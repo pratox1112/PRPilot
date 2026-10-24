@@ -5,6 +5,7 @@ ROADMAP_PRPilot.md
 # secrets
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 credentials*.json
@@ -23,6 +24,7 @@ data/raw/
 data/processed/
 *.parquet
 *.gguf
+models/
 *.safetensors
 checkpoints/
 mlruns/
