@@ -1,0 +1,47 @@
+# Candidate source repos for feasibility task 0.4 (roadmap §4.1).
+# `bot_logins`: accounts that act as bots but are regular user accounts, so GitHub does not
+# report them as type `Bot`. Accounts of type `Bot` or ending in `[bot]` are always bots.
+# `command_bots`: bots that apply labels on behalf of a human slash command (e.g. `/kind bug`).
+
+[global]
+bot_logins = []
+
+[repos."numpy/numpy"]
+bot_logins = []
+command_bots = []
+
+[repos."pandas-dev/pandas"]
+bot_logins = []
+command_bots = []
+
+[repos."matplotlib/matplotlib"]
+bot_logins = []
+command_bots = []
+
+[repos."scikit-learn/scikit-learn"]
+bot_logins = []
+command_bots = []
+
+[repos."kubernetes/kubernetes"]
+bot_logins = ["k8s-ci-robot", "k8s-triage-robot", "k8s-github-robot", "fejta-bot"]
+command_bots = ["k8s-ci-robot"]
+
+[repos."prometheus/prometheus"]
+bot_logins = []
+command_bots = []
+
+[repos."cilium/cilium"]
+bot_logins = []
+command_bots = []
+
+[repos."containerd/containerd"]
+bot_logins = ["k8s-ci-robot"]
+command_bots = ["k8s-ci-robot"]
+
+[repos."electron/electron"]
+bot_logins = []
+command_bots = []
+
+[repos."angular/angular"]
+bot_logins = []
+command_bots = []
