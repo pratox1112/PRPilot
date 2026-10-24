@@ -1,6 +1,6 @@
 # ADR 0001: Pydantic AI output mode for the triage agent
 
-- Status: proposed (confirmed once `results/feasibility_pydantic_ai.json` passes on a clean tree)
+- Status: accepted (feasibility check passed: `results/feasibility_pydantic_ai.json` @ b36d622)
 - Date: 2026-10-24
 
 ## Context

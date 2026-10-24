@@ -31,7 +31,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 | 0.5 | Revert positives in test window | ≥50 | [TBD] | [TBD] |
 | 0.6 | Teacher agreement on type | ≥60% of 200 train PRs | [TBD] | [TBD] |
 | 0.7 | LlamaFirewall + Presidio | Both run on Python 3.12 | [TBD] | [TBD] |
-| 0.8 | Pydantic AI + llama.cpp + Langfuse | Validated `TriageOutput` and a trace in Langfuse | [TBD] | [TBD] |
+| 0.8 | Pydantic AI + llama.cpp + Langfuse | Validated `TriageOutput` and a trace in Langfuse | 3/3 valid first attempt (N = 3 synthetic PRs); 3 traces visible in Langfuse | **Go** |
 
 ## Log
 
@@ -62,3 +62,11 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Dataset hash: n/a
 - Notes / decisions / problems: no paid resources created yet.
 - Next: record budget and credit details
+
+### 2026-10-24 — Task 0.8 — Pydantic AI + llama.cpp + Langfuse feasibility
+- Status: done
+- What changed: triage agent (`prpilot_core/agents/triage.py`) using `TextOutput` with our own JSON parsing and repo-rule retries; feasibility script `scripts/feasibility/pydantic_ai_check.py`; ADR 0001 (output mode).
+- Results: first-attempt valid, static schema (model) = 3/3; first attempt also passing repo rules = 3/3; valid after retries (system, retry limit 2) = 3/3; N = 3 synthetic PRs → results/feasibility_pydantic_ai.json @ b36d622247a09e4f68c0671910f8a705e3a5be72 (clean tree)
+- Dataset hash: see `dataset.hash` in the results file (synthetic samples)
+- Notes / decisions / problems: Qwen3-1.7B-Q8_0 on llama.cpp `b11854-8e5a58df8` (pinned image), `--jinja` + `enable_thinking: false` gives clean JSON with no `<think>` block. Traces confirmed in Langfuse (US) by owner. Smoke check only, not a quality measure: the untrained model picked wrong labels / issue links on the synthetic PRs. Laptop CPU took ~7–9 s per ~640-token prompt, so long diffs will be slow; relevant for Cloud Run sizing.
+- Next: 0.4 (data volume), 0.5 (revert counts)
