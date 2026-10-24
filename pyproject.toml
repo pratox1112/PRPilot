@@ -1,0 +1,33 @@
+[project]
+name = "prpilot"
+version = "0.1.0"
+description = "Event-driven pull request triage agent with approval-gated write actions."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic==2.14.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.17.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.22,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "prpilot_core"
+module-root = ""
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
