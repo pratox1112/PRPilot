@@ -1,0 +1,44 @@
+# planning docs (local only)
+ROADMAP.md
+ROADMAP_PRPilot.md
+
+# secrets
+.env
+.env.*
+*.pem
+*.key
+credentials*.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# data, models, artifacts
+data/raw/
+data/processed/
+*.parquet
+*.gguf
+*.safetensors
+checkpoints/
+mlruns/
+logs/
+
+# node
+node_modules/
+.next/
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
