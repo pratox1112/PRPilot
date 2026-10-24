@@ -168,7 +168,7 @@ def run_one(agent, tracer, pr: PRContext) -> dict:
                     build_user_prompt(pr, RULES), deps=deps, model_settings=MODEL_SETTINGS
                 )
                 final = {"valid": True, "output": result.output.model_dump(mode="json")}
-                usage = result.usage()
+                usage = result.usage
             except UnexpectedModelBehavior as e:
                 final = {"valid": False, "error": str(e)[:500]}
                 usage = None
