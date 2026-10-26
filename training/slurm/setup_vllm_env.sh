@@ -2,7 +2,7 @@
 # Create (or re-create after a scratch purge) the teacher inference env on scratch.
 # Run on a compute node, not the login node (conda and pip get killed there):
 #   srun --account=eece7398.202710 -p short --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash
-#   cd ~/prpilot && bash training/slurm/setup_vllm_env.sh
+#   cd /scratch/$USER/prpilot/code && bash training/slurm/setup_vllm_env.sh
 # If ~/prpilot-keep/requirements-vllm.lock.txt exists, the exact recorded versions are used.
 
 set -euo pipefail

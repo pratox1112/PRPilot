@@ -1,4 +1,7 @@
 # Shared environment for PRPilot jobs on Explorer. Source it: `source training/slurm/env.sh`.
+# Layout: everything rebuildable (code clone, env, model weights, logs) lives on scratch under
+# $PRPILOT_SCRATCH; results and labels that cost GPU time are copied to $PRPILOT_KEEP in home.
+# Code clone: /scratch/$USER/prpilot/code (submit jobs from there).
 # Model weights go to scratch (large, purged monthly, re-downloadable). The Hugging Face
 # token stays in the default HF_HOME under $HOME, so the scratch purge cannot delete it.
 
