@@ -2,7 +2,15 @@
 # descriptions, not from reading PRs. Shared types:
 #   bug | feature | docs | refactor | test | ci/build | dependency | other
 # Labels not listed here are not type labels (area, process, backport, size, release-branch).
-# Lines marked REVIEW are judgement calls for the owner to confirm.
+# Lines marked REVIEW are judgement calls (accepted by the owner on 2026-10-26).
+
+# When a PR carries labels that map to more than one type, the primary type is the first one
+# in this list. Order: changes users feel first (bug, feature), then dependency and build
+# changes, then supporting work. "other" only wins when nothing else applies, which also keeps
+# catch-all labels such as cilium's release-note/misc from overriding a real type.
+primary_type_priority = [
+  "bug", "feature", "dependency", "ci/build", "test", "docs", "refactor", "other",
+]
 
 [repos."numpy/numpy"]
 "00 - Bug" = "bug"

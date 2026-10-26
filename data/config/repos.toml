@@ -1,4 +1,8 @@
-# Candidate source repos for feasibility task 0.4 (roadmap §4.1).
+# Source repos (roadmap §4.1). All 10 candidates stay listed so the feasibility results can be
+# reproduced; `status` records the selection made from results/feasibility_label_volume.json.
+#
+# `status`: "selected" (used for data) or "dropped" (with `reason`).
+# `split_role`: "train_val_test" (split by time) or "held_out" (whole repo goes to test only).
 # `bot_logins`: accounts that act as bots but are regular user accounts, so GitHub does not
 # report them as type `Bot`. Accounts of type `Bot` or ending in `[bot]` are always bots.
 # `command_bots`: bots that apply labels on behalf of a human slash command (e.g. `/kind bug`).
@@ -6,42 +10,64 @@
 [global]
 bot_logins = []
 
-[repos."numpy/numpy"]
+[repos."kubernetes/kubernetes"]
+status = "selected"
+split_role = "train_val_test"
+bot_logins = ["k8s-ci-robot", "k8s-triage-robot", "k8s-github-robot", "fejta-bot"]
+command_bots = ["k8s-ci-robot"]
+
+[repos."cilium/cilium"]
+status = "selected"
+split_role = "train_val_test"
 bot_logins = []
 command_bots = []
 
 [repos."pandas-dev/pandas"]
+status = "selected"
+split_role = "train_val_test"
+bot_logins = []
+command_bots = []
+
+[repos."numpy/numpy"]
+status = "selected"
+split_role = "held_out"
+reason = "Clean, mostly human-applied type taxonomy and ~2.6k usable PRs; smallest loss of training data among the strong repos."
+# GitHub reports the license as NOASSERTION (auto-detection fails); numpy is BSD-3-Clause.
 bot_logins = []
 command_bots = []
 
 [repos."matplotlib/matplotlib"]
+status = "dropped"
+reason = "License is the Matplotlib (PSF-based) license, not MIT/Apache/BSD as §4.1 requires; ~1.2k usable PRs."
 bot_logins = ["meeseeksmachine"]
 command_bots = []
 
 [repos."scikit-learn/scikit-learn"]
+status = "dropped"
+reason = "Type labels are applied by a path-based bot; ~4% of sampled PRs have a human type label."
 bot_logins = ["scikit-learn-bot"]
 command_bots = []
 
-[repos."kubernetes/kubernetes"]
-bot_logins = ["k8s-ci-robot", "k8s-triage-robot", "k8s-github-robot", "fejta-bot"]
-command_bots = ["k8s-ci-robot"]
-
 [repos."prometheus/prometheus"]
+status = "dropped"
+reason = "Few labels of any kind; ~2-10% of sampled PRs have a human type label."
 bot_logins = ["prombot"]
 command_bots = []
 
-[repos."cilium/cilium"]
-bot_logins = []
-command_bots = []
-
 [repos."containerd/containerd"]
+status = "dropped"
+reason = "kind/* labels are almost all bot-applied; ~0-2% human type labels."
 bot_logins = ["k8s-ci-robot"]
 command_bots = ["k8s-ci-robot"]
 
 [repos."electron/electron"]
+status = "dropped"
+reason = "No PR type labels (only semver/* and backport labels)."
 bot_logins = []
 command_bots = []
 
 [repos."angular/angular"]
+status = "dropped"
+reason = "No PR type labels; types live in conventional-commit titles, which are model inputs (leakage)."
 bot_logins = []
 command_bots = []
