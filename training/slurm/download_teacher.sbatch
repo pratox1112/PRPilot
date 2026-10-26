@@ -12,7 +12,7 @@ set -euo pipefail
 cd "${SLURM_SUBMIT_DIR}"
 source training/slurm/env.sh
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate prpilot-vllm
+conda activate "${PRPILOT_VLLM_ENV}"
 
 echo "downloading ${TEACHER_REPO}@${TEACHER_REVISION} to ${HF_HUB_CACHE}"
 hf download "${TEACHER_REPO}" --revision "${TEACHER_REVISION}"

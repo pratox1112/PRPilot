@@ -13,7 +13,7 @@ set -euo pipefail
 cd "${SLURM_SUBMIT_DIR}"
 source training/slurm/env.sh
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate prpilot-vllm
+conda activate "${PRPILOT_VLLM_ENV}"
 export HF_HUB_OFFLINE=1  # the model must already be downloaded; never fetch on a GPU node
 
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
