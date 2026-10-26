@@ -1,0 +1,126 @@
+# Repo label -> shared PR type (roadmap §4.3). Configuration written from label names and
+# descriptions, not from reading PRs. Shared types:
+#   bug | feature | docs | refactor | test | ci/build | dependency | other
+# Labels not listed here are not type labels (area, process, backport, size, release-branch).
+# Lines marked REVIEW are judgement calls for the owner to confirm.
+
+[repos."numpy/numpy"]
+"00 - Bug" = "bug"
+"06 - Regression" = "bug"
+"01 - Enhancement" = "feature"
+"04 - Documentation" = "docs"
+"05 - Testing" = "test"
+"36 - Build" = "ci/build"
+"component: CI" = "ci/build"
+"Dependencies" = "dependency"
+"03 - Maintenance" = "refactor"  # REVIEW: numpy MAINT = cleanup/refactor, sometimes CI/deps
+"41 - Static typing" = "other"   # REVIEW
+"07 - Deprecation" = "other"
+
+[repos."pandas-dev/pandas"]
+"Bug" = "bug"
+"Regression" = "bug"
+"Enhancement" = "feature"
+"Docs" = "docs"
+"Testing" = "test"
+"Unreliable Test" = "test"
+"CI" = "ci/build"
+"Build" = "ci/build"
+"Dependencies" = "dependency"
+"Refactor" = "refactor"
+"Clean" = "refactor"
+"Code Style" = "refactor"
+"Performance" = "other"          # REVIEW: no performance type in the shared taxonomy
+"Typing" = "other"               # REVIEW
+"Deprecate" = "other"
+
+[repos."matplotlib/matplotlib"]
+"PR: bugfix" = "bug"
+"New feature" = "feature"
+"Documentation" = "docs"
+"Documentation: API" = "docs"
+"Documentation: user guide" = "docs"
+"Documentation: examples" = "docs"
+"Documentation: devdocs" = "docs"
+"Documentation: tutorials" = "docs"
+"Documentation: plot types" = "docs"
+"Documentation: website" = "docs"
+"Documentation: build" = "docs"
+"Documentation: tags" = "docs"
+"topic: testing" = "test"
+"CI: testing" = "ci/build"
+"Build" = "ci/build"
+"PR: dependencies" = "dependency"
+"dependencies" = "dependency"
+"Maintenance" = "refactor"       # REVIEW: same ambiguity as numpy
+"Performance" = "other"
+
+[repos."scikit-learn/scikit-learn"]
+"Bug" = "bug"
+"Regression" = "bug"
+"New Feature" = "feature"
+"Enhancement" = "feature"
+"Documentation" = "docs"
+"Build / CI" = "ci/build"
+"Refactor" = "refactor"
+"dependencies" = "dependency"
+"Performance" = "other"
+
+[repos."kubernetes/kubernetes"]
+"kind/bug" = "bug"
+"kind/regression" = "bug"
+"kind/feature" = "feature"
+"kind/documentation" = "docs"
+"kind/cleanup" = "refactor"
+"kind/failing-test" = "test"
+"kind/flake" = "test"
+"kind/dependency" = "dependency"
+"kind/deprecation" = "other"
+# kind/api-change left out: it marks an API change on top of a bug/feature, not a type.
+
+[repos."prometheus/prometheus"]
+"kind/bug" = "bug"
+"kind/feature" = "feature"
+"kind/enhancement" = "feature"
+"kind/cleanup" = "refactor"
+"dependencies" = "dependency"
+"kind/optimization" = "other"
+"kind/performance" = "other"
+
+[repos."cilium/cilium"]
+"kind/bug" = "bug"
+"kind/regression" = "bug"
+"release-note/bug" = "bug"
+"kind/feature" = "feature"
+"kind/enhancement" = "feature"
+"release-note/minor" = "feature"   # REVIEW: release-note labels mark the changelog section
+"release-note/major" = "feature"   # REVIEW
+"area/documentation" = "docs"
+"kind/cleanup" = "refactor"
+"kind/tech-debt" = "refactor"
+"kind/bug/CI" = "test"
+"ci/flake" = "test"
+"area/CI" = "ci/build"
+"area/CI-improvement" = "ci/build"
+"release-note/ci" = "ci/build"
+"dependencies" = "dependency"
+"kind/performance" = "other"
+"release-note/misc" = "other"      # REVIEW: very common catch-all
+
+[repos."containerd/containerd"]
+"kind/bug" = "bug"
+"kind/feature" = "feature"
+"kind/enhancement" = "feature"
+"kind/docs" = "docs"
+"kind/test" = "test"
+"kind/refactor" = "refactor"
+"kind/cleanup" = "refactor"
+"dependencies" = "dependency"
+"kind/performance" = "other"
+
+[repos."electron/electron"]
+"documentation :notebook:" = "docs"
+# semver/* labels are release-impact labels, not PR types; deliberately not mapped.
+
+[repos."angular/angular"]
+# No type labels on PRs (types live in conventional-commit titles, which are model inputs).

@@ -15,11 +15,11 @@ bot_logins = []
 command_bots = []
 
 [repos."matplotlib/matplotlib"]
-bot_logins = []
+bot_logins = ["meeseeksmachine"]
 command_bots = []
 
 [repos."scikit-learn/scikit-learn"]
-bot_logins = []
+bot_logins = ["scikit-learn-bot"]
 command_bots = []
 
 [repos."kubernetes/kubernetes"]
@@ -27,7 +27,7 @@ bot_logins = ["k8s-ci-robot", "k8s-triage-robot", "k8s-github-robot", "fejta-bot
 command_bots = ["k8s-ci-robot"]
 
 [repos."prometheus/prometheus"]
-bot_logins = []
+bot_logins = ["prombot"]
 command_bots = []
 
 [repos."cilium/cilium"]
