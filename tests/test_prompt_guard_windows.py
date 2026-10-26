@@ -1,6 +1,16 @@
 import pytest
 
-from prpilot_core.screening.prompt_guard import _malicious_index, window_spans
+from prpilot_core.screening.prompt_guard import _malicious_index, special_wrap, window_spans
+
+
+def test_special_wrap_cls_sep():
+    assert special_wrap([1, 50, 51, 2], [50, 51]) == ([1], [2])
+
+
+def test_special_wrap_none_and_error():
+    assert special_wrap([50, 51], [50, 51]) == ([], [])
+    with pytest.raises(ValueError):
+        special_wrap([1, 9, 2], [50])
 
 
 @pytest.mark.parametrize("n", [0, 1, 509, 510])

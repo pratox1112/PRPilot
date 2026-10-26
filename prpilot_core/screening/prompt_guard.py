@@ -48,6 +48,16 @@ def window_spans(n_tokens: int, size: int, stride: int) -> list[tuple[int, int]]
     return spans
 
 
+def special_wrap(with_special: list[int], plain: list[int]) -> tuple[list[int], list[int]]:
+    """Find the special tokens the tokenizer puts before and after content, by comparing one
+    probe text encoded with and without them (works across tokenizer API versions)."""
+    n = len(plain)
+    for i in range(len(with_special) - n + 1):
+        if with_special[i : i + n] == plain:
+            return with_special[:i], with_special[i + n :]
+    raise ValueError("could not locate content tokens inside the special-token template")
+
+
 def _malicious_index(id2label: dict[int, str]) -> int:
     for idx, name in id2label.items():
         if any(k in name.upper() for k in ("MALICIOUS", "INJECTION", "JAILBREAK")):
@@ -78,14 +88,19 @@ class PromptGuard:
         self.model = AutoModelForSequenceClassification.from_pretrained(path).eval()
         self.threshold = threshold
         self.batch_size = batch_size
-        self.content_size = MAX_TOKENS - self.tokenizer.num_special_tokens_to_add()
+        probe = "hello world"
+        self.prefix, self.suffix = special_wrap(
+            self.tokenizer(probe)["input_ids"],
+            self.tokenizer(probe, add_special_tokens=False)["input_ids"],
+        )
+        self.content_size = MAX_TOKENS - len(self.prefix) - len(self.suffix)
         self.stride = min(stride, self.content_size)
         self.malicious_index = _malicious_index(self.model.config.id2label)
 
     def score(self, text: str) -> GuardResult:
         ids = self.tokenizer(text, add_special_tokens=False)["input_ids"]
         spans = window_spans(len(ids), self.content_size, self.stride)
-        windows = [self.tokenizer.build_inputs_with_special_tokens(ids[s:e]) for s, e in spans]
+        windows = [self.prefix + ids[s:e] + self.suffix for s, e in spans]
         scores: list[float] = []
         for i in range(0, len(windows), self.batch_size):
             batch = self.tokenizer.pad(
