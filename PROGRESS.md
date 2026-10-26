@@ -24,8 +24,8 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 
 | # | Check | Go if | Result | Decision |
 |---|---|---|---|---|
-| 0.1 | Explorer GPU job | Job runs on a GPU | [TBD] | [TBD] |
-| 0.2 | GCP project + budget alert | Budget alert active | [TBD] | [TBD] |
+| 0.1 | Explorer GPU job | Job runs on a GPU | Owner-confirmed done; H200/A100 available, 4 GPUs/user | **Go** |
+| 0.2 | GCP project + budget alert | Budget alert active | Owner-confirmed done | **Go** |
 | 0.3 | GitHub App webhook | Webhook arrives at test endpoint | [TBD] | [TBD] |
 | 0.4 | Human-labeled PR volume | ≥3,000 PRs with a human-applied type label | ~25,756 estimated (95% CI 19,985–32,289) across 10 candidates | **Go** |
 | 0.5 | Revert positives in test window | ≥50 | [TBD] | [TBD] |
@@ -48,7 +48,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Next: 0.7, 0.8
 
 ### 2026-10-24 — Task 0.1 — Explorer account and GPU test
-- Status: partial
+- Status: done (owner-confirmed 2026-10-26; `nvidia-smi` output and account check not recorded here)
 - What changed: account active; partitions and limits recorded from `sinfo` / `sacctmgr`.
 - Results: `gpu` partition (8 h limit) has H200 x8 (4 nodes), A100 x3–4 (3 nodes), V100, T4; `gpu-short` / `gpu-interactive` 2 h. QOS `gpu`: max 4 GPUs and 4 jobs per user. Storage: home 75 GB; scratch on VAST, purged monthly, no backup.
 - Dataset hash: n/a
@@ -56,7 +56,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Next: GPU test job output, account check
 
 ### 2026-10-24 — Task 0.2 — GCP project and budget alert
-- Status: partial
+- Status: done (owner-confirmed 2026-10-26; budget amount and credit details not recorded here)
 - What changed: owner reports project and budget alert are done.
 - Results: budget amount, credit type and expiry: [TBD]
 - Dataset hash: n/a
