@@ -2,9 +2,9 @@
   "task": "0.4",
   "step": "estimate",
   "meta": {
-    "timestamp_utc": "2026-10-26T16:39:56+00:00",
+    "timestamp_utc": "2026-10-26T16:48:28+00:00",
     "git": {
-      "commit": "43d74cb283953c43d51b07cc6c6f833483d1bd1e",
+      "commit": "43bf02106e490db306fe7694fab4c6643675444e",
       "dirty": false
     },
     "python": "3.12.10",
@@ -28,65 +28,125 @@
     "cache_hits": 141
   },
   "repos": {
-    "numpy/numpy": {
-      "mapped_labels": 11,
+    "kubernetes/kubernetes": {
+      "mapped_labels": 9,
       "windows": {
         "2023": {
           "sampled": 50,
-          "with_type_label": 36,
-          "share": 0.72,
+          "with_type_label": 40,
+          "share": 0.8,
           "share_ci95": [
-            0.583,
-            0.825
+            0.67,
+            0.888
           ],
-          "merged_count": 1315
+          "merged_count": 3661
         },
         "2024": {
           "sampled": 50,
-          "with_type_label": 24,
-          "share": 0.48,
+          "with_type_label": 43,
+          "share": 0.86,
           "share_ci95": [
-            0.348,
-            0.615
+            0.738,
+            0.93
           ],
-          "merged_count": 1388
+          "merged_count": 3118
         },
         "2025H1": {
           "sampled": 50,
-          "with_type_label": 25,
-          "share": 0.5,
+          "with_type_label": 42,
+          "share": 0.84,
           "share_ci95": [
-            0.366,
-            0.634
+            0.715,
+            0.917
           ],
-          "merged_count": 682
+          "merged_count": 1428
         },
         "2025H2-2026Q1": {
           "sampled": 50,
-          "with_type_label": 31,
-          "share": 0.62,
+          "with_type_label": 35,
+          "share": 0.7,
           "share_ci95": [
-            0.482,
-            0.741
+            0.562,
+            0.809
           ],
-          "merged_count": 1064
+          "merged_count": 2550
         }
       },
-      "estimated_usable_prs": 2614,
+      "estimated_usable_prs": 8595,
       "estimated_usable_prs_ci95": [
-        2012,
-        3160
+        7208,
+        9522
       ],
       "type_distribution_in_sample": {
-        "docs": 9,
-        "refactor": 46,
-        "bug": 36,
-        "ci/build": 10,
-        "other": 17,
-        "feature": 5,
-        "test": 4
+        "test": 27,
+        "refactor": 76,
+        "bug": 49,
+        "feature": 15,
+        "docs": 5,
+        "other": 1,
+        "dependency": 3
       },
-      "sampled_prs_with_multiple_types": 11
+      "sampled_prs_with_multiple_types": 16
+    },
+    "cilium/cilium": {
+      "mapped_labels": 18,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 28,
+          "share": 0.56,
+          "share_ci95": [
+            0.423,
+            0.688
+          ],
+          "merged_count": 4253
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 27,
+          "share": 0.54,
+          "share_ci95": [
+            0.404,
+            0.67
+          ],
+          "merged_count": 4286
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 32,
+          "share": 0.64,
+          "share_ci95": [
+            0.501,
+            0.759
+          ],
+          "merged_count": 2280
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 34,
+          "share": 0.68,
+          "share_ci95": [
+            0.542,
+            0.792
+          ],
+          "merged_count": 3296
+        }
+      },
+      "estimated_usable_prs": 8397,
+      "estimated_usable_prs_ci95": [
+        6460,
+        10142
+      ],
+      "type_distribution_in_sample": {
+        "feature": 6,
+        "other": 72,
+        "refactor": 11,
+        "bug": 9,
+        "docs": 5,
+        "ci/build": 38,
+        "test": 6
+      },
+      "sampled_prs_with_multiple_types": 25
     },
     "pandas-dev/pandas": {
       "mapped_labels": 15,
@@ -148,6 +208,66 @@
         "feature": 1
       },
       "sampled_prs_with_multiple_types": 13
+    },
+    "numpy/numpy": {
+      "mapped_labels": 11,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 36,
+          "share": 0.72,
+          "share_ci95": [
+            0.583,
+            0.825
+          ],
+          "merged_count": 1315
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 24,
+          "share": 0.48,
+          "share_ci95": [
+            0.348,
+            0.615
+          ],
+          "merged_count": 1388
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 25,
+          "share": 0.5,
+          "share_ci95": [
+            0.366,
+            0.634
+          ],
+          "merged_count": 682
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 31,
+          "share": 0.62,
+          "share_ci95": [
+            0.482,
+            0.741
+          ],
+          "merged_count": 1064
+        }
+      },
+      "estimated_usable_prs": 2614,
+      "estimated_usable_prs_ci95": [
+        2012,
+        3160
+      ],
+      "type_distribution_in_sample": {
+        "docs": 9,
+        "refactor": 46,
+        "bug": 36,
+        "ci/build": 10,
+        "other": 17,
+        "feature": 5,
+        "test": 4
+      },
+      "sampled_prs_with_multiple_types": 11
     },
     "matplotlib/matplotlib": {
       "mapped_labels": 19,
@@ -265,66 +385,6 @@
       },
       "sampled_prs_with_multiple_types": 0
     },
-    "kubernetes/kubernetes": {
-      "mapped_labels": 9,
-      "windows": {
-        "2023": {
-          "sampled": 50,
-          "with_type_label": 40,
-          "share": 0.8,
-          "share_ci95": [
-            0.67,
-            0.888
-          ],
-          "merged_count": 3661
-        },
-        "2024": {
-          "sampled": 50,
-          "with_type_label": 43,
-          "share": 0.86,
-          "share_ci95": [
-            0.738,
-            0.93
-          ],
-          "merged_count": 3118
-        },
-        "2025H1": {
-          "sampled": 50,
-          "with_type_label": 42,
-          "share": 0.84,
-          "share_ci95": [
-            0.715,
-            0.917
-          ],
-          "merged_count": 1428
-        },
-        "2025H2-2026Q1": {
-          "sampled": 50,
-          "with_type_label": 35,
-          "share": 0.7,
-          "share_ci95": [
-            0.562,
-            0.809
-          ],
-          "merged_count": 2550
-        }
-      },
-      "estimated_usable_prs": 8595,
-      "estimated_usable_prs_ci95": [
-        7208,
-        9522
-      ],
-      "type_distribution_in_sample": {
-        "refactor": 76,
-        "test": 27,
-        "bug": 49,
-        "feature": 15,
-        "docs": 5,
-        "other": 1,
-        "dependency": 3
-      },
-      "sampled_prs_with_multiple_types": 16
-    },
     "prometheus/prometheus": {
       "mapped_labels": 7,
       "windows": {
@@ -381,66 +441,6 @@
         "refactor": 2
       },
       "sampled_prs_with_multiple_types": 0
-    },
-    "cilium/cilium": {
-      "mapped_labels": 18,
-      "windows": {
-        "2023": {
-          "sampled": 50,
-          "with_type_label": 28,
-          "share": 0.56,
-          "share_ci95": [
-            0.423,
-            0.688
-          ],
-          "merged_count": 4253
-        },
-        "2024": {
-          "sampled": 50,
-          "with_type_label": 27,
-          "share": 0.54,
-          "share_ci95": [
-            0.404,
-            0.67
-          ],
-          "merged_count": 4286
-        },
-        "2025H1": {
-          "sampled": 50,
-          "with_type_label": 32,
-          "share": 0.64,
-          "share_ci95": [
-            0.501,
-            0.759
-          ],
-          "merged_count": 2280
-        },
-        "2025H2-2026Q1": {
-          "sampled": 50,
-          "with_type_label": 34,
-          "share": 0.68,
-          "share_ci95": [
-            0.542,
-            0.792
-          ],
-          "merged_count": 3296
-        }
-      },
-      "estimated_usable_prs": 8397,
-      "estimated_usable_prs_ci95": [
-        6460,
-        10142
-      ],
-      "type_distribution_in_sample": {
-        "feature": 6,
-        "refactor": 11,
-        "other": 72,
-        "bug": 9,
-        "docs": 5,
-        "ci/build": 38,
-        "test": 6
-      },
-      "sampled_prs_with_multiple_types": 25
     },
     "containerd/containerd": {
       "mapped_labels": 9,
