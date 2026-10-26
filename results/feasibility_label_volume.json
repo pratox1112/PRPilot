@@ -2,10 +2,10 @@
   "task": "0.4",
   "step": "estimate",
   "meta": {
-    "timestamp_utc": "2026-10-26T16:09:13+00:00",
+    "timestamp_utc": "2026-10-26T16:38:10+00:00",
     "git": {
-      "commit": "fa1e93ac0b642539feb0991524e1dba208419394",
-      "dirty": false
+      "commit": "d44473d03d5b4f1da485e3e7cac7782e03b8d2d0",
+      "dirty": true
     },
     "python": "3.12.10",
     "packages": {
@@ -315,8 +315,8 @@
         9522
       ],
       "type_distribution_in_sample": {
-        "refactor": 76,
         "test": 27,
+        "refactor": 76,
         "bug": 49,
         "feature": 15,
         "docs": 5,
@@ -433,8 +433,8 @@
       ],
       "type_distribution_in_sample": {
         "feature": 6,
-        "refactor": 11,
         "other": 72,
+        "refactor": 11,
         "bug": 9,
         "docs": 5,
         "ci/build": 38,
