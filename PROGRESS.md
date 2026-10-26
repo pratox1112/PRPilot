@@ -28,7 +28,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 | 0.2 | GCP project + budget alert | Budget alert active | Owner-confirmed done | **Go** |
 | 0.3 | GitHub App webhook | Webhook arrives at test endpoint | [TBD] | [TBD] |
 | 0.4 | Human-labeled PR volume | ≥3,000 PRs with a human-applied type label | ~25,756 estimated (95% CI 19,985–32,289) across 10 candidates | **Go** |
-| 0.5 | Revert positives in test window | ≥50 | [TBD] | [TBD] |
+| 0.5 | Revert positives in test window | ≥50 | 45 positives in test set (rate 0.38%) | **No-go** → risk is a feature with no metric |
 | 0.6 | Teacher agreement on type | ≥60% of 200 train PRs | [TBD] | [TBD] |
 | 0.7 | LlamaFirewall + Presidio | Both run on Python 3.12 | LlamaFirewall 1.0.3 breaks on import; PromptGuard 2 direct (fallback) + Presidio run | **Go** (via fallback) |
 | 0.8 | Pydantic AI + llama.cpp + Langfuse | Validated `TriageOutput` and a trace in Langfuse | 3/3 valid first attempt (N = 3 synthetic PRs); 3 traces visible in Langfuse | **Go** |
@@ -100,3 +100,16 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   - Presidio corrupts code: in a diff, `cfg.scale` was detected as a URL and redacted to `<URL>ale`, and identifiers were tagged PERSON/LOCATION. Plan for Phase 4: run Presidio on prose fields (title, body, comments) only; use the secret scanner for diffs.
   - CPU cost: 86M took ~14 s for a 12-window diff (~1.2 s per window); 22M ~5 s. Relevant for worker sizing.
 - Next: 0.5
+
+### 2026-10-26 — Task 0.5 — Revert positives (risk ground truth)
+- Status: done (no-go; fallback chosen)
+- What changed: `scripts/feasibility/revert_links.py` (revert → original linking, unit-tested), `scripts/feasibility/reverts.py`.
+- Results: test-set positives = 45 (43 on default branch) out of 11,837 merged test-set PRs, positive rate 0.38%; go threshold 50 → no-go. Test set = 2025-07..2026-03 window of kubernetes, cilium, pandas + all of numpy (held out). 278 revert PRs found, 259 linked (explicit ref / commit SHA / title match), 19 unlinked, 1 revert-of-revert skipped → results/feasibility_reverts.json @ 5b69a1f77bd255df276b90e7aab678d2dec10c90 (clean tree; reverts searched until 2026-10-26).
+- Dataset hash: positives `positives_hash` in the results file
+- Notes / decisions / problems:
+  - Owner decision (2026-10-26): risk stays in `TriageOutput` as a feature, but no risk metric (recall / AUROC) is reported anywhere. Resume may describe risk classification as a feature only.
+  - Reason beyond the threshold: with a 0.38% base rate, ~50 test positives would give a recall CI of roughly ±13 points, and the train split has only ~150 positives.
+  - Not chosen: widening the proxy to "fix PR within 14 days touching the same files" (noisy), or re-linking the 19 unlinked reverts after seeing the result (would look like tuning the measurement to pass).
+  - Known blind spot of the method: reverts pushed as direct commits without a PR are not found.
+  - Phase 2 impact: drop "Risk recall / AUROC" from the metric table (§5.3).
+- Next: 0.6 (teacher), 0.3 (GitHub App)

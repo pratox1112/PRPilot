@@ -1,0 +1,6 @@
+# Teacher inference environment on Explorer (Python 3.12, conda env `prpilot-vllm`).
+# vLLM pins torch==2.13.0 itself. After installing, `pip freeze` is saved next to this file
+# as requirements-vllm.lock.txt so the exact environment is recorded (hard rule 8).
+vllm==0.31.0
+transformers==5.17.0
+huggingface-hub[cli]>=1.31,<3
