@@ -18,6 +18,10 @@ export PIP_NO_CACHE_DIR=1
 export PYTHONNOUSERSITE=1
 export HF_HUB_DISABLE_TELEMETRY=1
 export VLLM_NO_USAGE_STATS=1
+# Start vLLM's engine process fresh instead of forking: CUDA is already initialised in the
+# parent by then, and CUDA cannot be re-initialised in a forked child. Our scripts keep their
+# work under `if __name__ == "__main__"`, which spawn requires.
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
 export DO_NOT_TRACK=1
 
 export TEACHER_REPO="Qwen/Qwen3.5-122B-A10B-GPTQ-Int4"
