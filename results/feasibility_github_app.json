@@ -1,0 +1,26 @@
+{
+  "task": "0.3",
+  "meta": {
+    "timestamp_utc": "2026-10-27T01:08:17+00:00",
+    "git": {
+      "commit": "f3412121555ffe324816784f70ba95806c9880e1",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "fastapi": "0.162.0",
+      "uvicorn": "0.54.0"
+    }
+  },
+  "signature_verified": true,
+  "first_pull_request_event": {
+    "event": "pull_request",
+    "action": "opened",
+    "delivery_id": "e3e3a490-d1a2-11f1-9c6a-24d7cb79ef8d",
+    "repository": "pratox1112/prpilot-sandbox",
+    "installation_id": 175652280,
+    "pr_number": 1,
+    "received_utc": "2026-10-27T01:08:17+00:00"
+  },
+  "note": "Proves a signed webhook from the GitHub App reached the local endpoint."
+}

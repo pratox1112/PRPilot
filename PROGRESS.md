@@ -26,7 +26,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 |---|---|---|---|---|
 | 0.1 | Explorer GPU job | Job runs on a GPU | Owner-confirmed done; H200/A100 available, 4 GPUs/user | **Go** |
 | 0.2 | GCP project + budget alert | Budget alert active | Owner-confirmed done | **Go** |
-| 0.3 | GitHub App webhook | Webhook arrives at test endpoint | [TBD] | [TBD] |
+| 0.3 | GitHub App webhook | Webhook arrives at test endpoint | Signed `pull_request/opened` verified at local endpoint via tunnel; unsigned → 401 | **Go** |
 | 0.4 | Human-labeled PR volume | ≥3,000 PRs with a human-applied type label | ~25,756 estimated (95% CI 19,985–32,289) across 10 candidates | **Go** |
 | 0.5 | Revert positives in test window | ≥50 | 45 positives in test set (rate 0.38%) | **No-go** → risk is a feature with no metric |
 | 0.6 | Teacher agreement on type | ≥60% of 200 train PRs | [TBD] | [TBD] |
@@ -113,3 +113,15 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   - Known blind spot of the method: reverts pushed as direct commits without a PR are not found.
   - Phase 2 impact: drop "Risk recall / AUROC" from the metric table (§5.3).
 - Next: 0.6 (teacher), 0.3 (GitHub App)
+
+### 2026-10-27 — Task 0.3 — GitHub App and webhook delivery
+- Status: done
+- What changed: `prpilot_core/github/webhooks.py` (X-Hub-Signature-256 HMAC verification, constant-time compare, unit-tested); `scripts/feasibility/webhook_receiver.py` (FastAPI test endpoint that rejects bad signatures, saves deliveries to `data/raw/webhooks/`, flags redeliveries by `X-GitHub-Delivery`).
+- Results: signed `pull_request/opened` (PR #1, `pratox1112/prpilot-sandbox`) verified and accepted (202) → results/feasibility_github_app.json @ f3412121555ffe324816784f70ba95806c9880e1 (clean tree). Unsigned request → 401, both locally and through the tunnel (manual check).
+- Dataset hash: n/a
+- Notes / decisions / problems:
+  - GitHub App `prpilot-dev-pratox1112`: repository permissions Contents read, Issues read/write, Metadata read, Pull requests read/write; subscribed to Pull request events; installable only on the owner's account; installed only on `prpilot-sandbox` (installation 175652280). Private key stored outside the repo (`~/.prpilot/github-app.pem`); App ID, key path and webhook secret in `.env`.
+  - Local delivery used a Cloudflare quick tunnel (URL changes on every restart); the deployed api replaces it in Phase 6.
+  - A PR opened before the App is installed sends no event; `ping` and `installation/created` arrived first.
+- Next: 0.6 (teacher), then 0.9 review
+
