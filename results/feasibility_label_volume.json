@@ -1,0 +1,607 @@
+{
+  "task": "0.4",
+  "step": "estimate",
+  "meta": {
+    "timestamp_utc": "2026-10-26T16:48:28+00:00",
+    "git": {
+      "commit": "43bf02106e490db306fe7694fab4c6643675444e",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "query_version": "label-volume-v1",
+  "sample_hash": "sha256:2b34e108cf61fbc8a75f0dc5dc1da2b246d6ef4eb4ba781df959757cb75450f1",
+  "mappings_hash": "sha256:0579caac6375cc7dcfa6d5fba5532a878f618e9c4e3a22a0cc91d98e02122e2a",
+  "method": "Per repo and window: share of sampled merged PRs with >=1 human-applied label that maps to a shared type, times the window's merged PR count. 95% Wilson interval per window, summed (conservative). Sample = most recently created merged PRs per window.",
+  "go_threshold": 3000,
+  "total_estimated_usable_prs": 25756,
+  "total_ci95": [
+    19985,
+    32289
+  ],
+  "decision": "go",
+  "github_calls": {
+    "network": 0,
+    "cache_hits": 141
+  },
+  "repos": {
+    "kubernetes/kubernetes": {
+      "mapped_labels": 9,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 40,
+          "share": 0.8,
+          "share_ci95": [
+            0.67,
+            0.888
+          ],
+          "merged_count": 3661
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 43,
+          "share": 0.86,
+          "share_ci95": [
+            0.738,
+            0.93
+          ],
+          "merged_count": 3118
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 42,
+          "share": 0.84,
+          "share_ci95": [
+            0.715,
+            0.917
+          ],
+          "merged_count": 1428
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 35,
+          "share": 0.7,
+          "share_ci95": [
+            0.562,
+            0.809
+          ],
+          "merged_count": 2550
+        }
+      },
+      "estimated_usable_prs": 8595,
+      "estimated_usable_prs_ci95": [
+        7208,
+        9522
+      ],
+      "type_distribution_in_sample": {
+        "test": 27,
+        "refactor": 76,
+        "bug": 49,
+        "feature": 15,
+        "docs": 5,
+        "other": 1,
+        "dependency": 3
+      },
+      "sampled_prs_with_multiple_types": 16
+    },
+    "cilium/cilium": {
+      "mapped_labels": 18,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 28,
+          "share": 0.56,
+          "share_ci95": [
+            0.423,
+            0.688
+          ],
+          "merged_count": 4253
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 27,
+          "share": 0.54,
+          "share_ci95": [
+            0.404,
+            0.67
+          ],
+          "merged_count": 4286
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 32,
+          "share": 0.64,
+          "share_ci95": [
+            0.501,
+            0.759
+          ],
+          "merged_count": 2280
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 34,
+          "share": 0.68,
+          "share_ci95": [
+            0.542,
+            0.792
+          ],
+          "merged_count": 3296
+        }
+      },
+      "estimated_usable_prs": 8397,
+      "estimated_usable_prs_ci95": [
+        6460,
+        10142
+      ],
+      "type_distribution_in_sample": {
+        "feature": 6,
+        "other": 72,
+        "refactor": 11,
+        "bug": 9,
+        "docs": 5,
+        "ci/build": 38,
+        "test": 6
+      },
+      "sampled_prs_with_multiple_types": 25
+    },
+    "pandas-dev/pandas": {
+      "mapped_labels": 15,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 24,
+          "share": 0.48,
+          "share_ci95": [
+            0.348,
+            0.615
+          ],
+          "merged_count": 3504
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 35,
+          "share": 0.7,
+          "share_ci95": [
+            0.562,
+            0.809
+          ],
+          "merged_count": 2006
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 28,
+          "share": 0.56,
+          "share_ci95": [
+            0.423,
+            0.688
+          ],
+          "merged_count": 458
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 31,
+          "share": 0.62,
+          "share_ci95": [
+            0.482,
+            0.741
+          ],
+          "merged_count": 1542
+        }
+      },
+      "estimated_usable_prs": 4299,
+      "estimated_usable_prs_ci95": [
+        3284,
+        5236
+      ],
+      "type_distribution_in_sample": {
+        "refactor": 13,
+        "other": 9,
+        "ci/build": 23,
+        "test": 27,
+        "docs": 48,
+        "bug": 7,
+        "dependency": 4,
+        "feature": 1
+      },
+      "sampled_prs_with_multiple_types": 13
+    },
+    "numpy/numpy": {
+      "mapped_labels": 11,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 36,
+          "share": 0.72,
+          "share_ci95": [
+            0.583,
+            0.825
+          ],
+          "merged_count": 1315
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 24,
+          "share": 0.48,
+          "share_ci95": [
+            0.348,
+            0.615
+          ],
+          "merged_count": 1388
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 25,
+          "share": 0.5,
+          "share_ci95": [
+            0.366,
+            0.634
+          ],
+          "merged_count": 682
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 31,
+          "share": 0.62,
+          "share_ci95": [
+            0.482,
+            0.741
+          ],
+          "merged_count": 1064
+        }
+      },
+      "estimated_usable_prs": 2614,
+      "estimated_usable_prs_ci95": [
+        2012,
+        3160
+      ],
+      "type_distribution_in_sample": {
+        "docs": 9,
+        "refactor": 46,
+        "bug": 36,
+        "ci/build": 10,
+        "other": 17,
+        "feature": 5,
+        "test": 4
+      },
+      "sampled_prs_with_multiple_types": 11
+    },
+    "matplotlib/matplotlib": {
+      "mapped_labels": 19,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 26,
+          "share": 0.52,
+          "share_ci95": [
+            0.385,
+            0.652
+          ],
+          "merged_count": 1558
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 11,
+          "share": 0.22,
+          "share_ci95": [
+            0.128,
+            0.352
+          ],
+          "merged_count": 978
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 7,
+          "share": 0.14,
+          "share_ci95": [
+            0.07,
+            0.262
+          ],
+          "merged_count": 472
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 10,
+          "share": 0.2,
+          "share_ci95": [
+            0.112,
+            0.33
+          ],
+          "merged_count": 561
+        }
+      },
+      "estimated_usable_prs": 1204,
+      "estimated_usable_prs_ci95": [
+        821,
+        1669
+      ],
+      "type_distribution_in_sample": {
+        "docs": 23,
+        "refactor": 18,
+        "ci/build": 3,
+        "other": 2,
+        "test": 9,
+        "bug": 3,
+        "feature": 1
+      },
+      "sampled_prs_with_multiple_types": 5
+    },
+    "scikit-learn/scikit-learn": {
+      "mapped_labels": 9,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 2,
+          "share": 0.04,
+          "share_ci95": [
+            0.011,
+            0.135
+          ],
+          "merged_count": 1354
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 2,
+          "share": 0.04,
+          "share_ci95": [
+            0.011,
+            0.135
+          ],
+          "merged_count": 1307
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 2,
+          "share": 0.04,
+          "share_ci95": [
+            0.011,
+            0.135
+          ],
+          "merged_count": 571
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 2,
+          "share": 0.04,
+          "share_ci95": [
+            0.011,
+            0.135
+          ],
+          "merged_count": 933
+        }
+      },
+      "estimated_usable_prs": 167,
+      "estimated_usable_prs_ci95": [
+        46,
+        561
+      ],
+      "type_distribution_in_sample": {
+        "docs": 6,
+        "bug": 1,
+        "other": 1
+      },
+      "sampled_prs_with_multiple_types": 0
+    },
+    "prometheus/prometheus": {
+      "mapped_labels": 7,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 3,
+          "share": 0.06,
+          "share_ci95": [
+            0.021,
+            0.162
+          ],
+          "merged_count": 674
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 5,
+          "share": 0.1,
+          "share_ci95": [
+            0.043,
+            0.214
+          ],
+          "merged_count": 1261
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 3,
+          "share": 0.06,
+          "share_ci95": [
+            0.021,
+            0.162
+          ],
+          "merged_count": 554
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 1,
+          "share": 0.02,
+          "share_ci95": [
+            0.004,
+            0.105
+          ],
+          "merged_count": 807
+        }
+      },
+      "estimated_usable_prs": 216,
+      "estimated_usable_prs_ci95": [
+        83,
+        553
+      ],
+      "type_distribution_in_sample": {
+        "other": 3,
+        "feature": 2,
+        "bug": 5,
+        "refactor": 2
+      },
+      "sampled_prs_with_multiple_types": 0
+    },
+    "containerd/containerd": {
+      "mapped_labels": 9,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 1,
+          "share": 0.02,
+          "share_ci95": [
+            0.004,
+            0.105
+          ],
+          "merged_count": 932
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 1,
+          "share": 0.02,
+          "share_ci95": [
+            0.004,
+            0.105
+          ],
+          "merged_count": 916
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 450
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 626
+        }
+      },
+      "estimated_usable_prs": 37,
+      "estimated_usable_prs_ci95": [
+        7,
+        271
+      ],
+      "type_distribution_in_sample": {
+        "test": 1,
+        "bug": 1
+      },
+      "sampled_prs_with_multiple_types": 0
+    },
+    "electron/electron": {
+      "mapped_labels": 1,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 3,
+          "share": 0.06,
+          "share_ci95": [
+            0.021,
+            0.162
+          ],
+          "merged_count": 2357
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 1,
+          "share": 0.02,
+          "share_ci95": [
+            0.004,
+            0.105
+          ],
+          "merged_count": 2630
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 1,
+          "share": 0.02,
+          "share_ci95": [
+            0.004,
+            0.105
+          ],
+          "merged_count": 1749
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 2014
+        }
+      },
+      "estimated_usable_prs": 229,
+      "estimated_usable_prs_ci95": [
+        64,
+        986
+      ],
+      "type_distribution_in_sample": {
+        "docs": 5
+      },
+      "sampled_prs_with_multiple_types": 0
+    },
+    "angular/angular": {
+      "mapped_labels": 0,
+      "windows": {
+        "2023": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 192
+        },
+        "2024": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 184
+        },
+        "2025H1": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 134
+        },
+        "2025H2-2026Q1": {
+          "sampled": 50,
+          "with_type_label": 0,
+          "share": 0.0,
+          "share_ci95": [
+            0.0,
+            0.071
+          ],
+          "merged_count": 2146
+        }
+      },
+      "estimated_usable_prs": 0,
+      "estimated_usable_prs_ci95": [
+        0,
+        190
+      ],
+      "type_distribution_in_sample": {},
+      "sampled_prs_with_multiple_types": 0
+    }
+  }
+}

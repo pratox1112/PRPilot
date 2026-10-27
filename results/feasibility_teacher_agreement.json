@@ -1,0 +1,307 @@
+{
+  "task": "0.6",
+  "meta": {
+    "timestamp_utc": "2026-10-27T17:48:09+00:00",
+    "git": {
+      "commit": "5259fb3e60d3e3c31ae4a821bbafb82654b2dd71",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "pydantic": "2.14.1"
+    }
+  },
+  "teacher": {
+    "task": "0.6 (teacher outputs)",
+    "timestamp_utc": "2026-10-27T17:45:57+00:00",
+    "git": {
+      "commit": "5259fb3e60d3e3c31ae4a821bbafb82654b2dd71",
+      "dirty": false
+    },
+    "slurm_job_id": "11412144",
+    "packages": {
+      "vllm": "0.31.0+cu129",
+      "torch": "2.13.0+cu129",
+      "transformers": "5.17.0"
+    },
+    "model": {
+      "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+      "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+    },
+    "settings": {
+      "max_model_len": 32768,
+      "temperature": 0.0,
+      "modes": {
+        "thinking_off": {
+          "thinking": false,
+          "max_tokens": 1024
+        },
+        "thinking_on": {
+          "thinking": true,
+          "max_tokens": 8192
+        }
+      },
+      "constrained_decoding": false
+    },
+    "inputs_hash": "sha256:273a78742a86503b68dc3f6e8da846332582fc4f41fa95f2be89f5f4dbfe1ea4",
+    "load_seconds": 249.0,
+    "mode_seconds": {
+      "thinking_off": 47.7,
+      "thinking_on": 146.0
+    }
+  },
+  "inputs_hash": "sha256:273a78742a86503b68dc3f6e8da846332582fc4f41fa95f2be89f5f4dbfe1ea4",
+  "outputs_file": "teacher_agreement_11412144.jsonl",
+  "outputs_hash": "sha256:0255385a9ca7f8867daaec766d2880c4300778af893d4562e72f1d57765cafb5",
+  "metric": "Teacher type == maintainer primary type, first attempt, static-schema parse, invalid reply = disagreement. Model metric (no retries, no constrained decoding).",
+  "go_threshold": 0.6,
+  "best_mode": "thinking_on",
+  "decision": "go",
+  "modes": {
+    "thinking_off": {
+      "n": 200,
+      "agreement": 0.625,
+      "agreement_ci95": [
+        0.556,
+        0.689
+      ],
+      "agree_count": 125,
+      "valid_json_first_attempt": 197,
+      "agreement_with_any_maintainer_type": 0.645,
+      "finish_reasons": {
+        "stop": 200
+      },
+      "by_repo": {
+        "cilium/cilium": {
+          "n": 59,
+          "agree": 36,
+          "agreement": 0.61
+        },
+        "kubernetes/kubernetes": {
+          "n": 75,
+          "agree": 42,
+          "agreement": 0.56
+        },
+        "pandas-dev/pandas": {
+          "n": 66,
+          "agree": 47,
+          "agreement": 0.712
+        }
+      },
+      "by_type": {
+        "bug": {
+          "n": 34,
+          "agree": 29,
+          "agreement": 0.853
+        },
+        "other": {
+          "n": 31,
+          "agree": 4,
+          "agreement": 0.129
+        },
+        "ci/build": {
+          "n": 23,
+          "agree": 18,
+          "agreement": 0.783
+        },
+        "feature": {
+          "n": 16,
+          "agree": 6,
+          "agreement": 0.375
+        },
+        "docs": {
+          "n": 30,
+          "agree": 30,
+          "agreement": 1.0
+        },
+        "refactor": {
+          "n": 48,
+          "agree": 28,
+          "agreement": 0.583
+        },
+        "test": {
+          "n": 17,
+          "agree": 10,
+          "agreement": 0.588
+        },
+        "dependency": {
+          "n": 1,
+          "agree": 0,
+          "agreement": 0.0
+        }
+      },
+      "confusion": {
+        "bug": {
+          "bug": 29,
+          "refactor": 1,
+          "test": 4
+        },
+        "other": {
+          "other": 4,
+          "refactor": 8,
+          "bug": 8,
+          "ci/build": 1,
+          "docs": 5,
+          "test": 1,
+          "dependency": 1,
+          "INVALID": 3
+        },
+        "ci/build": {
+          "other": 1,
+          "ci/build": 18,
+          "docs": 1,
+          "bug": 2,
+          "dependency": 1
+        },
+        "feature": {
+          "dependency": 6,
+          "feature": 6,
+          "test": 2,
+          "refactor": 1,
+          "bug": 1
+        },
+        "docs": {
+          "docs": 30
+        },
+        "refactor": {
+          "refactor": 28,
+          "docs": 3,
+          "other": 1,
+          "test": 7,
+          "bug": 3,
+          "dependency": 4,
+          "ci/build": 2
+        },
+        "test": {
+          "bug": 5,
+          "test": 10,
+          "refactor": 2
+        },
+        "dependency": {
+          "ci/build": 1
+        }
+      }
+    },
+    "thinking_on": {
+      "n": 200,
+      "agreement": 0.65,
+      "agreement_ci95": [
+        0.582,
+        0.713
+      ],
+      "agree_count": 130,
+      "valid_json_first_attempt": 200,
+      "agreement_with_any_maintainer_type": 0.665,
+      "finish_reasons": {
+        "stop": 200
+      },
+      "by_repo": {
+        "cilium/cilium": {
+          "n": 59,
+          "agree": 36,
+          "agreement": 0.61
+        },
+        "kubernetes/kubernetes": {
+          "n": 75,
+          "agree": 44,
+          "agreement": 0.587
+        },
+        "pandas-dev/pandas": {
+          "n": 66,
+          "agree": 50,
+          "agreement": 0.758
+        }
+      },
+      "by_type": {
+        "bug": {
+          "n": 34,
+          "agree": 30,
+          "agreement": 0.882
+        },
+        "other": {
+          "n": 31,
+          "agree": 2,
+          "agreement": 0.065
+        },
+        "ci/build": {
+          "n": 23,
+          "agree": 20,
+          "agreement": 0.87
+        },
+        "feature": {
+          "n": 16,
+          "agree": 8,
+          "agreement": 0.5
+        },
+        "docs": {
+          "n": 30,
+          "agree": 30,
+          "agreement": 1.0
+        },
+        "refactor": {
+          "n": 48,
+          "agree": 28,
+          "agreement": 0.583
+        },
+        "test": {
+          "n": 17,
+          "agree": 12,
+          "agreement": 0.706
+        },
+        "dependency": {
+          "n": 1,
+          "agree": 0,
+          "agreement": 0.0
+        }
+      },
+      "confusion": {
+        "bug": {
+          "bug": 30,
+          "test": 4
+        },
+        "other": {
+          "other": 2,
+          "refactor": 10,
+          "test": 3,
+          "ci/build": 3,
+          "bug": 5,
+          "docs": 5,
+          "dependency": 1,
+          "feature": 2
+        },
+        "ci/build": {
+          "ci/build": 20,
+          "docs": 1,
+          "dependency": 1,
+          "bug": 1
+        },
+        "feature": {
+          "dependency": 6,
+          "feature": 8,
+          "test": 2
+        },
+        "docs": {
+          "docs": 30
+        },
+        "refactor": {
+          "refactor": 28,
+          "bug": 2,
+          "docs": 3,
+          "ci/build": 2,
+          "test": 7,
+          "feature": 1,
+          "dependency": 5
+        },
+        "test": {
+          "test": 12,
+          "bug": 3,
+          "dependency": 1,
+          "refactor": 1
+        },
+        "dependency": {
+          "ci/build": 1
+        }
+      }
+    }
+  }
+}

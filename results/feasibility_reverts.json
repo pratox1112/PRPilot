@@ -1,0 +1,2468 @@
+{
+  "task": "0.5",
+  "meta": {
+    "timestamp_utc": "2026-10-26T16:56:46+00:00",
+    "git": {
+      "commit": "5b69a1f77bd255df276b90e7aab678d2dec10c90",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "query_version": "reverts-v1",
+  "revert_search_until": "2026-10-26",
+  "windows": [
+    [
+      "train",
+      "2023-01-01",
+      "2024-12-31"
+    ],
+    [
+      "val",
+      "2025-01-01",
+      "2025-06-30"
+    ],
+    [
+      "test",
+      "2025-07-01",
+      "2026-03-31"
+    ]
+  ],
+  "split_roles": {
+    "kubernetes/kubernetes": "train_val_test",
+    "cilium/cilium": "train_val_test",
+    "pandas-dev/pandas": "train_val_test",
+    "numpy/numpy": "held_out"
+  },
+  "method": "Revert PR = merged PR whose title starts with revert/reverts/reverted/reverting (optionally after [tags]). Linked to its original via 'Reverts owner/repo#N' or 'revert ... #N/URL' (explicit_ref), 'This reverts commit <sha>' (commit_sha), or a bare #N whose title matches the revert title (title_match). Original must be merged before the revert. Reverts of reverts are skipped. Window = original's merge date. Direct-push reverts without a PR are not found.",
+  "go_threshold": 50,
+  "test_set_merged_prs": 11837,
+  "test_positives": 45,
+  "test_positives_default_branch_only": 43,
+  "test_positive_rate": 0.0038,
+  "decision": "no-go",
+  "positives_hash": "sha256:1482abdfcbcfe573778ab063b6fb0638501bcdf78962cfd8312dbcdb94524a7a",
+  "github_calls": {
+    "network": 314,
+    "cache_hits": 9
+  },
+  "repos": {
+    "kubernetes/kubernetes": {
+      "default_branch": "master",
+      "revert_prs_found": 133,
+      "link_methods": {
+        "commit_sha": 39,
+        "explicit_ref": 77,
+        "unlinked": 13,
+        "title_match": 4
+      },
+      "revert_of_revert_skipped": 1,
+      "merged_counts": {
+        "train": 6779,
+        "val": 1428,
+        "test": 2550
+      },
+      "positives_by_window": {
+        "train": {
+          "all": 76,
+          "default_branch": 76
+        },
+        "val": {
+          "all": 6,
+          "default_branch": 6
+        },
+        "test": {
+          "all": 20,
+          "default_branch": 20
+        }
+      },
+      "originals": [
+        {
+          "number": 103174,
+          "merged_at": "2021-09-16T23:11:33Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 120448,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 108912,
+          "merged_at": "2023-01-05T11:57:58Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 114981,
+          "link": "commit_sha"
+        },
+        {
+          "number": 109939,
+          "merged_at": "2024-05-31T14:19:57Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 125269,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 112663,
+          "merged_at": "2022-09-22T19:51:29Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 116331,
+          "link": "commit_sha"
+        },
+        {
+          "number": 113151,
+          "merged_at": "2022-12-13T22:53:49Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 117301,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 113156,
+          "merged_at": "2022-12-13T00:35:44Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 114840,
+          "link": "commit_sha"
+        },
+        {
+          "number": 113298,
+          "merged_at": "2023-02-04T13:26:29Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 115543,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 114229,
+          "merged_at": "2022-12-10T15:54:59Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 115723,
+          "link": "commit_sha"
+        },
+        {
+          "number": 114605,
+          "merged_at": "2023-02-01T15:25:09Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 115769,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 114640,
+          "merged_at": "2023-03-06T15:10:29Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 116341,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 114822,
+          "merged_at": "2023-01-04T18:26:00Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 114829,
+          "link": "commit_sha"
+        },
+        {
+          "number": 115000,
+          "merged_at": "2023-01-13T03:57:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 115068,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 115291,
+          "merged_at": "2023-01-31T09:47:00Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 115428,
+          "link": "commit_sha"
+        },
+        {
+          "number": 115324,
+          "merged_at": "2023-02-25T04:04:05Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 116062,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 115455,
+          "merged_at": "2023-02-02T14:35:31Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 115808,
+          "link": "commit_sha"
+        },
+        {
+          "number": 115465,
+          "merged_at": "2023-02-15T00:35:54Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 115785,
+          "link": "commit_sha"
+        },
+        {
+          "number": 115583,
+          "merged_at": "2023-02-15T23:29:00Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 117194,
+          "link": "commit_sha"
+        },
+        {
+          "number": 115692,
+          "merged_at": "2023-02-11T02:11:30Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 116500,
+          "link": "commit_sha"
+        },
+        {
+          "number": 115967,
+          "merged_at": "2023-03-11T01:34:40Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 122697,
+          "link": "commit_sha"
+        },
+        {
+          "number": 117297,
+          "merged_at": "2023-04-29T00:32:16Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 117690,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 118316,
+          "merged_at": "2023-05-29T20:01:44Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 118335,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 118606,
+          "merged_at": "2023-06-14T04:41:57Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 119444,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 118631,
+          "merged_at": "2023-06-15T18:22:31Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 118903,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 118895,
+          "merged_at": "2023-07-17T18:41:10Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 119876,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 119155,
+          "merged_at": "2023-10-19T07:31:28Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 122285,
+          "link": "commit_sha"
+        },
+        {
+          "number": 119396,
+          "merged_at": "2023-09-14T16:20:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 122288,
+          "link": "commit_sha"
+        },
+        {
+          "number": 119592,
+          "merged_at": "2023-08-27T13:07:22Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 120219,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 119946,
+          "merged_at": "2023-10-16T12:41:20Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 121290,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 120059,
+          "merged_at": "2023-08-19T01:19:32Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 120077,
+          "link": "commit_sha"
+        },
+        {
+          "number": 120194,
+          "merged_at": "2023-09-01T03:52:30Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 120441,
+          "link": "commit_sha"
+        },
+        {
+          "number": 120257,
+          "merged_at": "2023-10-20T04:14:05Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 121445,
+          "link": "commit_sha"
+        },
+        {
+          "number": 120398,
+          "merged_at": "2023-09-13T19:40:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 120755,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 120749,
+          "merged_at": "2023-09-19T14:45:07Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 120774,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 121213,
+          "merged_at": "2023-10-17T18:08:20Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 121324,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 121614,
+          "merged_at": "2023-10-30T21:42:27Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 121646,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 121615,
+          "merged_at": "2023-10-31T12:14:14Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 121647,
+          "link": "commit_sha"
+        },
+        {
+          "number": 122058,
+          "merged_at": "2023-12-14T04:10:20Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 122317,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 122440,
+          "merged_at": "2023-12-22T23:36:09Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 140873,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 122541,
+          "merged_at": "2024-03-06T01:30:57Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 123896,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 122565,
+          "merged_at": "2024-01-03T19:33:34Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 122747,
+          "link": "commit_sha"
+        },
+        {
+          "number": 122631,
+          "merged_at": "2024-04-18T07:00:29Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 125002,
+          "link": "title_match"
+        },
+        {
+          "number": 122871,
+          "merged_at": "2024-01-19T20:04:19Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 123159,
+          "link": "commit_sha"
+        },
+        {
+          "number": 122946,
+          "merged_at": "2024-02-02T10:11:32Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 124001,
+          "link": "commit_sha"
+        },
+        {
+          "number": 122994,
+          "merged_at": "2024-06-20T21:17:07Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 125630,
+          "link": "commit_sha"
+        },
+        {
+          "number": 123210,
+          "merged_at": "2024-02-09T09:27:25Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 123254,
+          "link": "commit_sha"
+        },
+        {
+          "number": 123310,
+          "merged_at": "2024-02-28T13:38:50Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 123590,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 123331,
+          "merged_at": "2024-02-29T09:50:02Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 123613,
+          "link": "commit_sha"
+        },
+        {
+          "number": 123513,
+          "merged_at": "2024-06-20T10:04:16Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 126139,
+          "link": "commit_sha"
+        },
+        {
+          "number": 123819,
+          "merged_at": "2024-07-18T07:53:17Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 126976,
+          "link": "commit_sha"
+        },
+        {
+          "number": 124086,
+          "merged_at": "2024-04-24T00:02:17Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 124512,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 124250,
+          "merged_at": "2024-04-22T18:53:21Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 124492,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 124445,
+          "merged_at": "2024-09-14T08:23:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 127377,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 124498,
+          "merged_at": "2024-04-24T12:10:10Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 124510,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 124731,
+          "merged_at": "2024-05-08T01:27:14Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 130243,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 124767,
+          "merged_at": "2024-05-09T11:34:26Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 124864,
+          "link": "commit_sha"
+        },
+        {
+          "number": 124865,
+          "merged_at": "2024-05-14T19:11:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 126201,
+          "link": "commit_sha"
+        },
+        {
+          "number": 125102,
+          "merged_at": "2025-03-12T06:33:46Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 130748,
+          "link": "title_match"
+        },
+        {
+          "number": 125372,
+          "merged_at": "2024-08-14T01:52:42Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 126723,
+          "link": "title_match"
+        },
+        {
+          "number": 125405,
+          "merged_at": "2024-06-25T09:15:53Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 125713,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 125575,
+          "merged_at": "2024-06-25T04:01:47Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 125731,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 125591,
+          "merged_at": "2024-07-01T09:31:14Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 126191,
+          "link": "commit_sha"
+        },
+        {
+          "number": 126047,
+          "merged_at": "2024-07-23T18:02:30Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 126330,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 126533,
+          "merged_at": "2024-11-05T17:31:30Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128761,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 126562,
+          "merged_at": "2024-10-22T18:48:53Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128333,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 126574,
+          "merged_at": "2024-08-29T15:49:38Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 127089,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 126599,
+          "merged_at": "2024-10-04T14:02:34Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 127899,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 126786,
+          "merged_at": "2024-08-31T10:22:44Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128139,
+          "link": "commit_sha"
+        },
+        {
+          "number": 126794,
+          "merged_at": "2025-03-20T21:16:31Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 130965,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 126889,
+          "merged_at": "2024-10-01T13:45:49Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 127811,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 127300,
+          "merged_at": "2024-11-08T02:20:57Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128694,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 127400,
+          "merged_at": "2024-09-17T08:19:16Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 127905,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 127611,
+          "merged_at": "2024-10-02T16:09:49Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 127861,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 127669,
+          "merged_at": "2024-10-07T10:40:22Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128450,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 127930,
+          "merged_at": "2024-10-17T15:03:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128216,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 128046,
+          "merged_at": "2024-11-04T22:09:37Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128627,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 128149,
+          "merged_at": "2024-10-17T15:03:29Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128175,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 128394,
+          "merged_at": "2024-11-06T20:10:03Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128629,
+          "link": "commit_sha"
+        },
+        {
+          "number": 128454,
+          "merged_at": "2024-10-31T17:17:27Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 135197,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 128508,
+          "merged_at": "2024-11-02T06:35:26Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128511,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 128640,
+          "merged_at": "2024-11-07T13:48:04Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 130348,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 128682,
+          "merged_at": "2024-11-12T19:00:46Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 128875,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 129175,
+          "merged_at": "2024-12-12T21:52:25Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 129231,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 129214,
+          "merged_at": "2024-12-14T00:52:25Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 129217,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 129344,
+          "merged_at": "2026-01-13T17:37:40Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 136574,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 129701,
+          "merged_at": "2025-01-22T15:18:37Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 129769,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 129716,
+          "merged_at": "2025-01-28T12:59:23Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 129878,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 129768,
+          "merged_at": "2025-09-08T21:05:29Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 133979,
+          "link": "commit_sha"
+        },
+        {
+          "number": 130291,
+          "merged_at": "2025-02-28T16:26:57Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 130515,
+          "link": "commit_sha"
+        },
+        {
+          "number": 130758,
+          "merged_at": "2025-03-12T21:51:48Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 130821,
+          "link": "title_match"
+        },
+        {
+          "number": 130837,
+          "merged_at": "2025-07-11T21:19:28Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 132958,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 133110,
+          "merged_at": "2025-07-23T14:08:28Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 133163,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 133167,
+          "merged_at": "2025-07-24T20:05:19Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 133203,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 133213,
+          "merged_at": "2025-07-28T17:06:37Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 134245,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 133476,
+          "merged_at": "2025-08-28T01:30:01Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 133949,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 134178,
+          "merged_at": "2025-09-21T16:00:12Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 134524,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 134836,
+          "merged_at": "2025-10-29T00:04:07Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 135119,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 134840,
+          "merged_at": "2025-11-05T16:06:59Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 135154,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 134881,
+          "merged_at": "2025-11-01T13:10:03Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 135045,
+          "link": "commit_sha"
+        },
+        {
+          "number": 135016,
+          "merged_at": "2025-11-04T03:58:04Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 135093,
+          "link": "commit_sha"
+        },
+        {
+          "number": 135369,
+          "merged_at": "2026-01-12T16:54:13Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 136558,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 135680,
+          "merged_at": "2025-12-18T10:09:33Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 135834,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 136081,
+          "merged_at": "2026-01-18T06:41:09Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 136953,
+          "link": "commit_sha"
+        },
+        {
+          "number": 136130,
+          "merged_at": "2026-01-10T22:23:57Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 136888,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 136254,
+          "merged_at": "2026-02-17T18:53:38Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 137662,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 136796,
+          "merged_at": "2026-02-11T22:24:00Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 137169,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 137217,
+          "merged_at": "2026-03-06T19:42:28Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 137574,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 137909,
+          "merged_at": "2026-03-19T20:52:40Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 137946,
+          "link": "commit_sha"
+        },
+        {
+          "number": 138242,
+          "merged_at": "2026-04-24T23:15:09Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 138806,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 138455,
+          "merged_at": "2026-07-13T21:20:20Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 140826,
+          "link": "commit_sha"
+        },
+        {
+          "number": 138536,
+          "merged_at": "2026-04-29T12:53:24Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 138714,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 138756,
+          "merged_at": "2026-05-04T15:24:22Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 139008,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 139053,
+          "merged_at": "2026-05-14T13:06:32Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 139077,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 139682,
+          "merged_at": "2026-06-15T13:11:25Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 140879,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 140063,
+          "merged_at": "2026-07-10T22:07:43Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 140886,
+          "link": "commit_sha"
+        },
+        {
+          "number": 140260,
+          "merged_at": "2026-07-07T19:43:08Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 140330,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 140448,
+          "merged_at": "2026-07-22T09:27:54Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 140990,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 140664,
+          "merged_at": "2026-09-18T23:41:56Z",
+          "base": "master",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 142567,
+          "link": "explicit_ref"
+        }
+      ],
+      "test_windows": [
+        "test"
+      ],
+      "test_positives": 20,
+      "test_positives_default_branch": 20,
+      "test_merged_prs": 2550
+    },
+    "cilium/cilium": {
+      "default_branch": "main",
+      "revert_prs_found": 109,
+      "link_methods": {
+        "explicit_ref": 38,
+        "commit_sha": 66,
+        "unlinked": 5
+      },
+      "revert_of_revert_skipped": 0,
+      "merged_counts": {
+        "train": 8539,
+        "val": 2280,
+        "test": 3296
+      },
+      "positives_by_window": {
+        "train": {
+          "all": 49,
+          "default_branch": 29
+        },
+        "val": {
+          "all": 10,
+          "default_branch": 8
+        },
+        "test": {
+          "all": 17,
+          "default_branch": 16
+        }
+      },
+      "originals": [
+        {
+          "number": 14545,
+          "merged_at": "2021-03-24T20:27:58Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 32315,
+          "link": "commit_sha"
+        },
+        {
+          "number": 20885,
+          "merged_at": "2022-08-12T18:56:24Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 34033,
+          "link": "commit_sha"
+        },
+        {
+          "number": 21980,
+          "merged_at": "2023-01-10T16:10:29Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23346,
+          "link": "commit_sha"
+        },
+        {
+          "number": 22191,
+          "merged_at": "2023-01-12T16:12:55Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23204,
+          "link": "commit_sha"
+        },
+        {
+          "number": 22903,
+          "merged_at": "2023-01-10T19:25:21Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 27694,
+          "link": "commit_sha"
+        },
+        {
+          "number": 23145,
+          "merged_at": "2023-01-18T13:32:31Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23169,
+          "link": "commit_sha"
+        },
+        {
+          "number": 23165,
+          "merged_at": "2023-06-14T01:55:36Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 31511,
+          "link": "commit_sha"
+        },
+        {
+          "number": 23463,
+          "merged_at": "2023-01-31T03:23:53Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23768,
+          "link": "commit_sha"
+        },
+        {
+          "number": 23500,
+          "merged_at": "2023-02-01T15:32:07Z",
+          "base": "v1.13",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23771,
+          "link": "commit_sha"
+        },
+        {
+          "number": 23515,
+          "merged_at": "2023-02-07T18:39:15Z",
+          "base": "v1.12",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23788,
+          "link": "commit_sha"
+        },
+        {
+          "number": 23630,
+          "merged_at": "2023-02-08T17:28:48Z",
+          "base": "v1.11",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 23789,
+          "link": "commit_sha"
+        },
+        {
+          "number": 24045,
+          "merged_at": "2023-02-27T16:46:51Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 24060,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 24117,
+          "merged_at": "2023-03-22T15:42:52Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 24535,
+          "link": "commit_sha"
+        },
+        {
+          "number": 24288,
+          "merged_at": "2023-03-25T04:56:34Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 25350,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 24319,
+          "merged_at": "2023-03-16T18:39:32Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 24418,
+          "link": "commit_sha"
+        },
+        {
+          "number": 24324,
+          "merged_at": "2023-03-13T18:49:14Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 34303,
+          "link": "commit_sha"
+        },
+        {
+          "number": 24837,
+          "merged_at": "2023-04-19T15:07:55Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 25044,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 24983,
+          "merged_at": "2023-04-19T22:35:15Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 25151,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 25033,
+          "merged_at": "2023-04-28T14:48:50Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 41587,
+          "link": "commit_sha"
+        },
+        {
+          "number": 25364,
+          "merged_at": "2023-05-13T19:29:34Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 25464,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 25670,
+          "merged_at": "2023-05-25T15:29:43Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 26400,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 25746,
+          "merged_at": "2023-06-16T18:24:40Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 26997,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 26036,
+          "merged_at": "2023-06-26T22:18:07Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 26496,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 26441,
+          "merged_at": "2023-07-07T09:12:11Z",
+          "base": "v1.13",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 26690,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 26989,
+          "merged_at": "2023-08-07T18:23:27Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 27352,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 27390,
+          "merged_at": "2023-08-09T15:57:47Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 27415,
+          "link": "commit_sha"
+        },
+        {
+          "number": 28008,
+          "merged_at": "2023-09-08T15:24:02Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 28041,
+          "link": "commit_sha"
+        },
+        {
+          "number": 28012,
+          "merged_at": "2023-09-08T11:45:15Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 29801,
+          "link": "commit_sha"
+        },
+        {
+          "number": 28928,
+          "merged_at": "2023-11-09T01:23:29Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 29202,
+          "link": "commit_sha"
+        },
+        {
+          "number": 28953,
+          "merged_at": "2024-02-01T17:13:19Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 40143,
+          "link": "commit_sha"
+        },
+        {
+          "number": 29086,
+          "merged_at": "2023-11-09T19:10:45Z",
+          "base": "v1.14",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 29205,
+          "link": "commit_sha"
+        },
+        {
+          "number": 29089,
+          "merged_at": "2023-11-09T22:51:09Z",
+          "base": "v1.13",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 29206,
+          "link": "commit_sha"
+        },
+        {
+          "number": 29090,
+          "merged_at": "2023-11-10T08:37:49Z",
+          "base": "v1.12",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 29209,
+          "link": "commit_sha"
+        },
+        {
+          "number": 29926,
+          "merged_at": "2024-01-16T10:37:07Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 40169,
+          "link": "commit_sha"
+        },
+        {
+          "number": 30195,
+          "merged_at": "2024-01-11T14:10:33Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 30210,
+          "link": "commit_sha"
+        },
+        {
+          "number": 30823,
+          "merged_at": "2024-02-17T20:40:40Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 30827,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 31145,
+          "merged_at": "2024-06-17T14:24:11Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 33394,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 31866,
+          "merged_at": "2024-04-17T13:15:38Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 33354,
+          "link": "commit_sha"
+        },
+        {
+          "number": 32046,
+          "merged_at": "2024-04-24T08:42:53Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 32160,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 33040,
+          "merged_at": "2024-06-18T02:02:04Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 33256,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 33381,
+          "merged_at": "2024-06-27T15:52:14Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 34058,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 33779,
+          "merged_at": "2024-07-16T02:03:35Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 34277,
+          "link": "commit_sha"
+        },
+        {
+          "number": 33809,
+          "merged_at": "2024-07-18T19:27:16Z",
+          "base": "v1.15",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 34238,
+          "link": "commit_sha"
+        },
+        {
+          "number": 33815,
+          "merged_at": "2024-07-18T19:25:00Z",
+          "base": "v1.14",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 34239,
+          "link": "commit_sha"
+        },
+        {
+          "number": 34668,
+          "merged_at": "2024-09-04T01:45:02Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 34863,
+          "link": "commit_sha"
+        },
+        {
+          "number": 35311,
+          "merged_at": "2024-10-11T14:44:25Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 35391,
+          "link": "commit_sha"
+        },
+        {
+          "number": 35389,
+          "merged_at": "2024-10-22T20:56:52Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 37687,
+          "link": "commit_sha"
+        },
+        {
+          "number": 35610,
+          "merged_at": "2024-10-30T19:09:20Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 35771,
+          "link": "commit_sha"
+        },
+        {
+          "number": 35908,
+          "merged_at": "2024-11-12T11:32:43Z",
+          "base": "v1.16",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 36116,
+          "link": "commit_sha"
+        },
+        {
+          "number": 36135,
+          "merged_at": "2024-11-25T10:32:20Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 36696,
+          "link": "commit_sha"
+        },
+        {
+          "number": 36466,
+          "merged_at": "2024-12-16T10:16:43Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 37274,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 36972,
+          "merged_at": "2025-01-21T17:16:42Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 37156,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 36978,
+          "merged_at": "2025-02-10T16:56:14Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 39333,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 37343,
+          "merged_at": "2025-02-10T11:51:57Z",
+          "base": "v1.16",
+          "on_default_branch": false,
+          "window": "val",
+          "reverted_by": 37525,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 37688,
+          "merged_at": "2025-02-19T01:57:59Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 37736,
+          "link": "commit_sha"
+        },
+        {
+          "number": 37754,
+          "merged_at": "2025-02-27T20:42:16Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 37969,
+          "link": "commit_sha"
+        },
+        {
+          "number": 37953,
+          "merged_at": "2025-03-03T10:52:36Z",
+          "base": "v1.15",
+          "on_default_branch": false,
+          "window": "val",
+          "reverted_by": 38004,
+          "link": "commit_sha"
+        },
+        {
+          "number": 38624,
+          "merged_at": "2025-04-03T20:12:08Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 38733,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 39392,
+          "merged_at": "2025-05-07T14:59:32Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 39529,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 39831,
+          "merged_at": "2025-09-18T10:54:49Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 41808,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 40132,
+          "merged_at": "2025-12-16T13:10:47Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 43379,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 40140,
+          "merged_at": "2025-06-20T11:07:28Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 40162,
+          "link": "commit_sha"
+        },
+        {
+          "number": 40185,
+          "merged_at": "2025-06-26T19:14:18Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 40668,
+          "link": "commit_sha"
+        },
+        {
+          "number": 40255,
+          "merged_at": "2025-07-24T22:42:35Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 40695,
+          "link": "commit_sha"
+        },
+        {
+          "number": 40330,
+          "merged_at": "2025-07-04T09:51:30Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 40517,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 41068,
+          "merged_at": "2025-08-12T16:40:59Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 41143,
+          "link": "commit_sha"
+        },
+        {
+          "number": 41994,
+          "merged_at": "2025-10-13T13:54:20Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 42163,
+          "link": "commit_sha"
+        },
+        {
+          "number": 42221,
+          "merged_at": "2025-10-22T16:55:18Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 42563,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 42294,
+          "merged_at": "2025-10-27T12:01:24Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 42430,
+          "link": "commit_sha"
+        },
+        {
+          "number": 42825,
+          "merged_at": "2025-11-17T18:43:03Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 42839,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 42992,
+          "merged_at": "2025-12-09T15:29:00Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 43237,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 43025,
+          "merged_at": "2026-02-02T11:10:19Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 47052,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 43474,
+          "merged_at": "2026-01-21T08:01:55Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 43919,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 43558,
+          "merged_at": "2026-02-12T10:28:34Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 45679,
+          "link": "commit_sha"
+        },
+        {
+          "number": 43912,
+          "merged_at": "2026-01-22T11:41:57Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 43935,
+          "link": "commit_sha"
+        },
+        {
+          "number": 44230,
+          "merged_at": "2026-02-10T11:10:39Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 44316,
+          "link": "commit_sha"
+        },
+        {
+          "number": 44499,
+          "merged_at": "2026-02-26T11:11:31Z",
+          "base": "v1.18",
+          "on_default_branch": false,
+          "window": "test",
+          "reverted_by": 44857,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 44739,
+          "merged_at": "2026-04-06T18:58:15Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 48087,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 44910,
+          "merged_at": "2026-03-31T15:32:07Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 45098,
+          "link": "commit_sha"
+        },
+        {
+          "number": 44987,
+          "merged_at": "2026-04-02T13:16:48Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 45759,
+          "link": "commit_sha"
+        },
+        {
+          "number": 45001,
+          "merged_at": "2026-06-25T10:19:33Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 47373,
+          "link": "commit_sha"
+        },
+        {
+          "number": 45586,
+          "merged_at": "2026-04-24T10:55:22Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 47812,
+          "link": "commit_sha"
+        },
+        {
+          "number": 45830,
+          "merged_at": "2026-05-11T09:24:12Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 45898,
+          "link": "commit_sha"
+        },
+        {
+          "number": 45879,
+          "merged_at": "2026-05-27T13:13:45Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 46221,
+          "link": "commit_sha"
+        },
+        {
+          "number": 45880,
+          "merged_at": "2026-05-21T12:07:04Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 46381,
+          "link": "commit_sha"
+        },
+        {
+          "number": 46036,
+          "merged_at": "2026-06-04T12:13:20Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 46370,
+          "link": "commit_sha"
+        },
+        {
+          "number": 46429,
+          "merged_at": "2026-06-09T12:46:57Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 46455,
+          "link": "commit_sha"
+        },
+        {
+          "number": 46927,
+          "merged_at": "2026-07-08T06:02:55Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 47202,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 47448,
+          "merged_at": "2026-07-24T05:24:02Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 47594,
+          "link": "commit_sha"
+        },
+        {
+          "number": 47631,
+          "merged_at": "2026-09-03T10:05:22Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 48475,
+          "link": "commit_sha"
+        },
+        {
+          "number": 47717,
+          "merged_at": "2026-08-04T09:14:14Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 47780,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48106,
+          "merged_at": "2026-08-20T15:20:22Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 48115,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48192,
+          "merged_at": "2026-08-25T16:12:55Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 48231,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48265,
+          "merged_at": "2026-09-06T22:37:13Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 48523,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48441,
+          "merged_at": "2026-09-06T22:35:46Z",
+          "base": "v1.20",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 48524,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48442,
+          "merged_at": "2026-09-06T22:26:10Z",
+          "base": "v1.19",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 48525,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48443,
+          "merged_at": "2026-09-03T14:46:31Z",
+          "base": "v1.18",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 48526,
+          "link": "commit_sha"
+        },
+        {
+          "number": 48895,
+          "merged_at": "2026-10-09T11:33:31Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 49525,
+          "link": "commit_sha"
+        },
+        {
+          "number": 49545,
+          "merged_at": "2026-10-22T15:53:50Z",
+          "base": "v1.18",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 49570,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 49546,
+          "merged_at": "2026-10-22T15:42:11Z",
+          "base": "v1.19",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 49569,
+          "link": "explicit_ref"
+        }
+      ],
+      "test_windows": [
+        "test"
+      ],
+      "test_positives": 17,
+      "test_positives_default_branch": 16,
+      "test_merged_prs": 3296
+    },
+    "pandas-dev/pandas": {
+      "default_branch": "main",
+      "revert_prs_found": 31,
+      "link_methods": {
+        "explicit_ref": 26,
+        "commit_sha": 4,
+        "unlinked": 1
+      },
+      "revert_of_revert_skipped": 0,
+      "merged_counts": {
+        "train": 5510,
+        "val": 458,
+        "test": 1542
+      },
+      "positives_by_window": {
+        "train": {
+          "all": 21,
+          "default_branch": 20
+        },
+        "val": {
+          "all": 2,
+          "default_branch": 1
+        },
+        "test": {
+          "all": 3,
+          "default_branch": 3
+        }
+      },
+      "originals": [
+        {
+          "number": 40906,
+          "merged_at": "2021-04-16T01:06:48Z",
+          "base": "master",
+          "on_default_branch": false,
+          "window": null,
+          "reverted_by": 50519,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 49404,
+          "merged_at": "2023-01-18T20:29:40Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 50848,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 50330,
+          "merged_at": "2023-03-20T17:11:21Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 52154,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 50356,
+          "merged_at": "2022-12-20T12:55:44Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 50706,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 51227,
+          "merged_at": "2023-02-09T17:33:43Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 51273,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 51483,
+          "merged_at": "2023-02-23T00:14:45Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 51584,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 51525,
+          "merged_at": "2023-03-11T12:34:24Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 51951,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 51604,
+          "merged_at": "2023-02-24T01:13:44Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 51742,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 51902,
+          "merged_at": "2023-03-11T19:38:13Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 51952,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 51911,
+          "merged_at": "2023-03-12T02:36:38Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 51984,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 52123,
+          "merged_at": "2023-04-07T02:57:31Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 55189,
+          "link": "commit_sha"
+        },
+        {
+          "number": 52247,
+          "merged_at": "2023-03-28T18:31:05Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 52263,
+          "link": "commit_sha"
+        },
+        {
+          "number": 53637,
+          "merged_at": "2023-06-13T16:25:48Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 53760,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 53825,
+          "merged_at": "2023-06-28T16:10:21Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 54068,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 53938,
+          "merged_at": "2023-07-25T07:29:00Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 55077,
+          "link": "commit_sha"
+        },
+        {
+          "number": 54335,
+          "merged_at": "2023-08-04T17:11:27Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 54497,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 54719,
+          "merged_at": "2023-08-24T16:21:07Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 54930,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 54737,
+          "merged_at": "2023-08-28T11:44:35Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 54802,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 55626,
+          "merged_at": "2023-10-22T19:18:53Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 56565,
+          "link": "commit_sha"
+        },
+        {
+          "number": 56422,
+          "merged_at": "2023-12-11T17:43:41Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 56481,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 56812,
+          "merged_at": "2024-01-10T17:53:27Z",
+          "base": "2.2.x",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 58093,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 57796,
+          "merged_at": "2024-03-13T23:29:49Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 57905,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 58209,
+          "merged_at": "2024-04-10T15:36:29Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 58218,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 60792,
+          "merged_at": "2025-01-26T18:08:31Z",
+          "base": "2.3.x",
+          "on_default_branch": false,
+          "window": "val",
+          "reverted_by": 61755,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 61308,
+          "merged_at": "2025-04-22T16:04:22Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 63290,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 61642,
+          "merged_at": "2025-07-03T17:02:50Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 61767,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 62514,
+          "merged_at": "2025-10-04T16:20:19Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 62767,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 64639,
+          "merged_at": "2026-03-17T02:20:38Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "test",
+          "reverted_by": 64846,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 64798,
+          "merged_at": "2026-04-25T13:48:21Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 65697,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 68943,
+          "merged_at": "2026-09-17T20:27:07Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": null,
+          "reverted_by": 68971,
+          "link": "explicit_ref"
+        }
+      ],
+      "test_windows": [
+        "test"
+      ],
+      "test_positives": 3,
+      "test_positives_default_branch": 3,
+      "test_merged_prs": 1542
+    },
+    "numpy/numpy": {
+      "default_branch": "main",
+      "revert_prs_found": 5,
+      "link_methods": {
+        "commit_sha": 2,
+        "explicit_ref": 3
+      },
+      "revert_of_revert_skipped": 0,
+      "merged_counts": {
+        "train": 2703,
+        "val": 682,
+        "test": 1064
+      },
+      "positives_by_window": {
+        "train": {
+          "all": 4,
+          "default_branch": 3
+        },
+        "val": {
+          "all": 1,
+          "default_branch": 1
+        },
+        "test": {}
+      },
+      "originals": [
+        {
+          "number": 23061,
+          "merged_at": "2023-03-26T05:44:02Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 23466,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 23838,
+          "merged_at": "2023-06-19T04:18:31Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 23985,
+          "link": "commit_sha"
+        },
+        {
+          "number": 25192,
+          "merged_at": "2023-11-19T20:36:07Z",
+          "base": "maintenance/1.26.x",
+          "on_default_branch": false,
+          "window": "train",
+          "reverted_by": 25240,
+          "link": "commit_sha"
+        },
+        {
+          "number": 25812,
+          "merged_at": "2024-02-18T17:24:18Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "train",
+          "reverted_by": 25862,
+          "link": "explicit_ref"
+        },
+        {
+          "number": 28678,
+          "merged_at": "2025-05-16T20:45:10Z",
+          "base": "main",
+          "on_default_branch": true,
+          "window": "val",
+          "reverted_by": 28990,
+          "link": "explicit_ref"
+        }
+      ],
+      "test_windows": [
+        "train",
+        "val",
+        "test"
+      ],
+      "test_positives": 5,
+      "test_positives_default_branch": 4,
+      "test_merged_prs": 4449
+    }
+  }
+}

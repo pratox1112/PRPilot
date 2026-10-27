@@ -1,0 +1,178 @@
+{
+  "task": "0.8",
+  "meta": {
+    "timestamp_utc": "2026-10-24T23:22:40+00:00",
+    "git": {
+      "commit": "b36d622247a09e4f68c0671910f8a705e3a5be72",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "pydantic-ai-slim": "2.61.0",
+      "pydantic": "2.14.1",
+      "openai": "3.37.0",
+      "opentelemetry-sdk": "1.45.1"
+    }
+  },
+  "dataset": {
+    "name": "synthetic_sample_prs",
+    "n": 3,
+    "hash": "sha256:10b8f0490901fd7cd9067867a1c2eb1bf2da4ba601f64283acea05530333b6a3"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-1.7B-GGUF",
+    "revision": "90862c4b9d2787eaed51d12237eafdfe7c5f6077",
+    "file": "Qwen3-1.7B-Q8_0.gguf",
+    "sha256": "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a"
+  },
+  "server": {
+    "image": "ghcr.io/ggml-org/llama.cpp@sha256:20c4196fc08b459a34ef78aaa05b101333b2fac687e30ec99f37b3c9dc071b44",
+    "build_info": "b11854-8e5a58df8",
+    "n_ctx": 8192,
+    "model_path": "/models/Qwen3-1.7B-Q8_0.gguf"
+  },
+  "settings": {
+    "output_mode": "text (TextOutput + own JSON parse)",
+    "output_retries": 2,
+    "constrained_decoding": false,
+    "model_settings": {
+      "temperature": 0.0,
+      "seed": 0,
+      "max_tokens": 1024,
+      "extra_body": {
+        "chat_template_kwargs": {
+          "enable_thinking": false
+        }
+      }
+    }
+  },
+  "tracing": {
+    "langfuse": true
+  },
+  "summary": {
+    "model_first_attempt_valid_static": 3,
+    "model_first_attempt_valid_with_repo_rules": 3,
+    "system_valid_with_retries": 3,
+    "n": 3,
+    "note": "Feasibility smoke check on synthetic PRs; not a resume metric."
+  },
+  "runs": [
+    {
+      "title": "Fix crash when config file is empty",
+      "trace_id": "52ee67cb48dead6f85e1dbddc84ce5f1",
+      "latency_s": 7.04,
+      "model_requests": 1,
+      "retries_used": 0,
+      "first_attempt": {
+        "valid_static": true,
+        "valid_with_repo_rules": true,
+        "error": "",
+        "contains_think_tag": false,
+        "raw_text": "{\n  \"summary\": \"Fixes a crash when loading an empty YAML file by returning an empty dictionary instead of raising an error.\",\n  \"type\": \"bug\",\n  \"risk\": \"medium\",\n  \"labels\": [\"area/deps\", \"kind/bug\"],\n  \"reviewers\": [\"alice-dev\", \"bob-maint\"],\n  \"related_issues\": [101],\n  \"rationale\": \"The PR addresses a critical bug where loading an empty YAML file caused a crash. The fix ensures the function returns an empty dictionary instead of raising an error, improving stability and reliability.\"\n}"
+      },
+      "final_with_retries": {
+        "valid": true,
+        "output": {
+          "summary": "Fixes a crash when loading an empty YAML file by returning an empty dictionary instead of raising an error.",
+          "type": "bug",
+          "risk": "medium",
+          "labels": [
+            "area/deps",
+            "kind/bug"
+          ],
+          "reviewers": [
+            "alice-dev",
+            "bob-maint"
+          ],
+          "related_issues": [
+            101
+          ],
+          "rationale": "The PR addresses a critical bug where loading an empty YAML file caused a crash. The fix ensures the function returns an empty dictionary instead of raising an error, improving stability and reliability."
+        }
+      },
+      "usage": {
+        "input_tokens": 652,
+        "output_tokens": 123,
+        "requests": 1
+      }
+    },
+    {
+      "title": "docs: explain retry settings",
+      "trace_id": "a8fa9603c9cd29f1fd53e531afc18538",
+      "latency_s": 8.62,
+      "model_requests": 1,
+      "retries_used": 0,
+      "first_attempt": {
+        "valid_static": true,
+        "valid_with_repo_rules": true,
+        "error": "",
+        "contains_think_tag": false,
+        "raw_text": "{\n  \"summary\": \"Adds documentation about `max_retries` and backoff in the configuration guide.\",\n  \"type\": \"docs\",\n  \"risk\": \"low\",\n  \"labels\": [\"area/deps\", \"kind/docs\"],\n  \"reviewers\": [\"bob-maint\", \"chen-w\"],\n  \"related_issues\": [102],\n  \"rationale\": \"The PR adds documentation to the configuration guide. It is a minor change and does not introduce new functionality or break existing features.\"\n}"
+      },
+      "final_with_retries": {
+        "valid": true,
+        "output": {
+          "summary": "Adds documentation about `max_retries` and backoff in the configuration guide.",
+          "type": "docs",
+          "risk": "low",
+          "labels": [
+            "area/deps",
+            "kind/docs"
+          ],
+          "reviewers": [
+            "bob-maint",
+            "chen-w"
+          ],
+          "related_issues": [
+            102
+          ],
+          "rationale": "The PR adds documentation to the configuration guide. It is a minor change and does not introduce new functionality or break existing features."
+        }
+      },
+      "usage": {
+        "input_tokens": 633,
+        "output_tokens": 106,
+        "requests": 1
+      }
+    },
+    {
+      "title": "Bump requests from 2.31.0 to 2.32.3",
+      "trace_id": "63d20620a8a37ddc1efa6c65f2e222ba",
+      "latency_s": 9.39,
+      "model_requests": 1,
+      "retries_used": 0,
+      "first_attempt": {
+        "valid_static": true,
+        "valid_with_repo_rules": true,
+        "error": "",
+        "contains_think_tag": false,
+        "raw_text": "{\n  \"summary\": \"Bumps requests version from 2.31.0 to 2.32.3 to include a security fix for certificate verification.\",\n  \"type\": \"feature\",\n  \"risk\": \"medium\",\n  \"labels\": [\"kind/feature\"],\n  \"reviewers\": [\"bob-maint\", \"chen-w\"],\n  \"related_issues\": [101, 102],\n  \"rationale\": \"The PR updates the dependency to include a security fix for certificate verification, which is a critical update for the project.\"\n}"
+      },
+      "final_with_retries": {
+        "valid": true,
+        "output": {
+          "summary": "Bumps requests version from 2.31.0 to 2.32.3 to include a security fix for certificate verification.",
+          "type": "feature",
+          "risk": "medium",
+          "labels": [
+            "kind/feature"
+          ],
+          "reviewers": [
+            "bob-maint",
+            "chen-w"
+          ],
+          "related_issues": [
+            101,
+            102
+          ],
+          "rationale": "The PR updates the dependency to include a security fix for certificate verification, which is a critical update for the project."
+        }
+      },
+      "usage": {
+        "input_tokens": 639,
+        "output_tokens": 118,
+        "requests": 1
+      }
+    }
+  ]
+}

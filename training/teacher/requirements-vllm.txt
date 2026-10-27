@@ -1,0 +1,19 @@
+# Teacher inference environment on Explorer (Python 3.12, env on scratch).
+#
+# CUDA 12.9 builds on purpose: the H200 nodes run NVIDIA driver 570.86 (CUDA <= 12.8), and the
+# default PyPI builds (torch 2.13.0+cu130, vllm 0.31.0) need driver >= 580 and fail with
+# "The NVIDIA driver on your system is too old". 12.9 builds run on a 12.x driver through CUDA
+# minor-version compatibility. No torch 2.13.0 build for cu128 exists, and vLLM 0.31.0 has no
+# cu126 build, so cu129 is the only matching pair.
+#
+# Install with uv and --index-strategy unsafe-best-match (training/slurm/setup_vllm_env.sh), so
+# each package is taken from whichever index has the pinned version.
+# After installing, `pip freeze` is saved as ~/prpilot-keep/requirements-vllm.lock.txt.
+--extra-index-url https://download.pytorch.org/whl/cu129
+--extra-index-url https://wheels.vllm.ai/0.31.0/cu129
+vllm==0.31.0+cu129
+torch==2.13.0+cu129
+torchvision==0.28.0+cu129
+torchaudio==2.11.0+cu129
+transformers==5.17.0
+huggingface-hub>=1.31,<3

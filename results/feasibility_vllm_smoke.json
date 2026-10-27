@@ -1,0 +1,153 @@
+{
+  "task": "0.6 (teacher smoke test)",
+  "timestamp_utc": "2026-10-27T17:29:08+00:00",
+  "git": {
+    "commit": "46a69b4daa49c61cdc85c7b68ff3c7bf0223d915",
+    "dirty": false
+  },
+  "slurm_job_id": "11411689",
+  "packages": {
+    "vllm": "0.31.0+cu129",
+    "torch": "2.13.0+cu129",
+    "transformers": "5.17.0"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+    "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+  },
+  "settings": {
+    "max_model_len": 16384,
+    "gpu_memory_utilization": 0.92,
+    "temperature": 0.0,
+    "constrained_decoding": false
+  },
+  "load_seconds": 334.0,
+  "dataset": {
+    "name": "synthetic_sample_prs",
+    "n": 3,
+    "samples": [
+      {
+        "title": "Fix crash when config file is empty",
+        "body": "Loading an empty YAML file returned None and crashed later. Fixes #101.",
+        "author": "dana-c",
+        "base_branch": "main",
+        "changed_files": [
+          "src/app/config.py",
+          "tests/test_config.py"
+        ],
+        "diff": "--- a/src/app/config.py\n+++ b/src/app/config.py\n@@ -10,6 +10,8 @@ def load(path):\n     data = yaml.safe_load(f)\n+    if data is None:\n+        return {}\n     return data\n"
+      },
+      {
+        "title": "docs: explain retry settings",
+        "body": "Adds a section on `max_retries` and backoff to the configuration guide.",
+        "author": "erin-k",
+        "base_branch": "main",
+        "changed_files": [
+          "docs/configuration.md"
+        ],
+        "diff": "--- a/docs/configuration.md\n+++ b/docs/configuration.md\n@@ -40,3 +40,12 @@\n+## Retries\n+\n+`max_retries` sets how many times...\n"
+      },
+      {
+        "title": "Bump requests from 2.31.0 to 2.32.3",
+        "body": "Bumps requests to pick up the security fix for certificate verification.",
+        "author": "frank-o",
+        "base_branch": "main",
+        "changed_files": [
+          "requirements.txt"
+        ],
+        "diff": "--- a/requirements.txt\n+++ b/requirements.txt\n@@ -3 +3 @@\n-requests==2.31.0\n+requests==2.32.3\n"
+      }
+    ]
+  },
+  "runs": {
+    "thinking_off": {
+      "batch_seconds": 1.5,
+      "first_attempt_valid_static": 3,
+      "first_attempt_valid_with_repo_rules": 3,
+      "n": 3,
+      "rows": [
+        {
+          "title": "Fix crash when config file is empty",
+          "prompt_tokens": 683,
+          "output_tokens": 166,
+          "finish_reason": "stop",
+          "has_think_block": false,
+          "valid_static": true,
+          "valid_with_repo_rules": true,
+          "error": "",
+          "type": "bug",
+          "raw_text": "{\n  \"summary\": \"Fixes a crash occurring when loading an empty YAML configuration file by returning an empty dictionary instead of None.\",\n  \"type\": \"bug\",\n  \"risk\": \"low\",\n  \"labels\": [\n    \"kind/bug\",\n    \"area/deps\"\n  ],\n  \"reviewers\": [\n    \"bob-maint\",\n    \"alice-dev\",\n    \"chen-w\"\n  ],\n  \"related_issues\": [\n    101\n  ],\n  \"rationale\": \"The PR explicitly addresses issue #101 regarding crashes with empty config files. The change is a simple null check in the config loader, posing low risk. It modifies source and test files, fitting the bug category.\"\n}"
+        },
+        {
+          "title": "docs: explain retry settings",
+          "prompt_tokens": 663,
+          "output_tokens": 144,
+          "finish_reason": "stop",
+          "has_think_block": false,
+          "valid_static": true,
+          "valid_with_repo_rules": true,
+          "error": "",
+          "type": "docs",
+          "raw_text": "{\n  \"summary\": \"This PR adds documentation explaining retry settings, specifically `max_retries` and backoff, to the configuration guide.\",\n  \"type\": \"docs\",\n  \"risk\": \"low\",\n  \"labels\": [\n    \"kind/docs\"\n  ],\n  \"reviewers\": [\n    \"alice-dev\",\n    \"bob-maint\"\n  ],\n  \"related_issues\": [\n    102\n  ],\n  \"rationale\": \"The PR title and body explicitly state the intent is to document retry settings, matching issue #102. Since it only modifies documentation files, the risk is low.\"\n}"
+        },
+        {
+          "title": "Bump requests from 2.31.0 to 2.32.3",
+          "prompt_tokens": 667,
+          "output_tokens": 135,
+          "finish_reason": "stop",
+          "has_think_block": false,
+          "valid_static": true,
+          "valid_with_repo_rules": true,
+          "error": "",
+          "type": "dependency",
+          "raw_text": "{\n  \"summary\": \"Updates the requests library from 2.31.0 to 2.32.3 to include a security fix for certificate verification.\",\n  \"type\": \"dependency\",\n  \"risk\": \"low\",\n  \"labels\": [\n    \"area/deps\"\n  ],\n  \"reviewers\": [\n    \"alice-dev\",\n    \"bob-maint\"\n  ],\n  \"related_issues\": [],\n  \"rationale\": \"This is a standard dependency bump for a security patch. The change is isolated to requirements.txt and poses minimal risk to the codebase.\"\n}"
+        }
+      ]
+    },
+    "thinking_on": {
+      "batch_seconds": 6.0,
+      "first_attempt_valid_static": 3,
+      "first_attempt_valid_with_repo_rules": 3,
+      "n": 3,
+      "rows": [
+        {
+          "title": "Fix crash when config file is empty",
+          "prompt_tokens": 681,
+          "output_tokens": 595,
+          "finish_reason": "stop",
+          "has_think_block": true,
+          "valid_static": true,
+          "valid_with_repo_rules": true,
+          "error": "",
+          "type": "bug",
+          "raw_text": "The user wants me to triage a GitHub pull request. I need to output exactly one JSON object matching the specified schema.\n\nLet me analyze the PR:\n\n1. **PR Title**: \"Fix crash when config file is empty\"\n2. **PR Author**: dana-c\n3. **PR Body**: \"Loading an empty YAML file returned None and crashed later. Fixes #101.\"\n4. **Changed Files**: src/app/config.py, tests/test_config.py\n5. **Diff**: Adds a check for None data when loading YAML, returns empty dict instead\n\n**Analysis:**\n- This is a bug fix - it fixes a crash when config file is empty\n- It references issue #101 which is in the open issues list\n- The change is small and focused - just 2 lines added\n- Risk should be low - it's a defensive check that prevents a crash\n- Labels should include: kind/bug (it's a bug fix), possibly area/deps (config related)\n- Reviewers: Should be from eligible list, not the author (dana-c). Best reviewers would be alice-dev, bob-maint, chen-w - I should pick up to 3, best first. Since this is a config-related fix, bob-maint (maintainer) seems appropriate.\n- Related issues: #101 is mentioned and is in the open issues list\n\nLet me construct the JSON:\n\n- summary: Brief description of the PR\n- type: \"bug\" (it's fixing a crash)\n- risk: \"low\" (small defensive change)\n- labels: [\"kind/bug\"] - this is clearly a bug fix\n- reviewers: [\"bob-maint\", \"alice-dev\"] - maintainers who can review config changes\n- related_issues: [101] - the issue this fixes\n- rationale: Why this classification was made\n\nLet me make sure I follow all rules:\n- summary and rationale: at most 3 sentences each \u2713\n- labels: only from repo_labels \u2713\n\n\n- reviewers: at most 3 from eligible_reviewers, not the author \u2713\n- related_issues: only numbers from repo_open_issues \u2713\n\nI'll finalize the JSON output now.\n</think>\n\n{\n  \"summary\": \"Fixes crash when loading empty YAML config file by returning empty dict instead of None. Adds defensive check in config.py and includes test coverage.\",\n  \"type\": \"bug\",\n  \"risk\": \"low\",\n  \"labels\": [\"kind/bug\"],\n  \"reviewers\": [\"bob-maint\", \"alice-dev\"],\n  \"related_issues\": [101],\n  \"rationale\": \"PR explicitly fixes issue #101 about crash with empty config. Change is minimal (2 lines) and defensive, reducing risk. Test file modified indicates proper coverage.\"\n}"
+        },
+        {
+          "title": "docs: explain retry settings",
+          "prompt_tokens": 661,
+          "output_tokens": 540,
+          "finish_reason": "stop",
+          "has_think_block": true,
+          "valid_static": true,
+          "valid_with_repo_rules": true,
+          "error": "",
+          "type": "docs",
+          "raw_text": "The user wants me to triage a GitHub pull request. I need to output exactly one JSON object matching the specified schema.\n\nLet me analyze the PR:\n\n1. **PR Title**: \"docs: explain retry settings\"\n2. **PR Author**: erin-k\n3. **PR Body**: \"Adds a section on `max_retries` and backoff to the configuration guide.\"\n4. **Changed Files**: docs/configuration.md\n5. **Diff**: Shows documentation changes about retries\n\n**Analysis:**\n- This is clearly a documentation change (docs/configuration.md)\n- Type should be \"docs\"\n- Risk should be \"low\" since it's just documentation\n- Labels: Should use \"kind/docs\" from the repo_labels\n- Reviewers: Need to pick from alice-dev, bob-maint, chen-w (not the author erin-k)\n- Related Issues: Issue #102 is \"Document retry settings\" which matches this PR perfectly\n- Summary: Brief description of what the PR does\n- Rationale: Why this classification was chosen\n\nLet me construct the JSON:\n\n```json\n{\n  \"summary\": \"Adds documentation section explaining max_retries and backoff configuration settings.\",\n  \"type\": \"docs\",\n  \"risk\": \"low\",\n  \"labels\": [\"kind/docs\"],\n  \"reviewers\": [\"bob-maint\", \"alice-dev\", \"chen-w\"],\n  \"related_issues\": [102],\n  \"rationale\": \"PR only modifies documentation files with no code changes. Issue #102 explicitly requests documentation for retry settings.\"\n}\n```\n\nWait, I need to check the reviewer rules:\n- At most 3 logins from <repo_eligible_reviewers>\n- Best first\n- Never the PR author (erin-k is not in the eligible reviewers list anyway)\n\nAll three reviewers (alice-dev, bob-maint, chen-w) are eligible. I'll rank them as bob-maint first (maintainer), then alice-dev, then chen-w.\n\n\n</think>\n\n{\n  \"summary\": \"Adds documentation section explaining max_retries and backoff configuration settings.\",\n  \"type\": \"docs\",\n  \"risk\": \"low\",\n  \"labels\": [\"kind/docs\"],\n  \"reviewers\": [\"bob-maint\", \"alice-dev\", \"chen-w\"],\n  \"related_issues\": [102],\n  \"rationale\": \"PR only modifies documentation files with no code changes. Issue #102 explicitly requests documentation for retry settings.\"\n}"
+        },
+        {
+          "title": "Bump requests from 2.31.0 to 2.32.3",
+          "prompt_tokens": 665,
+          "output_tokens": 769,
+          "finish_reason": "stop",
+          "has_think_block": true,
+          "valid_static": true,
+          "valid_with_repo_rules": true,
+          "error": "",
+          "type": "dependency",
+          "raw_text": "The user wants me to triage a GitHub pull request. I need to output exactly one JSON object matching the specified schema.\n\nLet me analyze the PR:\n\n1. **PR Title**: \"Bump requests from 2.31.0 to 2.32.3\"\n2. **PR Author**: frank-o\n3. **PR Body**: \"Bumps requests to pick up the security fix for certificate verification.\"\n4. **Changed Files**: requirements.txt\n5. **Diff**: Only changes the requests dependency version\n\nThis is clearly a dependency update PR. Let me determine:\n\n- **Type**: This is a dependency update, so \"dependency\" type\n- **Risk**: Low - it's a minor version bump of a well-known library for a security fix\n- **Summary**: Should be concise, describing what the PR does\n- **Labels**: Looking at repo_labels, \"area/deps\" seems most appropriate for a dependency update\n- **Reviewers**: From eligible_reviewers (alice-dev, bob-maint, chen-w), excluding the author (frank-o). I should pick up to 3, best first. Since this is a dependency update, any of them could review. I'll pick bob-maint first as they're a maintainer.\n- **Related Issues**: Looking at open issues (#101, #102), neither seems directly related to this dependency bump, so empty list\n- **Rationale**: Why this classification was made\n\nLet me construct the JSON:\n\n```json\n{\n  \"summary\": \"Updates requests library from 2.31.0 to 2.32.3 to include security fix for certificate verification.\",\n  \"type\": \"dependency\",\n  \"risk\": \"low\",\n  \"labels\": [\"area/deps\"],\n  \"reviewers\": [\"bob-maint\", \"alice-dev\", \"chen-w\"],\n  \"related_issues\": [],\n  \"rationale\": \"This is a straightforward dependency version bump for a security fix. Only requirements.txt is changed with a minor version update of a well-maintained library.\"\n}\n```\n\nWait, I need to check the reviewer pattern: \"^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$\"\n\n\n- bob-maint: matches (bob + - + maint)\n- alice-dev: matches (alice + - + dev)\n- chen-w: matches (chen + - + w)\n\nAll three are valid. I'll include all three as reviewers since the schema allows up to 3.\n\nLet me verify the schema requirements:\n- summary: minLength 1 \u2713\n- type: must be one of the enum values \u2713\n- risk: must be one of the enum values \u2713\n- labels: array of strings from repo_labels \u2713\n- reviewers: max 3, from eligible_reviewers, not the author \u2713\n- related_issues: array of integers from open issues \u2713\n- rationale: minLength 1 \u2713\n\nEverything checks out. I'm ready to output the JSON.\n</think>\n\n{\n  \"summary\": \"Updates requests library from 2.31.0 to 2.32.3 to include security fix for certificate verification.\",\n  \"type\": \"dependency\",\n  \"risk\": \"low\",\n  \"labels\": [\"area/deps\"],\n  \"reviewers\": [\"bob-maint\", \"alice-dev\", \"chen-w\"],\n  \"related_issues\": [],\n  \"rationale\": \"This is a straightforward dependency version bump for a security fix. Only requirements.txt is changed with a minor version update of a well-maintained library.\"\n}"
+        }
+      ]
+    }
+  },
+  "note": "Smoke test on 3 synthetic PRs; not the 0.6 agreement metric."
+}
