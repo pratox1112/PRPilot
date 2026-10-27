@@ -1,0 +1,73 @@
+{
+  "task": "0.6 (sample)",
+  "meta": {
+    "timestamp_utc": "2026-10-27T01:21:59+00:00",
+    "git": {
+      "commit": "8fffe7b49d6de55ab62ed67c37dfb0a73fb7c7cf",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "inputs_file": "data/processed/teacher_agreement_inputs.jsonl",
+  "inputs_hash": "sha256:273a78742a86503b68dc3f6e8da846332582fc4f41fa95f2be89f5f4dbfe1ea4",
+  "pool_size": 407,
+  "pool_hash": "sha256:f9075baa40edef298f14e912dfb9b17078f883a1ef1b84b4a04ae3844b3216c6",
+  "sample_size": 200,
+  "seed": 0,
+  "by_repo": {
+    "cilium/cilium": 59,
+    "kubernetes/kubernetes": 75,
+    "pandas-dev/pandas": 66
+  },
+  "by_type": {
+    "bug": 34,
+    "other": 31,
+    "ci/build": 23,
+    "feature": 16,
+    "docs": 30,
+    "refactor": 48,
+    "test": 17,
+    "dependency": 1
+  },
+  "multi_type_prs": 27,
+  "flags": {
+    "body_commands_stripped=False": 129,
+    "diff_truncated=False": 183,
+    "diff_status=ok": 197,
+    "files_capped=False": 196,
+    "diff_truncated=True": 17,
+    "body_commands_stripped=True": 71,
+    "diff_status=unavailable (HTTP 406)": 3,
+    "files_capped=True": 4
+  },
+  "settings": {
+    "diff_chars": 24000,
+    "max_files": 100,
+    "train_windows": [
+      [
+        "2023",
+        "2023-01-01",
+        "2023-12-31"
+      ],
+      [
+        "2024",
+        "2024-01-01",
+        "2024-12-31"
+      ]
+    ],
+    "per_window": 100
+  },
+  "approximations": [
+    "final title/body/diff, not open-time versions",
+    "slash-command lines stripped from the body",
+    "diff truncated to diff_chars with a file/hunk outline first",
+    "pool = most recently created merged PRs per year, not uniform"
+  ],
+  "github_calls": {
+    "network": 612,
+    "cache_hits": 19
+  }
+}
