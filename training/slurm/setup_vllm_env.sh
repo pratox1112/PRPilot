@@ -49,7 +49,8 @@ install() {
 
 if [ -f "${LOCK}" ] && lock_is_sane "${LOCK}"; then
   echo "$(date +%T) installing exact versions from ${LOCK}"
-  install -r "${LOCK}"
+  # The lock is a complete list; --no-deps stops uv re-adding packages we removed on purpose.
+  install --no-deps -r "${LOCK}"
 else
   if [ -f "${LOCK}" ]; then
     mv "${LOCK}" "${LOCK}.rejected"
@@ -57,10 +58,22 @@ else
   fi
   echo "$(date +%T) installing from training/teacher/requirements-vllm.txt"
   install -r training/teacher/requirements-vllm.txt
+  # torchcodec (audio/video decoding) only exists as a CUDA 13 build for torch 2.13 and fails to
+  # load (libnvrtc.so.13). vLLM treats it as optional and we run text-only, so remove it.
+  uv pip uninstall --python "$(command -v python)" torchcodec
   pip freeze --local > "${LOCK}"
   echo "recorded ${LOCK}"
 fi
 echo "$(date +%T) install finished"
+# Also covers lock files recorded before torchcodec was removed.
+uv pip uninstall --python "$(command -v python)" torchcodec 2>/dev/null || true
+
+# CUDA forward compatibility for the H200 nodes' driver 570 (see training/slurm/env.sh).
+echo "$(date +%T) installing cuda-compat"
+conda install -y -p "${PRPILOT_VLLM_ENV}" -c conda-forge --no-deps cuda-compat=13.0.2
+compat_lib=$(find "${PRPILOT_VLLM_ENV}" -name "libcuda.so.1" -path "*compat*" | head -1)
+test -n "${compat_lib}" || { echo "cuda-compat installed but libcuda.so.1 not found"; false; }
+echo "cuda-compat libcuda: ${compat_lib}"
 
 python -c "import vllm, torch; print('vllm', vllm.__version__, 'torch', torch.__version__, 'cuda build', torch.version.cuda)"
 # Fail loudly (and remove the env via the trap) if a CUDA 13 build slipped in.

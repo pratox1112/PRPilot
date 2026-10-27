@@ -16,4 +16,4 @@ torch==2.13.0+cu129
 torchvision==0.28.0+cu129
 torchaudio==2.11.0+cu129
 transformers==5.17.0
-huggingface-hub[cli]>=1.31,<3
+huggingface-hub>=1.31,<3

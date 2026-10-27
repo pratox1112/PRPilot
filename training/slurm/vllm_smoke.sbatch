@@ -17,6 +17,7 @@ conda activate "${PRPILOT_VLLM_ENV}"
 export HF_HUB_OFFLINE=1  # the model must already be downloaded; never fetch on a GPU node
 
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
+python -c "import ctypes; v = ctypes.c_int(); ctypes.CDLL('libcuda.so.1').cuDriverGetVersion(ctypes.byref(v)); print('effective CUDA driver API version:', v.value, '(12080 = native 570 driver; 13000+ = cuda-compat active)')"
 python -c "import torch, vllm; print('torch', torch.__version__, 'cuda', torch.version.cuda, 'available', torch.cuda.is_available()); print('vllm', vllm.__version__)"
 # is_available() only checks that a GPU exists; this actually starts CUDA, so a driver/CUDA
 # mismatch fails here in seconds instead of after loading the model.

@@ -23,6 +23,7 @@ OUT="${PRPILOT_SCRATCH}/outputs/teacher_agreement_${SLURM_JOB_ID}.jsonl"
 test -f "${INPUTS}" || { echo "missing ${INPUTS}; scp it from the laptop first"; exit 1; }
 
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
+python -c "import ctypes; v = ctypes.c_int(); ctypes.CDLL('libcuda.so.1').cuDriverGetVersion(ctypes.byref(v)); print('effective CUDA driver API version:', v.value, '(12080 = native 570 driver; 13000+ = cuda-compat active)')"
 python -c "import torch; x = torch.ones(1, device='cuda'); print('cuda init ok:', x.item(), torch.cuda.get_device_name())"
 python training/teacher/teacher_agreement.py --inputs "${INPUTS}" --out "${OUT}"
 cp "${OUT}" "${PRPILOT_KEEP}/"

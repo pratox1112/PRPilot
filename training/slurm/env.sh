@@ -24,6 +24,18 @@ export VLLM_NO_USAGE_STATS=1
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 export DO_NOT_TRACK=1
 
+# The H200 nodes run driver 570 (CUDA 12.8), but vLLM's kernels ship PTX built with CUDA 12.9,
+# which that driver cannot JIT. NVIDIA's forward-compatibility package (conda-forge
+# `cuda-compat`, installed into our env) provides a newer user-space libcuda for data-center
+# GPUs. Put it first on the library path when present.
+for _compat in "${PRPILOT_VLLM_ENV}/cuda-compat" "${PRPILOT_VLLM_ENV}/lib/cuda-compat"; do
+  if [ -e "${_compat}/libcuda.so.1" ]; then
+    export LD_LIBRARY_PATH="${_compat}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    break
+  fi
+done
+unset _compat
+
 export TEACHER_REPO="Qwen/Qwen3.5-122B-A10B-GPTQ-Int4"
 export TEACHER_REVISION="30cd92cba9707a9aba09d1e490ed4b66b78e9606"
 
