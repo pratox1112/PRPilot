@@ -17,6 +17,15 @@ export PIP_NO_CACHE_DIR=1
 # uninstall packages there, and imports can silently pick up old versions.
 export PYTHONNOUSERSITE=1
 export HF_HUB_DISABLE_TELEMETRY=1
+# Home is full, so every tool cache goes to scratch: vLLM's torch.compile cache, Triton and
+# FlashInfer JIT kernels, PyTorch Inductor, and anything else using ~/.cache (XDG). HF_HOME is
+# pinned to home explicitly so the Hugging Face token does not move with XDG_CACHE_HOME.
+export HF_HOME="${HOME}/.cache/huggingface"
+export XDG_CACHE_HOME="${PRPILOT_SCRATCH}/cache"
+export VLLM_CACHE_ROOT="${PRPILOT_SCRATCH}/cache/vllm"
+export TRITON_CACHE_DIR="${PRPILOT_SCRATCH}/cache/triton"
+export TORCHINDUCTOR_CACHE_DIR="${PRPILOT_SCRATCH}/cache/torchinductor"
+export FLASHINFER_WORKSPACE_BASE="${PRPILOT_SCRATCH}/cache"
 export VLLM_NO_USAGE_STATS=1
 # Start vLLM's engine process fresh instead of forking: CUDA is already initialised in the
 # parent by then, and CUDA cannot be re-initialised in a forked child. Our scripts keep their
@@ -39,4 +48,4 @@ unset _compat
 export TEACHER_REPO="Qwen/Qwen3.5-122B-A10B-GPTQ-Int4"
 export TEACHER_REVISION="30cd92cba9707a9aba09d1e490ed4b66b78e9606"
 
-mkdir -p "${HF_HUB_CACHE}" "${PRPILOT_SCRATCH}/envs" "${CONDA_PKGS_DIRS}" "${PRPILOT_SCRATCH}/outputs" "${PRPILOT_SCRATCH}/logs" "${PRPILOT_KEEP}"
+mkdir -p "${HF_HUB_CACHE}" "${XDG_CACHE_HOME}" "${PRPILOT_SCRATCH}/envs" "${CONDA_PKGS_DIRS}" "${PRPILOT_SCRATCH}/outputs" "${PRPILOT_SCRATCH}/logs" "${PRPILOT_KEEP}"

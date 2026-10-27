@@ -70,8 +70,10 @@ uv pip uninstall --python "$(command -v python)" torchcodec 2>/dev/null || true
 
 # CUDA forward compatibility for the H200 nodes' driver 570 (see training/slurm/env.sh).
 echo "$(date +%T) installing cuda-compat"
-conda install -y -p "${PRPILOT_VLLM_ENV}" -c conda-forge --no-deps cuda-compat=13.0.2
-compat_lib=$(find "${PRPILOT_VLLM_ENV}" -name "libcuda.so.1" -path "*compat*" | head -1)
+# `cuda-compat` is a metapackage; the libraries (user-space driver 580.95) are in cuda-compat-impl.
+conda install -y -p "${PRPILOT_VLLM_ENV}" -c conda-forge --no-deps \
+  cuda-compat=13.0.2 cuda-compat-impl=580.95.05
+compat_lib=$(find "${PRPILOT_VLLM_ENV}" -name "libcuda.so.1" -not -path "*site-packages*" | head -1)
 test -n "${compat_lib}" || { echo "cuda-compat installed but libcuda.so.1 not found"; false; }
 echo "cuda-compat libcuda: ${compat_lib}"
 

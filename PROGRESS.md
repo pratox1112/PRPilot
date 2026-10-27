@@ -125,3 +125,19 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   - A PR opened before the App is installed sends no event; `ping` and `installation/created` arrived first.
 - Next: 0.6 (teacher), then 0.9 review
 
+### 2026-10-27 — Task 0.6 (part) — Teacher environment and smoke test on Explorer
+- Status: done (smoke test only; agreement run next)
+- What changed: teacher env on scratch built with uv (`training/slurm/setup_vllm_env.sh`), pinned in `training/teacher/requirements-vllm.lock.txt` (vllm 0.31.0+cu129, torch 2.13.0+cu129, transformers 5.17.0; torchcodec removed); `training/slurm/env.sh` (spawn workers, caches on scratch, cuda-compat on the library path); smoke job `training/slurm/vllm_smoke.sbatch`.
+- Results: teacher `Qwen/Qwen3.5-122B-A10B-GPTQ-Int4` @ 30cd92c loaded on 1x H200 (67.7 GiB weights, 53.7 GiB KV cache, load + compile 334 s). Synthetic smoke PRs (N = 3, same as 0.8): first-attempt valid JSON 3/3 with thinking off and 3/3 with thinking on, repo rules 3/3, types bug/docs/dependency as expected; thinking on uses 540–769 output tokens, no truncation → results/feasibility_vllm_smoke.json (Slurm job 11411689, code @ 46a69b4daa49c61cdc85c7b68ff3c7bf0223d915, clean). Smoke check only, not the agreement metric.
+- Dataset hash: n/a (synthetic samples recorded in the results file)
+- Notes / decisions / problems (each found by the smoke test, in order):
+  1. Home dir full (77 of 75 GB) → env, caches and code clone moved to scratch; only results stay in `~/prpilot-keep`.
+  2. pip picked up old packages from `~/.local` → `PYTHONNOUSERSITE=1`; contaminated lock file rejected.
+  3. vLLM forked its engine after CUDA was initialised → `VLLM_WORKER_MULTIPROC_METHOD=spawn`.
+  4. H200 nodes run driver 570.86 (CUDA 12.8); default torch/vLLM builds are CUDA 13 → switched to the cu129 builds. Owner: a driver update will not happen.
+  5. torchcodec exists only as a CUDA 13 build → removed (vLLM treats it as optional; we run text-only).
+  6. vLLM's GPTQ Marlin kernel ships PTX built with CUDA 12.9, which driver 570 cannot JIT (`cudaErrorUnsupportedPtxVersion`) → NVIDIA forward compatibility via conda-forge `cuda-compat` 13.0.2 + `cuda-compat-impl` 580.95.05 in the env; effective driver API 13000, Marlin runs.
+  7. vLLM's compile cache defaulted to the full home dir → all tool caches moved to scratch.
+  - For Phase 3 training (no vLLM), plan a separate env on torch 2.13.0+cu126, which driver 570 supports natively.
+- Next: 0.6 agreement run (200 train-window PRs)
+
