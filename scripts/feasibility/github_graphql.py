@@ -50,6 +50,26 @@ class GitHubGraphQL:
         path.write_text(json.dumps(data), encoding="utf-8")
         return data
 
+    def rest_get(self, path: str, accept: str = "application/vnd.github+json") -> str:
+        """GET a REST endpoint (read-only), cached like GraphQL responses. Returns the body text."""
+        path_key = self._cache_path(f"REST {accept}", {"path": path})
+        if path_key.exists():
+            self.cache_hits += 1
+            return path_key.read_text(encoding="utf-8")
+        for attempt in range(6):
+            resp = self.client.get(f"https://api.github.com{path}", headers={"Accept": accept})
+            self.calls += 1
+            if resp.status_code in (403, 429) or resp.status_code >= 500:
+                wait = int(resp.headers.get("retry-after", 0)) or min(2**attempt * 5, 300)
+                print(f"  HTTP {resp.status_code} on {path}; retrying in {wait}s", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            path_key.parent.mkdir(parents=True, exist_ok=True)
+            path_key.write_text(resp.text, encoding="utf-8")
+            return resp.text
+        raise GraphQLError(f"gave up on GET {path}")
+
     def _post(self, query: str, variables: dict, attempts: int = 6) -> dict:
         for attempt in range(attempts):
             resp = self.client.post(API_URL, json={"query": query, "variables": variables})

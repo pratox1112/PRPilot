@@ -90,3 +90,8 @@ def repo_rule_errors(out: TriageOutput, deps: TriageDeps) -> list[str]:
 def parse_static(text: str) -> TriageOutput:
     """Layer 1 only: the static schema. Raises ValidationError."""
     return TriageOutput.model_validate_json(text.strip())
+
+
+def strip_think(text: str) -> str:
+    """Drop a leading <think>...</think> block (thinking-mode models) before parsing."""
+    return text.split("</think>", 1)[1] if "</think>" in text else text
