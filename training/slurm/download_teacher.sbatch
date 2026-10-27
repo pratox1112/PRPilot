@@ -16,5 +16,6 @@ conda activate "${PRPILOT_VLLM_ENV}"
 
 echo "downloading ${TEACHER_REPO}@${TEACHER_REVISION} to ${HF_HUB_CACHE}"
 hf download "${TEACHER_REPO}" --revision "${TEACHER_REVISION}"
-du -sh "${HF_HUB_CACHE}/models--${TEACHER_REPO//\//--}"
+# -L follows the snapshot links into blobs/; plain du reports only a few MB on this storage.
+du -shL --apparent-size "${HF_HUB_CACHE}/models--${TEACHER_REPO//\//--}/snapshots/${TEACHER_REVISION}"
 echo "done"
