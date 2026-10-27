@@ -29,7 +29,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 | 0.3 | GitHub App webhook | Webhook arrives at test endpoint | Signed `pull_request/opened` verified at local endpoint via tunnel; unsigned → 401 | **Go** |
 | 0.4 | Human-labeled PR volume | ≥3,000 PRs with a human-applied type label | ~25,756 estimated (95% CI 19,985–32,289) across 10 candidates | **Go** |
 | 0.5 | Revert positives in test window | ≥50 | 45 positives in test set (rate 0.38%) | **No-go** → risk is a feature with no metric |
-| 0.6 | Teacher agreement on type | ≥60% of 200 train PRs | [TBD] | [TBD] |
+| 0.6 | Teacher agreement on type | ≥60% of 200 train PRs | 130/200 = 65.0% (95% CI 58.2–71.3%), thinking on | **Go** (CI lower bound below 60%) |
 | 0.7 | LlamaFirewall + Presidio | Both run on Python 3.12 | LlamaFirewall 1.0.3 breaks on import; PromptGuard 2 direct (fallback) + Presidio run | **Go** (via fallback) |
 | 0.8 | Pydantic AI + llama.cpp + Langfuse | Validated `TriageOutput` and a trace in Langfuse | 3/3 valid first attempt (N = 3 synthetic PRs); 3 traces visible in Langfuse | **Go** |
 
@@ -140,4 +140,18 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   7. vLLM's compile cache defaulted to the full home dir → all tool caches moved to scratch.
   - For Phase 3 training (no vLLM), plan a separate env on torch 2.13.0+cu126, which driver 570 supports natively.
 - Next: 0.6 agreement run (200 train-window PRs)
+
+### 2026-10-27 — Task 0.6 — Teacher agreement with maintainers
+- Status: done
+- What changed: `scripts/feasibility/agreement_sample.py` (200-PR sample), `training/teacher/teacher_agreement.py` + `training/slurm/teacher_agreement.sbatch` (teacher run on 1x H200), `scripts/feasibility/score_agreement.py` (scoring); ADR 0003 (teacher choice).
+- Results: teacher type == maintainer primary type, first attempt, invalid reply = disagreement (model metric): thinking on 130/200 = 65.0% (95% CI [0.582, 0.713]), valid JSON 200/200; thinking off 125/200 = 62.5% (95% CI [0.556, 0.689]), valid JSON 197/200. By repo (thinking on): kubernetes 0.587, cilium 0.61, pandas 0.758 → results/feasibility_teacher_agreement.json @ 5259fb3e60d3e3c31ae4a821bbafb82654b2dd71 (clean tree; teacher Slurm job 11412144 at the same commit). Sample record → results/feasibility_teacher_sample.json @ 8fffe7b49d6de55ab62ed67c37dfb0a73fb7c7cf.
+- Dataset hash: inputs `inputs_hash` in both results files (must match; the scorer checks it)
+- Notes / decisions / problems:
+  - Sample: 200 drawn at random (seed 0) from 407 train-window PRs with a human type label (kubernetes 75, pandas 66, cilium 59). Held-out numpy excluded. Approximations: final (not open-time) title/body/diff; slash-command lines stripped from bodies (71 of 200 had them); diffs truncated to 24,000 chars (17 PRs); 3 diffs too large for the API (file list only).
+  - Per type (thinking on): docs 30/30, bug 30/34, ci/build 20/23, test 12/17, refactor 28/48, feature 8/16 (6 called dependency), other 2/31, dependency 0/1.
+  - `other` (mostly cilium `release-note/misc`) drives the disagreement: excluding those 31 PRs, agreement is 128/169 = 75.7% (computed from the same results file; informal). Revisit the `release-note/misc` -> other mapping in Phase 1.
+  - Point estimate passes 60%, but the 95% CI lower bound (58.2%) does not; recorded as a go with that caveat.
+  - Thinking on chosen: +5 PRs (not statistically meaningful) and 200/200 valid JSON; cost 146 s vs 47.7 s for 200 PRs on one H200 (load + compile 249 s).
+  - This was the train window, so choosing the mode on it does not touch the test set (hard rule 4).
+- Next: 0.9 Phase 0 review
 
