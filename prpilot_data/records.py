@@ -41,3 +41,10 @@ def write_result(name: str, payload: dict) -> Path:
     path = RESULTS_DIR / f"{name}.json"
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    """Read a JSON-lines file. Splits on "\n" only: `str.splitlines()` also breaks on Unicode
+    separators such as U+2028, which can appear unescaped inside JSON strings in PR text."""
+    with path.open(encoding="utf-8", newline="") as f:
+        return [json.loads(line) for line in f.read().split("\n") if line.strip()]

@@ -12,6 +12,7 @@ from pathlib import Path
 
 from prpilot_data.github_api import GitHubGraphQL, GraphQLError
 from prpilot_data.open_time import PR_OPEN_TIME_FIELDS
+from prpilot_data.records import read_jsonl
 
 QUERY_VERSION = "timeline-v1"
 BATCH = 10
@@ -62,7 +63,7 @@ def batch_query(numbers: list[int]) -> str:
 
 
 def read_index(path: Path) -> list[int]:
-    return [json.loads(line)["number"] for line in path.read_text(encoding="utf-8").splitlines()]
+    return [row["number"] for row in read_jsonl(path)]
 
 
 def _query_chunk(gh: GitHubGraphQL, owner: str, name: str, chunk: list[int]):

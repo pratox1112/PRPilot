@@ -40,7 +40,7 @@ def truncate_diff(diff: str, max_chars: int) -> tuple[str, bool]:
     files = _split_files(diff)
     headers = []
     for f in files:
-        lines = f.splitlines()
+        lines = f.split("\n")
         headers.append(lines[0])
         headers += [ln for ln in lines[1:] if ln.startswith("@@")]
     outline = "Files and hunks (outline):\n" + "\n".join(headers) + "\n\nHunks:\n"

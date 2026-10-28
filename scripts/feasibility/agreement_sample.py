@@ -163,7 +163,11 @@ def main() -> None:
                 print(f"  fetched inputs for {i}/{SAMPLE_SIZE}")
     file_hash = "sha256:" + hashlib.sha256(OUT_PATH.read_bytes()).hexdigest()
 
-    rows = [json.loads(line) for line in OUT_PATH.read_text(encoding="utf-8").splitlines()]
+    rows = [
+        json.loads(line)
+        for line in OUT_PATH.read_text(encoding="utf-8").split("\n")
+        if line.strip()
+    ]
     flags = Counter()
     for r in rows:
         for k, v in r["context"]["flags"].items():

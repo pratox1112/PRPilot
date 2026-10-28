@@ -6,7 +6,6 @@ the open-time state with `open_time.reconstruct`, and report per-field agreement
 naive baseline that simply takes today's final values.
 """
 
-import json
 from collections import Counter
 from datetime import timedelta
 from pathlib import Path
@@ -15,6 +14,7 @@ import httpx
 
 from prpilot_data.github_api import GitHubGraphQL
 from prpilot_data.open_time import PR_OPEN_TIME_FIELDS, normalize_text, reconstruct
+from prpilot_data.records import read_jsonl
 
 PAYLOAD_TRIM_DATE = "2025-10-07"  # GitHub changelog 2025-08-08: event payloads slimmed
 QUERY_VERSION = "open-time-v1"
@@ -25,8 +25,7 @@ TOLERANCES = {"0s": timedelta(0), "5min": timedelta(minutes=5)}
 def load_truth(paths: list[Path]) -> dict[tuple[str, int], dict]:
     truth = {}
     for path in paths:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            r = json.loads(line)
+        for r in read_jsonl(path):
             if r.get("number") is not None:
                 truth.setdefault((r["repo"], int(r["number"])), r)
     return truth

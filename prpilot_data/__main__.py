@@ -28,7 +28,7 @@ import tomllib
 from dotenv import load_dotenv
 
 from prpilot_data import gharchive
-from prpilot_data.records import REPO_ROOT, content_hash, run_metadata, write_result
+from prpilot_data.records import REPO_ROOT, content_hash, read_jsonl, run_metadata, write_result
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
@@ -200,8 +200,8 @@ def cmd_timeline(repo: str | None, limit: int | None) -> None:
         out = out_dir / (f"{slug}.trial.jsonl" if limit else f"{slug}.jsonl")
         written, missing, failed = timeline.fetch_repo(gh, r, numbers, out)
         capped: Counter = Counter()
-        for line in out.read_text(encoding="utf-8").splitlines():
-            for k, v in timeline.capped_counts(json.loads(line)).items():
+        for row in read_jsonl(out):
+            for k, v in timeline.capped_counts(row).items():
                 capped[k] += v
         stats[r] = {
             "requested": len(numbers),
