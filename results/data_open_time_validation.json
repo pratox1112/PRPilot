@@ -1,10 +1,10 @@
 {
   "step": "Phase 1 step 2: GraphQL open-time reconstruction vs GH Archive",
   "meta": {
-    "timestamp_utc": "2026-10-28T03:27:34+00:00",
+    "timestamp_utc": "2026-10-28T03:34:40+00:00",
     "git": {
-      "commit": "0f721931c5ee9efc8001744c6a1999a3667a209d",
-      "dirty": true
+      "commit": "b42ff988ec000d4fca0d7df4aad679be364064bb",
+      "dirty": false
     },
     "python": "3.12.10",
     "packages": {
@@ -17,8 +17,8 @@
   ],
   "truth_hash": "sha256:e7fc2efac168acb91c352d8e6b2e7776c8dc5ef99494135f1b91f4037df7d6b9",
   "github_calls": {
-    "network": 581,
-    "cache_hits": 2
+    "network": 66,
+    "cache_hits": 517
   },
   "prs_in_truth": 554,
   "prs_fetched": 554,
