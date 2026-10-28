@@ -1,0 +1,184 @@
+{
+  "step": "Phase 1 step 2: GH Archive payload completeness",
+  "meta": {
+    "timestamp_utc": "2026-10-28T03:23:31+00:00",
+    "git": {
+      "commit": "0f721931c5ee9efc8001744c6a1999a3667a209d",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "google-cloud-bigquery": "3.46.2"
+    }
+  },
+  "days": [
+    "20230301",
+    "20230913",
+    "20231205",
+    "20240214",
+    "20240611",
+    "20241015",
+    "20250205",
+    "20250415",
+    "20250903",
+    "20251015",
+    "20251203",
+    "20260120",
+    "20260310"
+  ],
+  "repos": [
+    "cilium/cilium",
+    "kubernetes/kubernetes",
+    "numpy/numpy",
+    "pandas-dev/pandas"
+  ],
+  "bytes_estimated": 160377821258,
+  "bytes_billed": 160378650624,
+  "opened_events": 469,
+  "completeness_by_day": {
+    "2023-03-01": {
+      "events": 76,
+      "title": 1.0,
+      "body": 0.961,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 16599
+    },
+    "2023-09-13": {
+      "events": 38,
+      "title": 1.0,
+      "body": 0.947,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 17067
+    },
+    "2023-12-05": {
+      "events": 43,
+      "title": 1.0,
+      "body": 0.884,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 17657
+    },
+    "2024-02-14": {
+      "events": 43,
+      "title": 1.0,
+      "body": 0.93,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 17648
+    },
+    "2024-06-11": {
+      "events": 52,
+      "title": 1.0,
+      "body": 0.942,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 16912
+    },
+    "2024-10-15": {
+      "events": 51,
+      "title": 1.0,
+      "body": 1.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 7824
+    },
+    "2025-02-05": {
+      "events": 37,
+      "title": 1.0,
+      "body": 0.919,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 16670
+    },
+    "2025-04-15": {
+      "events": 41,
+      "title": 1.0,
+      "body": 0.976,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 17016
+    },
+    "2025-09-03": {
+      "events": 22,
+      "title": 1.0,
+      "body": 0.909,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 16817
+    },
+    "2025-10-15": {
+      "events": 20,
+      "title": 0.0,
+      "body": 0.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 0.0,
+      "pr_created_at": 0.0,
+      "median_payload_chars": 485
+    },
+    "2025-12-03": {
+      "events": 16,
+      "title": 0.0,
+      "body": 0.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 0.0,
+      "pr_created_at": 0.0,
+      "median_payload_chars": 499
+    },
+    "2026-01-20": {
+      "events": 21,
+      "title": 0.0,
+      "body": 0.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 0.0,
+      "pr_created_at": 0.0,
+      "median_payload_chars": 505
+    },
+    "2026-03-10": {
+      "events": 9,
+      "title": 0.0,
+      "body": 0.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 0.0,
+      "pr_created_at": 0.0,
+      "median_payload_chars": 514
+    }
+  },
+  "raw_file": "data/raw/gharchive/validation_opened.jsonl"
+}

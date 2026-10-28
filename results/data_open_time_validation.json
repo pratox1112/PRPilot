@@ -1,10 +1,10 @@
 {
   "step": "Phase 1 step 2: GraphQL open-time reconstruction vs GH Archive",
   "meta": {
-    "timestamp_utc": "2026-10-28T03:20:02+00:00",
+    "timestamp_utc": "2026-10-28T03:27:34+00:00",
     "git": {
-      "commit": "264021d234f932da9e227a9a053564fe547f4483",
-      "dirty": false
+      "commit": "0f721931c5ee9efc8001744c6a1999a3667a209d",
+      "dirty": true
     },
     "python": "3.12.10",
     "packages": {
@@ -12,79 +12,80 @@
     }
   },
   "truth_files": [
-    "data/raw/gharchive/sample_opened.jsonl"
+    "data/raw/gharchive/sample_opened.jsonl",
+    "data/raw/gharchive/validation_opened.jsonl"
   ],
-  "truth_hash": "sha256:9a10ec31f7c9f9a6f768a304709eb6d2c18a5abde6615f7359c14ab4994a4250",
+  "truth_hash": "sha256:e7fc2efac168acb91c352d8e6b2e7776c8dc5ef99494135f1b91f4037df7d6b9",
   "github_calls": {
-    "network": 6,
-    "cache_hits": 0
+    "network": 581,
+    "cache_hits": 2
   },
-  "prs_in_truth": 85,
-  "prs_fetched": 85,
+  "prs_in_truth": 554,
+  "prs_fetched": 554,
   "by_tolerance": {
     "0s": {
       "all": {
         "title": {
-          "n": 72,
-          "agree": 72,
+          "n": 475,
+          "agree": 475,
           "rate": 1.0
         },
         "body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 475,
+          "rate": 1.0
         },
         "head_sha": {
-          "n": 85,
-          "agree": 67,
-          "rate": 0.7882
+          "n": 554,
+          "agree": 462,
+          "rate": 0.8339
         },
         "naive_title": {
-          "n": 72,
-          "agree": 56,
-          "rate": 0.7778
+          "n": 475,
+          "agree": 392,
+          "rate": 0.8253
         },
         "naive_body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 304,
+          "rate": 0.64
         },
         "naive_head_sha": {
-          "n": 85,
-          "agree": 50,
-          "rate": 0.5882
+          "n": 554,
+          "agree": 269,
+          "rate": 0.4856
         }
       },
       "before_trim": {
         "title": {
-          "n": 72,
-          "agree": 72,
+          "n": 475,
+          "agree": 475,
           "rate": 1.0
         },
         "body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 475,
+          "rate": 1.0
         },
         "head_sha": {
-          "n": 72,
-          "agree": 55,
-          "rate": 0.7639
+          "n": 475,
+          "agree": 391,
+          "rate": 0.8232
         },
         "naive_title": {
-          "n": 72,
-          "agree": 56,
-          "rate": 0.7778
+          "n": 475,
+          "agree": 392,
+          "rate": 0.8253
         },
         "naive_body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 304,
+          "rate": 0.64
         },
         "naive_head_sha": {
-          "n": 72,
-          "agree": 41,
-          "rate": 0.5694
+          "n": 475,
+          "agree": 228,
+          "rate": 0.48
         }
       },
       "after_trim": {
@@ -99,9 +100,9 @@
           "rate": null
         },
         "head_sha": {
-          "n": 13,
-          "agree": 12,
-          "rate": 0.9231
+          "n": 79,
+          "agree": 71,
+          "rate": 0.8987
         },
         "naive_title": {
           "n": 0,
@@ -114,22 +115,301 @@
           "rate": null
         },
         "naive_head_sha": {
-          "n": 13,
-          "agree": 9,
-          "rate": 0.6923
+          "n": 79,
+          "agree": 41,
+          "rate": 0.519
         }
       },
       "head_methods": {
-        "unresolved": 16,
-        "last_commit_before_open": 60,
-        "before_first_force_push": 9
+        "unresolved": 86,
+        "last_commit_before_open": 332,
+        "before_first_force_push": 136
       },
       "mismatches": [
         {
           "repo": "cilium/cilium",
+          "number": 24085,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24086,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24089,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24091,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24093,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24094,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24095,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24097,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24098,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24099,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24100,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24102,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24103,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24104,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24105,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24114,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24115,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24117,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24118,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24121,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
           "number": 26244,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -158,7 +438,6 @@
           "repo": "cilium/cilium",
           "number": 26246,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -173,7 +452,6 @@
           "repo": "cilium/cilium",
           "number": 26247,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -188,7 +466,6 @@
           "repo": "cilium/cilium",
           "number": 26252,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -203,7 +480,6 @@
           "repo": "cilium/cilium",
           "number": 26256,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -218,7 +494,6 @@
           "repo": "cilium/cilium",
           "number": 26259,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -233,7 +508,6 @@
           "repo": "cilium/cilium",
           "number": 26260,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -262,7 +536,6 @@
           "repo": "cilium/cilium",
           "number": 26269,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -305,7 +578,6 @@
           "repo": "cilium/cilium",
           "number": 26277,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -318,23 +590,8 @@
         },
         {
           "repo": "cilium/cilium",
-          "number": 26278,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": true,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "cilium/cilium",
           "number": 26281,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -347,11 +604,67 @@
         },
         {
           "repo": "cilium/cilium",
-          "number": 40048,
+          "number": 28134,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "before_first_force_push",
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28138,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28142,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28145,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28146,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": true,
@@ -360,15 +673,337 @@
           "commits_capped": false
         },
         {
-          "repo": "kubernetes/kubernetes",
-          "number": 118677,
+          "repo": "cilium/cilium",
+          "number": 29620,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 30763,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 37447,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 37453,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 38952,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 43879,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "before_first_force_push",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116162,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116164,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116166,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116167,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116170,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116171,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116172,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116174,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116177,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116178,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116180,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116183,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116184,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116185,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116189,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116191,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116192,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116195,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
@@ -389,37 +1024,8 @@
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118683,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 118689,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
           "number": 118691,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -432,109 +1038,109 @@
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118695,
+          "number": 120623,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
-          "force_pushed": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118696,
+          "number": 120624,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 120627,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 120628,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 120629,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
-          "force_pushed": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118697,
+          "number": 120630,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
+          "body_edited": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 132324,
+          "number": 120631,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
+          "body_edited": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 132326,
+          "number": 120637,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 132331,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": true,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 132338,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": true,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 132341,
-          "fields": [
-            "body"
-          ],
-          "head_method": "before_first_force_push",
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": true,
@@ -544,11 +1150,53 @@
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 132342,
+          "number": 120642,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "before_first_force_push",
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 122193,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 128082,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 129986,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": true,
@@ -557,24 +1205,79 @@
           "commits_capped": false
         },
         {
-          "repo": "numpy/numpy",
-          "number": 29211,
+          "repo": "kubernetes/kubernetes",
+          "number": 129990,
           "fields": [
-            "body"
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 134627,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 134632,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 136356,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "numpy/numpy",
+          "number": 28722,
+          "fields": [
+            "head_sha"
           ],
           "head_method": "last_commit_before_open",
           "renamed": false,
-          "body_edited": true,
+          "body_edited": false,
           "force_pushed": false,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
-          "repo": "pandas-dev/pandas",
-          "number": 53681,
+          "repo": "numpy/numpy",
+          "number": 30361,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -587,42 +1290,112 @@
         },
         {
           "repo": "pandas-dev/pandas",
-          "number": 53682,
+          "number": 51715,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "before_first_force_push",
           "renamed": false,
           "body_edited": true,
-          "force_pushed": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "pandas-dev/pandas",
-          "number": 61670,
+          "number": 51726,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
+          "body_edited": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "pandas-dev/pandas",
-          "number": 61672,
+          "number": 53681,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 55130,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": true,
           "body_edited": true,
           "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 56341,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 61293,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 63773,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 63783,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
@@ -646,66 +1419,66 @@
     "5min": {
       "all": {
         "title": {
-          "n": 72,
-          "agree": 72,
+          "n": 475,
+          "agree": 475,
           "rate": 1.0
         },
         "body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 475,
+          "rate": 1.0
         },
         "head_sha": {
-          "n": 85,
-          "agree": 68,
-          "rate": 0.8
+          "n": 554,
+          "agree": 457,
+          "rate": 0.8249
         },
         "naive_title": {
-          "n": 72,
-          "agree": 56,
-          "rate": 0.7778
+          "n": 475,
+          "agree": 392,
+          "rate": 0.8253
         },
         "naive_body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 304,
+          "rate": 0.64
         },
         "naive_head_sha": {
-          "n": 85,
-          "agree": 50,
-          "rate": 0.5882
+          "n": 554,
+          "agree": 269,
+          "rate": 0.4856
         }
       },
       "before_trim": {
         "title": {
-          "n": 72,
-          "agree": 72,
+          "n": 475,
+          "agree": 475,
           "rate": 1.0
         },
         "body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 475,
+          "rate": 1.0
         },
         "head_sha": {
-          "n": 72,
-          "agree": 55,
-          "rate": 0.7639
+          "n": 475,
+          "agree": 385,
+          "rate": 0.8105
         },
         "naive_title": {
-          "n": 72,
-          "agree": 56,
-          "rate": 0.7778
+          "n": 475,
+          "agree": 392,
+          "rate": 0.8253
         },
         "naive_body": {
-          "n": 72,
-          "agree": 42,
-          "rate": 0.5833
+          "n": 475,
+          "agree": 304,
+          "rate": 0.64
         },
         "naive_head_sha": {
-          "n": 72,
-          "agree": 41,
-          "rate": 0.5694
+          "n": 475,
+          "agree": 228,
+          "rate": 0.48
         }
       },
       "after_trim": {
@@ -720,9 +1493,9 @@
           "rate": null
         },
         "head_sha": {
-          "n": 13,
-          "agree": 13,
-          "rate": 1.0
+          "n": 79,
+          "agree": 72,
+          "rate": 0.9114
         },
         "naive_title": {
           "n": 0,
@@ -735,22 +1508,301 @@
           "rate": null
         },
         "naive_head_sha": {
-          "n": 13,
-          "agree": 9,
-          "rate": 0.6923
+          "n": 79,
+          "agree": 41,
+          "rate": 0.519
         }
       },
       "head_methods": {
-        "unresolved": 16,
-        "last_commit_before_open": 60,
-        "before_first_force_push": 9
+        "unresolved": 83,
+        "last_commit_before_open": 333,
+        "before_first_force_push": 138
       },
       "mismatches": [
         {
           "repo": "cilium/cilium",
+          "number": 24085,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24086,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24089,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24091,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24093,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24094,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24095,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24097,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24098,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24099,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24100,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24102,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24103,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24104,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24105,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24114,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24115,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24117,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24118,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 24121,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
           "number": 26244,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -779,7 +1831,6 @@
           "repo": "cilium/cilium",
           "number": 26246,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -794,7 +1845,6 @@
           "repo": "cilium/cilium",
           "number": 26247,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -809,7 +1859,6 @@
           "repo": "cilium/cilium",
           "number": 26252,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -824,7 +1873,6 @@
           "repo": "cilium/cilium",
           "number": 26256,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -839,7 +1887,6 @@
           "repo": "cilium/cilium",
           "number": 26259,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -854,7 +1901,6 @@
           "repo": "cilium/cilium",
           "number": 26260,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -883,7 +1929,6 @@
           "repo": "cilium/cilium",
           "number": 26269,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -926,7 +1971,6 @@
           "repo": "cilium/cilium",
           "number": 26277,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -939,23 +1983,8 @@
         },
         {
           "repo": "cilium/cilium",
-          "number": 26278,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": true,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "cilium/cilium",
           "number": 26281,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -968,9 +1997,163 @@
         },
         {
           "repo": "cilium/cilium",
-          "number": 40048,
+          "number": 28134,
           "fields": [
-            "body"
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28138,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28142,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28145,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 28146,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 29620,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 30763,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 37447,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "before_first_force_push",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 37453,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 38944,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 38945,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "cilium/cilium",
+          "number": 38952,
+          "fields": [
+            "head_sha"
           ],
           "head_method": "before_first_force_push",
           "renamed": false,
@@ -981,15 +2164,267 @@
           "commits_capped": false
         },
         {
-          "repo": "kubernetes/kubernetes",
-          "number": 118677,
+          "repo": "cilium/cilium",
+          "number": 43879,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "before_first_force_push",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116162,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116164,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116166,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116167,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116170,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116171,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116172,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116174,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116177,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116178,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116180,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116183,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116184,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116185,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116189,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116191,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116192,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 116195,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
@@ -1010,37 +2445,8 @@
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118683,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 118689,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
           "number": 118691,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -1053,109 +2459,109 @@
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118695,
+          "number": 120623,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
-          "force_pushed": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118696,
+          "number": 120624,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 120627,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 120628,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 120629,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
-          "force_pushed": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 118697,
+          "number": 120630,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
+          "body_edited": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 132324,
+          "number": 120631,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
+          "head_method": "unresolved",
           "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
+          "body_edited": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 132326,
+          "number": 120637,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 132331,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": true,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 132338,
-          "fields": [
-            "body"
-          ],
-          "head_method": "last_commit_before_open",
-          "renamed": true,
-          "body_edited": true,
-          "force_pushed": false,
-          "edits_capped": false,
-          "timeline_capped": false,
-          "commits_capped": false
-        },
-        {
-          "repo": "kubernetes/kubernetes",
-          "number": 132341,
-          "fields": [
-            "body"
-          ],
-          "head_method": "before_first_force_push",
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": true,
@@ -1165,11 +2571,53 @@
         },
         {
           "repo": "kubernetes/kubernetes",
-          "number": 132342,
+          "number": 120642,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "before_first_force_push",
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 122193,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 128082,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 129986,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
           "renamed": false,
           "body_edited": true,
           "force_pushed": true,
@@ -1178,24 +2626,79 @@
           "commits_capped": false
         },
         {
-          "repo": "numpy/numpy",
-          "number": 29211,
+          "repo": "kubernetes/kubernetes",
+          "number": 129990,
           "fields": [
-            "body"
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 134627,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 134632,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "kubernetes/kubernetes",
+          "number": 136356,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": true,
+          "commits_capped": false
+        },
+        {
+          "repo": "numpy/numpy",
+          "number": 28722,
+          "fields": [
+            "head_sha"
           ],
           "head_method": "last_commit_before_open",
           "renamed": false,
-          "body_edited": true,
+          "body_edited": false,
           "force_pushed": false,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
-          "repo": "pandas-dev/pandas",
-          "number": 53681,
+          "repo": "numpy/numpy",
+          "number": 30361,
           "fields": [
-            "body",
             "head_sha"
           ],
           "head_method": "unresolved",
@@ -1208,13 +2711,41 @@
         },
         {
           "repo": "pandas-dev/pandas",
-          "number": 53682,
+          "number": 51715,
           "fields": [
-            "body"
+            "head_sha"
+          ],
+          "head_method": "before_first_force_push",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 51726,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 51730,
+          "fields": [
+            "head_sha"
           ],
           "head_method": "last_commit_before_open",
           "renamed": false,
-          "body_edited": true,
+          "body_edited": false,
           "force_pushed": false,
           "edits_capped": false,
           "timeline_capped": false,
@@ -1222,23 +2753,23 @@
         },
         {
           "repo": "pandas-dev/pandas",
-          "number": 61670,
+          "number": 53681,
           "fields": [
-            "body"
+            "head_sha"
           ],
-          "head_method": "last_commit_before_open",
-          "renamed": false,
+          "head_method": "unresolved",
+          "renamed": true,
           "body_edited": true,
-          "force_pushed": false,
+          "force_pushed": true,
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
         },
         {
           "repo": "pandas-dev/pandas",
-          "number": 61672,
+          "number": 55130,
           "fields": [
-            "body"
+            "head_sha"
           ],
           "head_method": "last_commit_before_open",
           "renamed": true,
@@ -1247,8 +2778,116 @@
           "edits_capped": false,
           "timeline_capped": false,
           "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 56341,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 56345,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 56347,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 60850,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "last_commit_before_open",
+          "renamed": false,
+          "body_edited": false,
+          "force_pushed": false,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 61293,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 63773,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": false,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
+        },
+        {
+          "repo": "pandas-dev/pandas",
+          "number": 63783,
+          "fields": [
+            "head_sha"
+          ],
+          "head_method": "unresolved",
+          "renamed": true,
+          "body_edited": true,
+          "force_pushed": true,
+          "edits_capped": false,
+          "timeline_capped": false,
+          "commits_capped": false
         }
       ]
+    }
+  },
+  "true_head_commit_fetchable": {
+    "force_pushed": {
+      "n": 219,
+      "exists": 154
+    },
+    "not_force_pushed": {
+      "n": 335,
+      "exists": 334
     }
   }
 }
