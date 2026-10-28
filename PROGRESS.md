@@ -155,3 +155,28 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   - This was the train window, so choosing the mode on it does not touch the test set (hard rule 4).
 - Next: 0.9 Phase 0 review
 
+## Phase 1 — Data pipeline
+
+### 2026-10-28 — Task 1.1 — Data package
+- Status: done
+- What changed: `prpilot_data/` package (GitHub client, label attribution, input preparation and record helpers moved from `scripts/feasibility/` unchanged; Phase 0 scripts import them from the package). CLI `python -m prpilot_data`.
+- Results: n/a
+- Dataset hash: n/a
+- Notes / decisions / problems: Phase 1 guidelines approved 2026-10-27 with all eight recommended choices (merged default-branch PRs only; drop cilium `release-note/misc` from the type mapping; keep bot-authored PRs with a flag; report issue recall with/without explicit `Fixes #N`; GH Archive after cost estimate; 6,000-token diff budget with the student tokenizer; `prpilot_data/` package).
+- Next: 1.2
+
+### 2026-10-28 — Task 1.2 — Open-time inputs: GH Archive check and GraphQL reconstruction
+- Status: done
+- What changed: `prpilot_data/gharchive.py` (dry-run-first BigQuery queries with a byte cap), `prpilot_data/open_time.py` (title from the earliest `RenamedTitleEvent.previousTitle`; body from the oldest edit-history entry; head commit = last commit before opening, or the commit before the first force push), `prpilot_data/validate_open_time.py`.
+- Results:
+  - GH Archive payload completeness: `opened` events carry title/body/author until GitHub trimmed event payloads on 2025-10-07; head and base SHA are present throughout → results/data_gharchive_sample.json @ a22eb4f5799055e97b746ce30ea694d42731194b, results/data_gharchive_validation.json @ 0f721931c5ee9efc8001744c6a1999a3667a209d (16 days, 554 opened PR events; 179.5 GiB billed, inside the free tier).
+  - GraphQL reconstruction vs GH Archive truth (N = 554; title/body N = 475 before the trim), 0 s clock tolerance: title 475/475 = 100% (naive final value 82.5%); body 475/475 = 100% (naive 64.0%); head SHA 462/554 = 83.4% (naive 48.6%) → results/data_open_time_validation.json @ b42ff988ec000d4fca0d7df4aad679be364064bb (clean tree).
+  - Open-time head commit still fetchable by SHA: not force-pushed 334/335; force-pushed 154/219 (70%) (same file).
+- Dataset hash: validation sample `truth_hash` in the results file
+- Notes / decisions / problems:
+  - The body rule first used the oldest `createdAt`, which matched only 42/72: GitHub stores the original and the first edit with the same timestamp. The original is the last entry in the API's (newest-first) order; fixed and re-validated.
+  - Head-SHA misses: 81 force-pushed PRs whose earlier commits GraphQL returns as null (flagged `unresolved`, final-diff fallback), 13 silently wrong guesses (about 2.3%).
+  - 0 s tolerance beats 5 min overall (462 vs 457 correct).
+  - Owner decision (option B): GraphQL reconstruction for all PRs, plus GH Archive head SHAs for the post-trim months 2025-10..2026-03 (est. 634 GiB, within the free tier). Unresolved heads are flagged and metrics are reported for clean vs flagged PRs. A full GH Archive query (~13.3 TiB, ~$77) was not run; it would raise correct open-time diffs from about 83% to about 88%, limited by commits that no longer exist.
+- Next: 1.3 (stage A discovery at full scale)
+
