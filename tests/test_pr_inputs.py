@@ -1,9 +1,4 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "feasibility"))
-
-from pr_inputs import (  # noqa: E402
+from prpilot_data.inputs import (
     TRUNCATION_MARK,
     changed_files,
     strip_label_commands,

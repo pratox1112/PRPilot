@@ -26,8 +26,6 @@ from collections import Counter
 import httpx
 from common import REPO_ROOT, content_hash, run_metadata, write_result
 from dotenv import load_dotenv
-from github_graphql import GitHubGraphQL
-from label_attribution import attribute_labels, is_human_applied
 from label_volume import (
     CACHE_DIR,
     PAGE_SIZE,
@@ -38,7 +36,10 @@ from label_volume import (
     load_bots,
     search_q,
 )
-from pr_inputs import changed_files, strip_label_commands, truncate_diff
+
+from prpilot_data.github_api import GitHubGraphQL
+from prpilot_data.inputs import changed_files, strip_label_commands, truncate_diff
+from prpilot_data.labels import attribute_labels, is_human_applied
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 MAPPINGS_CONFIG = REPO_ROOT / "data" / "config" / "type_mappings.toml"

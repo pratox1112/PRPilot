@@ -1,9 +1,4 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "feasibility"))
-
-from label_attribution import RepoBots, attribute_labels, is_human_applied  # noqa: E402
+from prpilot_data.labels import RepoBots, attribute_labels, is_human_applied
 
 BOTS = RepoBots(bot_logins=frozenset({"k8s-ci-robot"}), command_bots=frozenset({"k8s-ci-robot"}))
 HUMAN = {"__typename": "User", "login": "alice"}

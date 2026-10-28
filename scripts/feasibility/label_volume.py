@@ -19,8 +19,9 @@ from collections import Counter, defaultdict
 
 from common import REPO_ROOT, content_hash, run_metadata, write_result
 from dotenv import load_dotenv
-from github_graphql import GitHubGraphQL
-from label_attribution import RepoBots, attribute_labels, is_human_applied
+
+from prpilot_data.github_api import GitHubGraphQL
+from prpilot_data.labels import RepoBots, attribute_labels, is_human_applied
 
 QUERY_VERSION = "label-volume-v1"
 CACHE_DIR = REPO_ROOT / "data" / "raw" / "github_graphql"

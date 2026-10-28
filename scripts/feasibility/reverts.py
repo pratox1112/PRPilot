@@ -14,8 +14,9 @@ from datetime import UTC, date, datetime
 
 from common import REPO_ROOT, content_hash, run_metadata, write_result
 from dotenv import load_dotenv
-from github_graphql import GitHubGraphQL
 from revert_links import extract_refs, is_revert_title, title_matches
+
+from prpilot_data.github_api import GitHubGraphQL
 
 QUERY_VERSION = "reverts-v1"
 CACHE_DIR = REPO_ROOT / "data" / "raw" / "github_graphql"

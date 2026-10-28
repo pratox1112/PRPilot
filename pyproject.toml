@@ -33,7 +33,7 @@ requires = ["uv_build>=0.12.22,<0.13"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "prpilot_core"
+module-name = ["prpilot_core", "prpilot_data"]
 module-root = ""
 
 [tool.uv.sources]
