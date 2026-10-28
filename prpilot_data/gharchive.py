@@ -1,0 +1,92 @@
+"""Open-time PR snapshots from GH Archive on BigQuery (roadmap §4.2, Phase 1 decision 6).
+
+A `PullRequestEvent` with action `opened` carries the PR as it was when it was opened:
+title, body, head and base SHA. That is the open-time source; GraphQL reconstruction is the
+cross-check and fallback.
+
+Cost safety: GH Archive tables are not clustered by repo, so a query scans the whole
+`payload` column of every table it touches. Every query is dry-run first; a real run needs an
+explicit byte budget and is capped with `maximum_bytes_billed`.
+"""
+
+from dataclasses import dataclass
+
+SAMPLE_DAYS = ("20230615", "20250616", "20260216")
+FULL_MONTHS = ("202301", "202603")
+
+_FIELDS = """
+  created_at AS event_created_at,
+  repo.name AS repo,
+  actor.login AS actor,
+  SAFE_CAST(JSON_VALUE(payload, '$.number') AS INT64) AS number,
+  JSON_VALUE(payload, '$.action') AS action,
+  JSON_VALUE(payload, '$.pull_request.title') AS title,
+  JSON_VALUE(payload, '$.pull_request.body') AS body,
+  JSON_VALUE(payload, '$.pull_request.user.login') AS author,
+  JSON_VALUE(payload, '$.pull_request.author_association') AS author_association,
+  JSON_VALUE(payload, '$.pull_request.head.sha') AS head_sha,
+  JSON_VALUE(payload, '$.pull_request.base.sha') AS base_sha,
+  JSON_VALUE(payload, '$.pull_request.base.ref') AS base_ref,
+  SAFE_CAST(JSON_VALUE(payload, '$.pull_request.draft') AS BOOL) AS draft,
+  JSON_VALUE(payload, '$.pull_request.created_at') AS pr_created_at,
+  LENGTH(payload) AS payload_chars"""
+
+
+def opened_events_sql(table: str, suffix_filter: str) -> str:
+    """SQL for `opened` PR events of @repos in the GH Archive tables matching the filter."""
+    return f"""
+SELECT{_FIELDS}
+FROM `githubarchive.{table}.*`
+WHERE {suffix_filter}
+  AND type = 'PullRequestEvent'
+  AND repo.name IN UNNEST(@repos)
+  AND JSON_VALUE(payload, '$.action') = 'opened'
+ORDER BY event_created_at"""
+
+
+def sample_sql() -> str:
+    days = ", ".join(f"'{d}'" for d in SAMPLE_DAYS)
+    return opened_events_sql("day", f"_TABLE_SUFFIX IN ({days})")
+
+
+def full_sql() -> str:
+    start, end = FULL_MONTHS
+    return opened_events_sql("month", f"_TABLE_SUFFIX BETWEEN '{start}' AND '{end}'")
+
+
+@dataclass(frozen=True)
+class Estimate:
+    bytes_processed: int
+
+    @property
+    def gib(self) -> float:
+        return self.bytes_processed / 2**30
+
+    def usd(self, price_per_tib: float = 6.25) -> float:
+        """On-demand list price, before the free first TiB per month."""
+        return self.bytes_processed / 2**40 * price_per_tib
+
+
+def completeness(rows: list[dict]) -> dict:
+    """Share of opened events whose payload carries each open-time field, per sample day."""
+    fields = ("title", "body", "head_sha", "base_sha", "base_ref", "author", "pr_created_at")
+    by_day: dict[str, list[dict]] = {}
+    for r in rows:
+        by_day.setdefault(str(r["event_created_at"])[:10], []).append(r)
+    out = {}
+    for day, rs in sorted(by_day.items()):
+        out[day] = {
+            "events": len(rs),
+            **{f: round(sum(r.get(f) not in (None, "") for r in rs) / len(rs), 3) for f in fields},
+            "median_payload_chars": sorted(r["payload_chars"] for r in rs)[len(rs) // 2],
+        }
+    return out
+
+
+def byte_cap(estimate: Estimate, budget_gib: float) -> int:
+    """maximum_bytes_billed for a run: the estimate plus 10%, refusing anything over budget."""
+    if estimate.gib > budget_gib:
+        raise SystemExit(
+            f"estimate {estimate.gib:.1f} GiB exceeds the approved budget of {budget_gib} GiB"
+        )
+    return (estimate.bytes_processed * 11 + 9) // 10  # ceil(1.1 * bytes), exact in integers
