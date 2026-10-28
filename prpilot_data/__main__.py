@@ -127,6 +127,7 @@ def cmd_validate() -> None:
         for period in ("before_trim", "after_trim"):
             s = r[period]
             print(f"   {period:12}", {f: (v["agree"], v["n"]) for f, v in s.items()})
+    print(f"open-time head commit still fetchable: {report['true_head_commit_fetchable']}")
     print(f"fetched {report['prs_fetched']}/{report['prs_in_truth']} PRs; wrote {path}")
 
 

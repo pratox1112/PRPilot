@@ -11,6 +11,8 @@ from collections import Counter
 from datetime import timedelta
 from pathlib import Path
 
+import httpx
+
 from prpilot_data.github_api import GitHubGraphQL
 from prpilot_data.open_time import PR_OPEN_TIME_FIELDS, normalize_text, reconstruct
 
@@ -121,4 +123,30 @@ def validate(gh: GitHubGraphQL, truth: dict) -> dict:
             "head_methods": dict(methods),
             "mismatches": mismatches,
         }
+    report["true_head_commit_fetchable"] = commit_availability(gh, truth, prs)
     return report
+
+
+def commit_exists(gh: GitHubGraphQL, repo: str, sha: str) -> bool:
+    """Can the commit still be fetched? (Needed to build an open-time diff from its SHA.)"""
+    try:
+        gh.rest_get(f"/repos/{repo}/commits/{sha}", accept="application/vnd.github.sha")
+        return True
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in (404, 422):
+            return False
+        raise
+
+
+def commit_availability(gh: GitHubGraphQL, truth: dict, prs: dict) -> dict:
+    """For each sampled PR: does GH Archive's open-time head commit still exist on GitHub?
+    Split by whether the PR was force-pushed, which is where GraphQL cannot recover it."""
+    groups: dict[str, Counter] = {"force_pushed": Counter(), "not_force_pushed": Counter()}
+    for key, node in prs.items():
+        pushed = any(
+            n.get("__typename") == "HeadRefForcePushedEvent" for n in node["timelineItems"]["nodes"]
+        )
+        g = groups["force_pushed" if pushed else "not_force_pushed"]
+        g["n"] += 1
+        g["exists"] += commit_exists(gh, key[0], truth[key]["head_sha"])
+    return {name: dict(c) for name, c in groups.items()}

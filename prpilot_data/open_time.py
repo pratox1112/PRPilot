@@ -55,10 +55,12 @@ def title_at_open(current_title: str, renames: list[dict]) -> str:
 
 
 def body_at_open(current_body: str | None, edits: list[dict]) -> str:
+    """GitHub lists edits newest first, and on the first edit it stores the original text and
+    the edit with the same timestamp, so `createdAt` cannot tell them apart. The last entry in
+    the API's order is the original (validated: 30/30 against GH Archive)."""
     if not edits:
         return current_body or ""
-    oldest = min(edits, key=lambda e: e["createdAt"])
-    return oldest.get("diff") or ""
+    return edits[-1].get("diff") or ""
 
 
 @dataclass(frozen=True)

@@ -27,10 +27,11 @@ def test_title_unchanged_and_renamed():
 def test_body_unedited_and_edited():
     assert body_at_open("now", []) == "now"
     assert body_at_open(None, []) == ""
+    # API order: newest first; the original and the first edit share a timestamp.
     edits = [
         {"createdAt": "2025-03-03T00:00:00Z", "diff": "v3"},
-        {"createdAt": "2025-03-01T12:00:00Z", "diff": "v1"},
         {"createdAt": "2025-03-02T00:00:00Z", "diff": "v2"},
+        {"createdAt": "2025-03-02T00:00:00Z", "diff": "v1"},
     ]
     assert body_at_open("v3", edits) == "v1"
 
