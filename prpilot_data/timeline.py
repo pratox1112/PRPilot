@@ -112,7 +112,11 @@ def fetch_repo(gh: GitHubGraphQL, repo: str, numbers: list[int], out_path: Path,
 
 
 def capped_counts(node: dict) -> dict[str, bool]:
-    """Which connections hit their page size, so a later stage can flag or refetch."""
+    """Which connections returned a full page, so a later stage can flag or refetch them.
+
+    A full page is the reliable signal: for `timelineItems(itemTypes: ...)` GitHub's
+    `totalCount` counts every timeline item of the PR, not only the requested types, so it
+    would mark thousands of PRs as cut off that are not (seen in the cilium/kubernetes run)."""
     caps = {
         "files": 100,
         "closingIssuesReferences": 20,
@@ -124,4 +128,4 @@ def capped_counts(node: dict) -> dict[str, bool]:
         "timelineItems": 100,
         "commits": 100,
     }
-    return {k: node[k]["totalCount"] > cap for k, cap in caps.items()}
+    return {k: len(node[k]["nodes"]) >= cap for k, cap in caps.items()}

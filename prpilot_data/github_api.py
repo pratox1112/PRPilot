@@ -57,7 +57,14 @@ class GitHubGraphQL:
             self.cache_hits += 1
             return path_key.read_text(encoding="utf-8")
         for attempt in range(6):
-            resp = self.client.get(f"https://api.github.com{path}", headers={"Accept": accept})
+            try:
+                resp = self.client.get(f"https://api.github.com{path}", headers={"Accept": accept})
+            except httpx.TransportError as e:
+                self.calls += 1
+                wait = min(2**attempt * 5, 300)
+                print(f"  {type(e).__name__} on {path}; retrying in {wait}s", file=sys.stderr)
+                time.sleep(wait)
+                continue
             self.calls += 1
             if resp.status_code in (403, 429) or resp.status_code >= 500:
                 wait = int(resp.headers.get("retry-after", 0)) or min(2**attempt * 5, 300)
@@ -72,7 +79,14 @@ class GitHubGraphQL:
 
     def _post(self, query: str, variables: dict, attempts: int = 6) -> dict:
         for attempt in range(attempts):
-            resp = self.client.post(API_URL, json={"query": query, "variables": variables})
+            try:
+                resp = self.client.post(API_URL, json={"query": query, "variables": variables})
+            except httpx.TransportError as e:  # dropped connection, timeout, laptop sleep
+                self.calls += 1
+                wait = min(2**attempt * 5, 300)
+                print(f"  {type(e).__name__}; retrying in {wait}s", file=sys.stderr)
+                time.sleep(wait)
+                continue
             self.calls += 1
             if resp.status_code in (403, 429) or resp.status_code >= 500:
                 wait = int(resp.headers.get("retry-after", 0)) or min(2**attempt * 5, 300)

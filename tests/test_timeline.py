@@ -38,9 +38,17 @@ def test_batch_query_has_all_sections_once_per_pr():
         assert section in q
 
 
-def test_capped_counts_flags_only_overfull():
-    flags = capped_counts(node(1, comments=conn(51), files=conn(100)))
-    assert flags["comments"] and not flags["files"] and not flags["labelEvents"]
+def full(n, total=None):
+    return {"totalCount": n if total is None else total, "nodes": [{}] * n}
+
+
+def test_capped_counts_uses_full_pages_not_total_count():
+    flags = capped_counts(
+        node(1, comments=full(50), files=full(99), labelEvents=full(3, total=900))
+    )
+    assert flags["comments"] and not flags["files"]
+    # filtered timeline connections report the PR's whole timeline as totalCount
+    assert not flags["labelEvents"]
 
 
 class FakeGH:
