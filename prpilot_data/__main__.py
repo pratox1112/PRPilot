@@ -11,6 +11,10 @@ uv run python -m prpilot_data discover [--repo owner/name] [--month YYYY-MM]
     Stage A: lists merged default-branch PRs opened in the data range (read-only GitHub
     search, cached). With --month it only prints counts for that month (a trial run).
 
+uv run python -m prpilot_data timeline [--repo owner/name] [--limit N]
+    Stage B: fetches the GraphQL timeline of every discovered PR (read-only, cached,
+    resumable). With --limit it fetches only the first N PRs of each repo (a trial run).
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -177,6 +181,54 @@ def cmd_discover(repo: str | None, month: str | None) -> None:
         print(f"wrote {path} and {INDEX_DIR}")
 
 
+def cmd_timeline(repo: str | None, limit: int | None) -> None:
+    from collections import Counter
+
+    from prpilot_data import timeline
+    from prpilot_data.github_api import GitHubGraphQL
+
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", timeline.QUERY_VERSION)
+    repos = [repo] if repo else selected_repos()
+    out_dir = REPO_ROOT / "data" / "interim" / "timeline"
+    stats = {}
+    for r in repos:
+        slug = r.replace("/", "__")
+        numbers = timeline.read_index(INDEX_DIR / f"{slug}.jsonl")
+        if limit:
+            numbers = sorted(numbers)[:limit]
+        out = out_dir / (f"{slug}.trial.jsonl" if limit else f"{slug}.jsonl")
+        written, missing, failed = timeline.fetch_repo(gh, r, numbers, out)
+        capped: Counter = Counter()
+        for line in out.read_text(encoding="utf-8").splitlines():
+            for k, v in timeline.capped_counts(json.loads(line)).items():
+                capped[k] += v
+        stats[r] = {
+            "requested": len(numbers),
+            "written": written,
+            "missing": missing,
+            "failed": failed,
+            "capped": dict(capped),
+        }
+        print(
+            f"{r}: {written}/{len(numbers)} written, {missing} missing, {len(failed)} failed; "
+            f"capped {dict(capped)}"
+        )
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not limit:
+        path = write_result(
+            "data_timeline",
+            {
+                "stage": "B: GraphQL timeline per PR",
+                "meta": run_metadata(["httpx"]),
+                "query_version": timeline.QUERY_VERSION,
+                "repos": stats,
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {out_dir}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m prpilot_data")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -188,6 +240,9 @@ def main() -> None:
     d = sub.add_parser("discover")
     d.add_argument("--repo")
     d.add_argument("--month", help="YYYY-MM: trial run for one month, counts only")
+    t = sub.add_parser("timeline")
+    t.add_argument("--repo")
+    t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
     args = parser.parse_args()
     if args.cmd == "gharchive-estimate":
         cmd_estimate()
@@ -195,6 +250,8 @@ def main() -> None:
         cmd_sample(args.days, args.budget_gib)
     elif args.cmd == "discover":
         cmd_discover(args.repo, args.month)
+    elif args.cmd == "timeline":
+        cmd_timeline(args.repo, args.limit)
     else:
         cmd_validate()
 
