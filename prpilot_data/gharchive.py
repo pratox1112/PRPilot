@@ -12,7 +12,26 @@ explicit byte budget and is capped with `maximum_bytes_billed`.
 from dataclasses import dataclass
 
 SAMPLE_DAYS = ("20230615", "20250616", "20260216")
+# Spread over the whole range, before and after GitHub trimmed payloads on 2025-10-07; used to
+# validate the GraphQL open-time reconstruction (head SHA everywhere, title/body before trim).
+VALIDATION_DAYS = (
+    "20230301",
+    "20230913",
+    "20231205",
+    "20240214",
+    "20240611",
+    "20241015",
+    "20250205",
+    "20250415",
+    "20250903",
+    "20251015",
+    "20251203",
+    "20260120",
+    "20260310",
+)
+DAY_SETS = {"sample": SAMPLE_DAYS, "validation": VALIDATION_DAYS}
 FULL_MONTHS = ("202301", "202603")
+POST_TRIM_MONTHS = ("202510", "202603")  # small payloads: head SHA only
 
 _FIELDS = """
   created_at AS event_created_at,
@@ -49,14 +68,25 @@ WHERE {suffix_filter}
 ORDER BY event_created_at"""
 
 
+def days_sql(days: tuple[str, ...] = SAMPLE_DAYS) -> str:
+    listed = ", ".join(f"'{d[2:]}'" for d in days)
+    return opened_events_sql("day", f"_TABLE_SUFFIX IN ({listed})")
+
+
 def sample_sql() -> str:
-    days = ", ".join(f"'{d[2:]}'" for d in SAMPLE_DAYS)
-    return opened_events_sql("day", f"_TABLE_SUFFIX IN ({days})")
+    return days_sql(SAMPLE_DAYS)
+
+
+def months_sql(start: str, end: str) -> str:
+    return opened_events_sql("month", f"_TABLE_SUFFIX BETWEEN '{start[2:]}' AND '{end[2:]}'")
 
 
 def full_sql() -> str:
-    start, end = FULL_MONTHS
-    return opened_events_sql("month", f"_TABLE_SUFFIX BETWEEN '{start[2:]}' AND '{end[2:]}'")
+    return months_sql(*FULL_MONTHS)
+
+
+def post_trim_sql() -> str:
+    return months_sql(*POST_TRIM_MONTHS)
 
 
 @dataclass(frozen=True)

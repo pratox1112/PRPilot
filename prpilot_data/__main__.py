@@ -3,9 +3,13 @@
 uv run --group data python -m prpilot_data gharchive-estimate
     Dry-runs the sample and full GH Archive queries; prints bytes and cost. Free.
 
-uv run --group data python -m prpilot_data gharchive-sample --budget-gib N
-    Runs the 3-day sample query (only if its estimate is <= N GiB) and reports how many
+uv run --group data python -m prpilot_data gharchive-sample --days sample|validation --budget-gib N
+    Runs a day-sample query (only if its estimate is <= N GiB) and reports how many
     `opened` events still carry the open-time fields.
+
+uv run python -m prpilot_data open-time-validate
+    Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
+    compares it with the GH Archive payloads.
 """
 
 import argparse
@@ -16,7 +20,7 @@ import tomllib
 from dotenv import load_dotenv
 
 from prpilot_data import gharchive
-from prpilot_data.records import REPO_ROOT, run_metadata, write_result
+from prpilot_data.records import REPO_ROOT, content_hash, run_metadata, write_result
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
@@ -47,6 +51,11 @@ def cmd_estimate() -> None:
     bigquery, client, params = client_and_config()
     for name, sql in [
         ("sample (3 days)", gharchive.sample_sql()),
+        (
+            f"validation ({len(gharchive.VALIDATION_DAYS)} days)",
+            gharchive.days_sql(gharchive.VALIDATION_DAYS),
+        ),
+        ("post-trim only (2025-10..2026-03)", gharchive.post_trim_sql()),
         ("full (2023-01..2026-03)", gharchive.full_sql()),
     ]:
         e = estimate(bigquery, client, params, sql)
@@ -56,9 +65,10 @@ def cmd_estimate() -> None:
         )
 
 
-def cmd_sample(budget_gib: float) -> None:
+def cmd_sample(day_set: str, budget_gib: float) -> None:
     bigquery, client, params = client_and_config()
-    sql = gharchive.sample_sql()
+    days = gharchive.DAY_SETS[day_set]
+    sql = gharchive.days_sql(days)
     e = estimate(bigquery, client, params, sql)
     cfg = bigquery.QueryJobConfig(
         query_parameters=params, maximum_bytes_billed=gharchive.byte_cap(e, budget_gib)
@@ -66,17 +76,17 @@ def cmd_sample(budget_gib: float) -> None:
     job = client.query(sql, job_config=cfg)
     rows = [dict(r) for r in job.result()]
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    raw_path = RAW_DIR / "sample_opened.jsonl"
+    raw_path = RAW_DIR / f"{day_set}_opened.jsonl"
     with raw_path.open("w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, default=str, ensure_ascii=False) + "\n")
     summary = gharchive.completeness(rows)
     path = write_result(
-        "data_gharchive_sample",
+        f"data_gharchive_{day_set}",
         {
             "step": "Phase 1 step 2: GH Archive payload completeness",
             "meta": run_metadata(["google-cloud-bigquery"]),
-            "sample_days": gharchive.SAMPLE_DAYS,
+            "days": days,
             "repos": selected_repos(),
             "bytes_estimated": e.bytes_processed,
             "bytes_billed": job.total_bytes_billed,
@@ -90,17 +100,51 @@ def cmd_sample(budget_gib: float) -> None:
     print(f"billed {job.total_bytes_billed / 2**30:.1f} GiB; wrote {path} and {raw_path}")
 
 
+def cmd_validate() -> None:
+    from prpilot_data.github_api import GitHubGraphQL
+    from prpilot_data.validate_open_time import QUERY_VERSION, load_truth, validate
+
+    load_dotenv(REPO_ROOT / ".env")
+    paths = sorted(RAW_DIR.glob("*_opened.jsonl"))
+    if not paths:
+        raise SystemExit(f"no GH Archive samples in {RAW_DIR}; run gharchive-sample first")
+    truth = load_truth(paths)
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", QUERY_VERSION)
+    report = validate(gh, truth)
+    path = write_result(
+        "data_open_time_validation",
+        {
+            "step": "Phase 1 step 2: GraphQL open-time reconstruction vs GH Archive",
+            "meta": run_metadata(["httpx"]),
+            "truth_files": [str(p.relative_to(REPO_ROOT)).replace("\\", "/") for p in paths],
+            "truth_hash": content_hash(sorted(f"{r}#{n}" for r, n in truth)),
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            **report,
+        },
+    )
+    for tol, r in report["by_tolerance"].items():
+        print(f"== tolerance {tol}: head methods {r['head_methods']}")
+        for period in ("before_trim", "after_trim"):
+            s = r[period]
+            print(f"   {period:12}", {f: (v["agree"], v["n"]) for f, v in s.items()})
+    print(f"fetched {report['prs_fetched']}/{report['prs_in_truth']} PRs; wrote {path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m prpilot_data")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("gharchive-estimate")
     s = sub.add_parser("gharchive-sample")
+    s.add_argument("--days", choices=sorted(gharchive.DAY_SETS), default="sample")
     s.add_argument("--budget-gib", type=float, required=True)
+    sub.add_parser("open-time-validate")
     args = parser.parse_args()
     if args.cmd == "gharchive-estimate":
         cmd_estimate()
+    elif args.cmd == "gharchive-sample":
+        cmd_sample(args.days, args.budget_gib)
     else:
-        cmd_sample(args.budget_gib)
+        cmd_validate()
 
 
 if __name__ == "__main__":
