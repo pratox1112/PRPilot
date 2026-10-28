@@ -5,9 +5,9 @@ from prpilot_data import gharchive
 
 def test_sample_sql_filters_days_type_repos_and_action():
     sql = gharchive.sample_sql()
-    assert "`githubarchive.day.*`" in sql
+    assert "`githubarchive.day.20*`" in sql  # no views (e.g. day.yesterday) in the wildcard
     for day in gharchive.SAMPLE_DAYS:
-        assert f"'{day}'" in sql
+        assert f"'{day[2:]}'" in sql
     assert "type = 'PullRequestEvent'" in sql
     assert "IN UNNEST(@repos)" in sql
     assert "'$.action') = 'opened'" in sql
@@ -15,8 +15,8 @@ def test_sample_sql_filters_days_type_repos_and_action():
 
 def test_full_sql_uses_month_range():
     sql = gharchive.full_sql()
-    assert "`githubarchive.month.*`" in sql
-    assert "BETWEEN '202301' AND '202603'" in sql
+    assert "`githubarchive.month.20*`" in sql
+    assert "BETWEEN '2301' AND '2603'" in sql
 
 
 def test_estimate_units():

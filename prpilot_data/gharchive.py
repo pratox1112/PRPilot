@@ -33,10 +33,15 @@ _FIELDS = """
 
 
 def opened_events_sql(table: str, suffix_filter: str) -> str:
-    """SQL for `opened` PR events of @repos in the GH Archive tables matching the filter."""
+    """SQL for `opened` PR events of @repos in the GH Archive tables matching the filter.
+
+    The wildcard is `<dataset>.20*`, not `<dataset>.*`: the datasets also hold views (e.g.
+    `day.yesterday`), and BigQuery refuses views inside a wildcard. `_TABLE_SUFFIX` is
+    therefore the table name without its leading "20".
+    """
     return f"""
 SELECT{_FIELDS}
-FROM `githubarchive.{table}.*`
+FROM `githubarchive.{table}.20*`
 WHERE {suffix_filter}
   AND type = 'PullRequestEvent'
   AND repo.name IN UNNEST(@repos)
@@ -45,13 +50,13 @@ ORDER BY event_created_at"""
 
 
 def sample_sql() -> str:
-    days = ", ".join(f"'{d}'" for d in SAMPLE_DAYS)
+    days = ", ".join(f"'{d[2:]}'" for d in SAMPLE_DAYS)
     return opened_events_sql("day", f"_TABLE_SUFFIX IN ({days})")
 
 
 def full_sql() -> str:
     start, end = FULL_MONTHS
-    return opened_events_sql("month", f"_TABLE_SUFFIX BETWEEN '{start}' AND '{end}'")
+    return opened_events_sql("month", f"_TABLE_SUFFIX BETWEEN '{start[2:]}' AND '{end[2:]}'")
 
 
 @dataclass(frozen=True)
