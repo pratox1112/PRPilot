@@ -7,6 +7,10 @@ uv run --group data python -m prpilot_data gharchive-sample --days sample|valida
     Runs a day-sample query (only if its estimate is <= N GiB) and reports how many
     `opened` events still carry the open-time fields.
 
+uv run python -m prpilot_data discover [--repo owner/name] [--month YYYY-MM]
+    Stage A: lists merged default-branch PRs opened in the data range (read-only GitHub
+    search, cached). With --month it only prints counts for that month (a trial run).
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -24,6 +28,7 @@ from prpilot_data.records import REPO_ROOT, content_hash, run_metadata, write_re
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
+INDEX_DIR = REPO_ROOT / "data" / "interim" / "index"
 
 
 def selected_repos() -> list[str]:
@@ -131,6 +136,47 @@ def cmd_validate() -> None:
     print(f"fetched {report['prs_fetched']}/{report['prs_in_truth']} PRs; wrote {path}")
 
 
+def cmd_discover(repo: str | None, month: str | None) -> None:
+    from datetime import date, timedelta
+
+    from prpilot_data import discover
+    from prpilot_data.github_api import GitHubGraphQL
+
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", discover.QUERY_VERSION)
+    repos = [repo] if repo else selected_repos()
+    if month:
+        y, m = map(int, month.split("-"))
+        start = date(y, m, 1)
+        end = date(y + m // 12, m % 12 + 1, 1) - timedelta(days=1)
+    else:
+        start, end = discover.RANGE_START, discover.RANGE_END
+    all_stats = {}
+    for r in repos:
+        rows, stats = discover.discover_repo(gh, r, start, end)
+        all_stats[r] = stats
+        print(
+            f"{r}: {stats['fetched_unique']} PRs (search reported {stats['search_reported']}), "
+            f"{stats['windows']} windows, overfull days {stats['overfull_days'] or '-'}"
+        )
+        if not month:
+            discover.write_index(rows, INDEX_DIR / f"{r.replace('/', '__')}.jsonl")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not month:
+        path = write_result(
+            "data_discover",
+            {
+                "stage": "A: discover merged default-branch PRs",
+                "meta": run_metadata(["httpx"]),
+                "range": [str(start), str(end)],
+                "repos": all_stats,
+                "total_prs": sum(s["fetched_unique"] for s in all_stats.values()),
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {INDEX_DIR}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m prpilot_data")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -139,11 +185,16 @@ def main() -> None:
     s.add_argument("--days", choices=sorted(gharchive.DAY_SETS), default="sample")
     s.add_argument("--budget-gib", type=float, required=True)
     sub.add_parser("open-time-validate")
+    d = sub.add_parser("discover")
+    d.add_argument("--repo")
+    d.add_argument("--month", help="YYYY-MM: trial run for one month, counts only")
     args = parser.parse_args()
     if args.cmd == "gharchive-estimate":
         cmd_estimate()
     elif args.cmd == "gharchive-sample":
         cmd_sample(args.days, args.budget_gib)
+    elif args.cmd == "discover":
+        cmd_discover(args.repo, args.month)
     else:
         cmd_validate()
 
