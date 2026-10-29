@@ -41,6 +41,10 @@ uv run --group data python -m prpilot_data dataset
     opening date, drops cross-split duplicates and writes data/processed/*.parquet with hashes.
     No network.
 
+uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
+    Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
+    every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -455,6 +459,21 @@ def cmd_dataset() -> None:
     print(f"wrote {path} and {out_dir}")
 
 
+def cmd_spot_check(n: int, seed: int) -> None:
+    import pyarrow.parquet as pq
+
+    from prpilot_data import spot_check
+
+    processed = REPO_ROOT / "data" / "processed"
+    rows = []
+    for split in ("train", "val"):
+        rows += pq.read_table(processed / f"prpilot_{split}.parquet").to_pylist()
+    picked = spot_check.sample(rows, n, seed)
+    out = REPO_ROOT / "data" / "interim" / "spot_check.md"
+    out.write_text(spot_check.report(picked, seed), encoding="utf-8")
+    print(f"wrote {len(picked)} PRs to {out}")
+
+
 def cmd_validate() -> None:
     from prpilot_data.github_api import GitHubGraphQL
     from prpilot_data.validate_open_time import QUERY_VERSION, load_truth, validate
@@ -600,6 +619,9 @@ def main() -> None:
     df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
     sub.add_parser("truth")
     sub.add_parser("dataset")
+    sc = sub.add_parser("spot-check")
+    sc.add_argument("--n", type=int, default=40)
+    sc.add_argument("--seed", type=int, default=0)
     t = sub.add_parser("timeline")
     t.add_argument("--repo")
     t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
@@ -624,6 +646,8 @@ def main() -> None:
         cmd_truth()
     elif args.cmd == "dataset":
         cmd_dataset()
+    elif args.cmd == "spot-check":
+        cmd_spot_check(args.n, args.seed)
     else:
         cmd_validate()
 
