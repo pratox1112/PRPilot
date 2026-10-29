@@ -6,10 +6,12 @@
 - `truncate_diff`: fits a unified diff into a character budget, keeping the per-file
   `diff --git` and `@@` hunk headers first (so the model sees every touched file and hunk
   location), then as many hunk bodies as fit, in order.
+- `fit_diff_to_tokens`: the same policy with the budget counted in student tokens.
 - `changed_files`: file paths from the `diff --git` headers.
 """
 
 import re
+from collections.abc import Callable
 
 _COMMAND_LINE = re.compile(
     r"^[ \t]*/[a-z][\w-]*(?:[ \t]+\S.*)?[ \t]*$", re.IGNORECASE | re.MULTILINE
@@ -57,3 +59,32 @@ def truncate_diff(diff: str, max_chars: int) -> tuple[str, bool]:
             body.append(f[:budget])
             break
     return outline + "".join(body) + TRUNCATION_MARK, True
+
+
+MAX_CHARS_PER_TOKEN = 12  # far above code's ~3-4, so the search range always holds the answer
+MAX_COUNTED_CHARS = 2_000_000  # beyond this the full diff is not tokenized (lockfiles, vendoring)
+
+
+def fit_diff_to_tokens(
+    diff: str, max_tokens: int, count_tokens: Callable[[str], int]
+) -> tuple[str, bool, int | None]:
+    """`truncate_diff` with the budget in tokens of the student's tokenizer (Phase 1 decision 7).
+
+    Returns (diff that fits, whether anything was cut, tokens in the full diff or None when the
+    diff is too large to count). Bisects for the largest character budget whose truncated diff
+    still fits, so the outline-first policy is the same as `truncate_diff`.
+    """
+    diff = diff or ""
+    full = count_tokens(diff) if len(diff) <= MAX_COUNTED_CHARS else None
+    if full is not None and full <= max_tokens:
+        return diff, False, full
+    lo, hi = 0, min(len(diff) - 1, max_tokens * MAX_CHARS_PER_TOKEN)
+    best = TRUNCATION_MARK
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        text, _ = truncate_diff(diff, mid)
+        if count_tokens(text) <= max_tokens:
+            lo, best = mid, text
+        else:
+            hi = mid - 1
+    return best, True, full

@@ -17,6 +17,8 @@ dependencies = [
 [dependency-groups]
 data = [
     "google-cloud-bigquery==3.46.2",
+    "huggingface-hub==2.3.0",
+    "tokenizers==0.23.3",
 ]
 dev = [
     "pytest==9.1.1",

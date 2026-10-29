@@ -23,6 +23,14 @@ uv run python -m prpilot_data complete
     Stage B follow-up: refetches, page by page, every connection whose single page was full
     (reviews, comments, label events, review requests, renames/force pushes, commits).
 
+uv run python -m prpilot_data diffs-validate [--sample 200]
+    Stage C check: GraphQL open-time heads and first-parent bases vs GH Archive on the
+    post-trim PRs (where GH Archive has the true head and base).
+
+uv run --group data python -m prpilot_data diffs [--repo owner/name] [--limit N]
+    Stage C: open-time diff per PR (REST compare, read-only, cached, resumable), cut to
+    6,000 Qwen3-1.7B tokens. With --limit it fetches only the first N PRs per repo (trial).
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -36,7 +44,14 @@ import tomllib
 from dotenv import load_dotenv
 
 from prpilot_data import gharchive
-from prpilot_data.records import REPO_ROOT, content_hash, read_jsonl, run_metadata, write_result
+from prpilot_data.records import (
+    REPO_ROOT,
+    content_hash,
+    read_jsonl,
+    require_clean_tree,
+    run_metadata,
+    write_result,
+)
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
@@ -120,6 +135,7 @@ def cmd_sample(day_set: str, budget_gib: float) -> None:
 def cmd_post_trim(budget_gib: float) -> None:
     from collections import Counter
 
+    require_clean_tree()
     bigquery, client, params = client_and_config()
     sql = gharchive.post_trim_sql()
     e = estimate(bigquery, client, params, sql)
@@ -189,6 +205,90 @@ def cmd_complete() -> None:
         },
     )
     print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
+
+
+def timeline_nodes(repo: str) -> list[dict]:
+    return read_jsonl(
+        REPO_ROOT / "data" / "interim" / "timeline" / f"{repo.replace('/', '__')}.jsonl"
+    )
+
+
+def base_index(gh, diffs, repo: str, nodes: list[dict]):
+    branch = diffs.base_branch(nodes)
+    chain = diffs.first_parent_chain(diffs.fetch_history(gh, repo, branch))
+    print(f"{repo}: {len(chain)} first-parent commits on {branch} since {diffs.HISTORY_SINCE}")
+    return diffs.BaseIndex(chain)
+
+
+def cmd_diffs_validate(sample: int) -> None:
+    from prpilot_data import diffs
+    from prpilot_data.github_api import GitHubGraphQL
+
+    require_clean_tree()
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", diffs.QUERY_VERSION)
+    archive = diffs.load_archive(RAW_DIR / "post_trim_heads.jsonl")
+    nodes, indexes = {}, {}
+    for r in selected_repos():
+        repo_nodes = timeline_nodes(r)
+        nodes.update({(r, n["number"]): n for n in repo_nodes})
+        indexes[r] = base_index(gh, diffs, r, repo_nodes)
+    report = diffs.validate(gh, nodes, archive, indexes, sample)
+    path = write_result(
+        "data_diffs_validation",
+        {
+            "stage": "C check: open-time head and base reconstruction vs GH Archive (post-trim)",
+            "meta": run_metadata(["httpx"]),
+            "query_version": diffs.QUERY_VERSION,
+            "sample_seed": 0,
+            **report,
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+        },
+    )
+    print(f"heads: {report['head_agree']}/{report['post_trim_prs']} agree with GH Archive")
+    print(f"   by method {report['head_reconstruction']}")
+    print(f"bases ({report['base_sample']} sampled): {report['base_outcomes']}")
+    print(f"   diff agreement {report['base_diff_agree']}")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
+
+
+def cmd_diffs(repo: str | None, limit: int | None) -> None:
+    from prpilot_data import diffs, tokens
+    from prpilot_data.github_api import GitHubGraphQL
+
+    if not limit:
+        require_clean_tree()
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", diffs.QUERY_VERSION)
+    count_tokens = tokens.load_counter()
+    archive = diffs.load_archive(RAW_DIR / "post_trim_heads.jsonl")
+    out_dir = REPO_ROOT / "data" / "interim" / "diffs"
+    stats = {}
+    for r in [repo] if repo else selected_repos():
+        nodes = timeline_nodes(r)
+        index = base_index(gh, diffs, r, nodes)
+        if limit:
+            nodes = sorted(nodes, key=lambda n: n["number"])[:limit]
+        slug = r.replace("/", "__")
+        out = out_dir / (f"{slug}.trial.jsonl" if limit else f"{slug}.jsonl")
+        written = diffs.process_repo(gh, nodes, archive, index, count_tokens, out)
+        stats[r] = diffs.summarize(read_jsonl(out))
+        print(f"{r}: {written} new rows; {stats[r]}")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not limit and not repo:
+        path = write_result(
+            "data_diffs",
+            {
+                "stage": "C: open-time diffs, truncated to the student token budget",
+                "meta": run_metadata(["httpx", "tokenizers", "huggingface-hub"]),
+                "query_version": diffs.QUERY_VERSION,
+                "tokenizer": {"model": tokens.STUDENT_MODEL, "revision": tokens.STUDENT_REVISION},
+                "diff_token_budget": diffs.DIFF_TOKENS,
+                "repos": stats,
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {out_dir}")
 
 
 def cmd_validate() -> None:
@@ -325,6 +425,11 @@ def main() -> None:
     pt = sub.add_parser("gharchive-post-trim")
     pt.add_argument("--budget-gib", type=float, required=True)
     sub.add_parser("complete")
+    dv = sub.add_parser("diffs-validate")
+    dv.add_argument("--sample", type=int, default=200)
+    df = sub.add_parser("diffs")
+    df.add_argument("--repo")
+    df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
     t = sub.add_parser("timeline")
     t.add_argument("--repo")
     t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
@@ -341,6 +446,10 @@ def main() -> None:
         cmd_post_trim(args.budget_gib)
     elif args.cmd == "complete":
         cmd_complete()
+    elif args.cmd == "diffs-validate":
+        cmd_diffs_validate(args.sample)
+    elif args.cmd == "diffs":
+        cmd_diffs(args.repo, args.limit)
     else:
         cmd_validate()
 

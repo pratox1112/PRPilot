@@ -18,8 +18,25 @@ def _git(*args: str) -> str:
     ).stdout.strip()
 
 
+def porcelain_paths(status: str) -> list[str]:
+    """Paths from `git status --porcelain` output (each line is "XY path")."""
+    return [line[3:] for line in status.split("\n") if line.strip()]
+
+
 def git_info() -> dict:
-    return {"commit": _git("rev-parse", "HEAD"), "dirty": bool(_git("status", "--porcelain"))}
+    status = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+    ).stdout
+    dirty = porcelain_paths(status)
+    return {"commit": _git("rev-parse", "HEAD"), "dirty": bool(dirty), "dirty_paths": dirty}
+
+
+def require_clean_tree() -> None:
+    """Refuse to start a recorded run on uncommitted changes (hard rule 1)."""
+    info = git_info()
+    if info["dirty"]:
+        listing = "\n  ".join(info["dirty_paths"])
+        raise SystemExit(f"uncommitted changes; commit them before this run:\n  {listing}")
 
 
 def content_hash(obj) -> str:

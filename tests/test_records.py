@@ -1,6 +1,15 @@
 import json
 
-from prpilot_data.records import read_jsonl
+from prpilot_data.records import porcelain_paths, read_jsonl
+
+
+def test_porcelain_paths_keeps_leading_status_column():
+    status = " M prpilot_data/x.py\n?? results/data_timeline_complete.json\n"
+    assert porcelain_paths(status) == [
+        "prpilot_data/x.py",
+        "results/data_timeline_complete.json",
+    ]
+    assert porcelain_paths("") == []
 
 
 def test_read_jsonl_keeps_unicode_line_separators_inside_strings(tmp_path):

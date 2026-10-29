@@ -1,6 +1,7 @@
 from prpilot_data.inputs import (
     TRUNCATION_MARK,
     changed_files,
+    fit_diff_to_tokens,
     strip_label_commands,
     truncate_diff,
 )
@@ -55,3 +56,26 @@ def test_truncation_keeps_outline_of_every_file():
 def test_tiny_budget_still_bounded():
     out, cut = truncate_diff(DIFF, 60)
     assert cut and len(out) <= 60 + len(TRUNCATION_MARK)
+
+
+def words(text):
+    return len(text.split())
+
+
+def test_fit_to_tokens_leaves_short_diff_alone():
+    assert fit_diff_to_tokens(DIFF, 10_000, words) == (DIFF, False, words(DIFF))
+
+
+def test_fit_to_tokens_uses_largest_budget_that_fits():
+    out, cut, full = fit_diff_to_tokens(DIFF, 40, words)
+    assert cut and full == words(DIFF) and words(out) <= 40
+    assert "diff --git a/docs/b.md b/docs/b.md" in out and out.endswith(TRUNCATION_MARK)
+    assert words(out) > 30  # uses the budget, not just the outline
+
+
+def test_fit_to_tokens_skips_counting_huge_diffs(monkeypatch):
+    from prpilot_data import inputs
+
+    monkeypatch.setattr(inputs, "MAX_COUNTED_CHARS", 100)
+    out, cut, full = fit_diff_to_tokens(DIFF, 40, words)
+    assert cut and full is None and words(out) <= 40

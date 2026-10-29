@@ -1210,6 +1210,8 @@ dependencies = [
 [package.dev-dependencies]
 data = [
     { name = "google-cloud-bigquery" },
+    { name = "huggingface-hub" },
+    { name = "tokenizers" },
 ]
 dev = [
     { name = "pytest" },
@@ -1237,7 +1239,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-data = [{ name = "google-cloud-bigquery", specifier = "==3.46.2" }]
+data = [
+    { name = "google-cloud-bigquery", specifier = "==3.46.2" },
+    { name = "huggingface-hub", specifier = "==2.3.0" },
+    { name = "tokenizers", specifier = "==0.23.3" },
+]
 dev = [
     { name = "pytest", specifier = "==9.1.1" },
     { name = "ruff", specifier = "==0.17.2" },
