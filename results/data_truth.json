@@ -1,0 +1,179 @@
+{
+  "stage": "D: ground truth from maintainer actions (labels, type, reviewers, issues)",
+  "meta": {
+    "timestamp_utc": "2026-10-29T18:53:53+00:00",
+    "git": {
+      "commit": "ed04aab74cb699f71cc16b3668cbe23810fd169c",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "type_mappings_hash": "sha256:1817bb63b28f83abc3025849351cfec81bcceb8def17036a1bda9c6f55a30309",
+  "repos_config_hash": "sha256:70921de97acbe1c207b65d150326788daeb63846fa532618e0ecf0d1815932a1",
+  "codeowners_window_s": 120.0,
+  "repos": {
+    "cilium/cilium": {
+      "prs": 9397,
+      "bot_authored": 1184,
+      "with_type": 5198,
+      "primary_type": {
+        "none": 4199,
+        "ci/build": 1480,
+        "feature": 1337,
+        "bug": 1188,
+        "refactor": 662,
+        "docs": 449,
+        "other": 34,
+        "dependency": 29,
+        "test": 19
+      },
+      "multi_type": 488,
+      "with_human_label": 8271,
+      "label_applier_kinds": {
+        "human": 22029,
+        "bot": 15479,
+        "unknown": 115
+      },
+      "human_labels_added_after_merge": 2044,
+      "with_reviewer": 9349,
+      "reviewers_per_pr_mean": 2.38,
+      "reviewer_evidence": {
+        "reviewed": 20033,
+        "human_request": 11795
+      },
+      "excluded_requests": {
+        "team_or_hidden": 26252,
+        "bot_request": 3024,
+        "codeowners_at_open": 7350,
+        "unknown_actor": 6
+      },
+      "with_issue": 1361,
+      "issues": 1439,
+      "issues_other_repo": 11,
+      "issues_mentioned_at_open": 1121
+    },
+    "kubernetes/kubernetes": {
+      "prs": 9263,
+      "bot_authored": 0,
+      "with_type": 9148,
+      "primary_type": {
+        "refactor": 4057,
+        "bug": 2062,
+        "feature": 2000,
+        "test": 694,
+        "docs": 293,
+        "none": 115,
+        "dependency": 22,
+        "other": 20
+      },
+      "multi_type": 762,
+      "with_human_label": 9250,
+      "label_applier_kinds": {
+        "bot": 86483,
+        "slash_command": 22495,
+        "human": 526
+      },
+      "human_labels_added_after_merge": 664,
+      "with_reviewer": 7488,
+      "reviewers_per_pr_mean": 1.73,
+      "reviewer_evidence": {
+        "reviewed": 13266,
+        "cc_command": 4694,
+        "human_request": 996
+      },
+      "excluded_requests": {
+        "bot_request": 23191,
+        "team_or_hidden": 407,
+        "codeowners_at_open": 16,
+        "author_or_bot_reviewer": 1
+      },
+      "with_issue": 2096,
+      "issues": 2152,
+      "issues_other_repo": 230,
+      "issues_mentioned_at_open": 1867
+    },
+    "numpy/numpy": {
+      "prs": 3603,
+      "bot_authored": 340,
+      "with_type": 1134,
+      "primary_type": {
+        "none": 2469,
+        "refactor": 253,
+        "other": 244,
+        "bug": 183,
+        "ci/build": 173,
+        "docs": 160,
+        "feature": 80,
+        "test": 35,
+        "dependency": 6
+      },
+      "multi_type": 164,
+      "with_human_label": 1540,
+      "label_applier_kinds": {
+        "bot": 2462,
+        "human": 2215
+      },
+      "human_labels_added_after_merge": 186,
+      "with_reviewer": 1840,
+      "reviewers_per_pr_mean": 0.75,
+      "reviewer_evidence": {
+        "reviewed": 2642,
+        "human_request": 434
+      },
+      "excluded_requests": {
+        "codeowners_at_open": 119,
+        "team_or_hidden": 36
+      },
+      "with_issue": 823,
+      "issues": 865,
+      "issues_other_repo": 12,
+      "issues_mentioned_at_open": 599
+    },
+    "pandas-dev/pandas": {
+      "prs": 6582,
+      "bot_authored": 94,
+      "with_type": 4789,
+      "primary_type": {
+        "docs": 1865,
+        "none": 1793,
+        "other": 703,
+        "refactor": 670,
+        "test": 610,
+        "bug": 414,
+        "ci/build": 382,
+        "feature": 80,
+        "dependency": 65
+      },
+      "multi_type": 296,
+      "with_human_label": 6379,
+      "label_applier_kinds": {
+        "human": 9726,
+        "bot": 162
+      },
+      "human_labels_added_after_merge": 137,
+      "with_reviewer": 6044,
+      "reviewers_per_pr_mean": 1.21,
+      "reviewer_evidence": {
+        "reviewed": 7571,
+        "human_request": 1742
+      },
+      "excluded_requests": {
+        "codeowners_at_open": 1541,
+        "team_or_hidden": 9,
+        "bot_request": 72
+      },
+      "with_issue": 2036,
+      "issues": 2219,
+      "issues_other_repo": 0,
+      "issues_mentioned_at_open": 1951
+    }
+  },
+  "github_calls": {
+    "network": 254,
+    "cache_hits": 0
+  }
+}
