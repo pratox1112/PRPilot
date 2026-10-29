@@ -1,9 +1,9 @@
 {
   "stage": "D: ground truth from maintainer actions (labels, type, reviewers, issues)",
   "meta": {
-    "timestamp_utc": "2026-10-29T18:53:53+00:00",
+    "timestamp_utc": "2026-10-29T20:18:44+00:00",
     "git": {
-      "commit": "ed04aab74cb699f71cc16b3668cbe23810fd169c",
+      "commit": "fc9e735811cd0219e9f3a42982c3518bfac8cbff",
       "dirty": false,
       "dirty_paths": []
     },
@@ -39,14 +39,15 @@
         "unknown": 115
       },
       "human_labels_added_after_merge": 2044,
-      "with_reviewer": 9349,
-      "reviewers_per_pr_mean": 2.38,
+      "with_reviewer": 9347,
+      "reviewers_per_pr_mean": 2.21,
       "reviewer_evidence": {
         "reviewed": 20033,
-        "human_request": 11795
+        "human_request": 4812
       },
       "excluded_requests": {
         "team_or_hidden": 26252,
+        "codeowners_at_ready": 7682,
         "bot_request": 3024,
         "codeowners_at_open": 7350,
         "unknown_actor": 6
@@ -83,11 +84,12 @@
       "reviewer_evidence": {
         "reviewed": 13266,
         "cc_command": 4694,
-        "human_request": 996
+        "human_request": 988
       },
       "excluded_requests": {
         "bot_request": 23191,
         "team_or_hidden": 407,
+        "codeowners_at_ready": 16,
         "codeowners_at_open": 16,
         "author_or_bot_reviewer": 1
       },
@@ -118,14 +120,15 @@
         "human": 2215
       },
       "human_labels_added_after_merge": 186,
-      "with_reviewer": 1840,
+      "with_reviewer": 1839,
       "reviewers_per_pr_mean": 0.75,
       "reviewer_evidence": {
         "reviewed": 2642,
-        "human_request": 434
+        "human_request": 421
       },
       "excluded_requests": {
         "codeowners_at_open": 119,
+        "codeowners_at_ready": 16,
         "team_or_hidden": 36
       },
       "with_issue": 823,
@@ -155,14 +158,15 @@
         "bot": 162
       },
       "human_labels_added_after_merge": 137,
-      "with_reviewer": 6044,
-      "reviewers_per_pr_mean": 1.21,
+      "with_reviewer": 6032,
+      "reviewers_per_pr_mean": 1.18,
       "reviewer_evidence": {
         "reviewed": 7571,
-        "human_request": 1742
+        "human_request": 1101
       },
       "excluded_requests": {
         "codeowners_at_open": 1541,
+        "codeowners_at_ready": 670,
         "team_or_hidden": 9,
         "bot_request": 72
       },
@@ -173,7 +177,7 @@
     }
   },
   "github_calls": {
-    "network": 254,
-    "cache_hits": 0
+    "network": 520,
+    "cache_hits": 254
   }
 }
