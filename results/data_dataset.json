@@ -1,0 +1,300 @@
+{
+  "stage": "E: cleaned dataset, one row per PR, split by opening date",
+  "meta": {
+    "timestamp_utc": "2026-10-29T20:47:35+00:00",
+    "git": {
+      "commit": "6f74e6f5c0d184eb424babef912766f704b54593",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "pyarrow": "25.0.1"
+    }
+  },
+  "split_rule": {
+    "train": "opened <= 2024-12-31",
+    "val": "opened <= 2025-06-30",
+    "test": "opened <= 2026-03-31, plus every PR of held-out repos",
+    "held_out": [
+      "numpy/numpy"
+    ]
+  },
+  "inflated_rule": "open-time files > 3 x final + 20",
+  "sources": {
+    "cilium/cilium": {
+      "index": "sha256:d36cef24009eda0ceda75909973c8b1279a5e05db96fd46f22e5edac025209f0",
+      "timeline": "sha256:472ffad76c55900e282756cccd805d221f4ffbb12a7e843f6277564a29358593",
+      "diffs": "sha256:10b8a4f81e99948847cd198c85a056a6f08b3dff865e182805581d3f457f74df",
+      "truth": "sha256:30387056a702278ab20e75c521c6cff003d64bff475ba238f7640dbfe9bbbe9b"
+    },
+    "kubernetes/kubernetes": {
+      "index": "sha256:6955dc31de04b20333a67fbbf1981dcf695e7e05f5fe69f806a16911fa7f2aa7",
+      "timeline": "sha256:48b0c8a8a508f787d0ccc9d127cbe9280faae15b0366d042c26139b99b4ed190",
+      "diffs": "sha256:d4a7e6f521e7c3b02000898993d9acaa7286a6a1dcfa95e48b4a120163ddd541",
+      "truth": "sha256:f8b3988c5af71721e10cb9cb8bb774dc9197278843d03b3b30f58e6f982ca340"
+    },
+    "numpy/numpy": {
+      "index": "sha256:b55932916945b7921ac197223185f838047d1b800aa1dd7fd56481f2a67571bf",
+      "timeline": "sha256:f2fe41f648382a9837ddcd4aff04b7c4c5130bcf8b837633cbd3ba9c9ccf5371",
+      "diffs": "sha256:c7a7231c70b638618b20b04d4d814760ed742c0748463abe7e6a850358280ff4",
+      "truth": "sha256:948e51f7a8155e2cfbcbff69564f327aaea067aecd3b93ec9b2ee8b7a2d17588"
+    },
+    "pandas-dev/pandas": {
+      "index": "sha256:03def9eb7df2f84714951e1e8b028b6d255657ed5a1390cfb1defa4b155051f6",
+      "timeline": "sha256:6c834ba023648120fad29b7a5f5b2a6ca1466958845f346b12294a3843b06b50",
+      "diffs": "sha256:cd24cdddf30dc4337fc18f63a3f0fde3c1471752ddb8cedb950fb34e81c0f54e",
+      "truth": "sha256:6f784b1c27620536a76b3d073adfe6ac9d670fea8a30c0ef77a6fb62a7cc45e1"
+    }
+  },
+  "reverts_source": {
+    "file": "results/feasibility_reverts.json",
+    "sha256": "sha256:732dacb8f12f324b77abd1c88867b1b25af2271bb7368ee9d9dfca977fe093a9"
+  },
+  "duplicates": {
+    "cross_split_groups": 27,
+    "dropped_by_split": {
+      "train": 63,
+      "val": 44
+    },
+    "within_split_groups_kept": 71,
+    "examples": [
+      [
+        "cilium/cilium#27864 (train)",
+        "cilium/cilium#28340 (train)",
+        "cilium/cilium#29609 (train)",
+        "cilium/cilium#31734 (train)",
+        "cilium/cilium#32329 (train)",
+        "cilium/cilium#32861 (train)",
+        "cilium/cilium#33217 (train)",
+        "cilium/cilium#33466 (train)",
+        "cilium/cilium#33834 (train)",
+        "cilium/cilium#34710 (train)",
+        "cilium/cilium#35140 (train)",
+        "cilium/cilium#35701 (train)",
+        "cilium/cilium#36304 (train)",
+        "cilium/cilium#36941 (val)",
+        "cilium/cilium#37258 (val)",
+        "cilium/cilium#37979 (val)",
+        "cilium/cilium#39288 (val)",
+        "cilium/cilium#39852 (val)",
+        "cilium/cilium#40309 (test)",
+        "cilium/cilium#40526 (test)",
+        "cilium/cilium#41978 (test)",
+        "cilium/cilium#43066 (test)",
+        "cilium/cilium#43604 (test)",
+        "cilium/cilium#43783 (test)",
+        "cilium/cilium#44069 (test)"
+      ],
+      [
+        "cilium/cilium#28306 (train)",
+        "cilium/cilium#35356 (train)",
+        "cilium/cilium#35981 (train)",
+        "cilium/cilium#40114 (val)",
+        "cilium/cilium#42446 (test)"
+      ],
+      [
+        "cilium/cilium#29905 (train)",
+        "cilium/cilium#39284 (val)"
+      ],
+      [
+        "cilium/cilium#31853 (train)",
+        "cilium/cilium#33926 (train)",
+        "cilium/cilium#36947 (val)",
+        "cilium/cilium#40086 (val)",
+        "cilium/cilium#40325 (test)",
+        "cilium/cilium#40593 (test)",
+        "cilium/cilium#41344 (test)",
+        "cilium/cilium#41563 (test)",
+        "cilium/cilium#43180 (test)",
+        "cilium/cilium#43832 (test)",
+        "cilium/cilium#44569 (test)"
+      ],
+      [
+        "cilium/cilium#33049 (train)",
+        "cilium/cilium#33747 (train)",
+        "cilium/cilium#34382 (train)",
+        "cilium/cilium#35054 (train)",
+        "cilium/cilium#36062 (train)",
+        "cilium/cilium#36678 (train)",
+        "cilium/cilium#37228 (val)",
+        "cilium/cilium#38964 (val)",
+        "cilium/cilium#39565 (val)",
+        "cilium/cilium#40136 (val)",
+        "cilium/cilium#40547 (test)",
+        "cilium/cilium#41187 (test)",
+        "cilium/cilium#41849 (test)",
+        "cilium/cilium#42740 (test)",
+        "cilium/cilium#43419 (test)",
+        "cilium/cilium#43736 (test)",
+        "cilium/cilium#44997 (test)"
+      ],
+      [
+        "cilium/cilium#33784 (train)",
+        "cilium/cilium#36124 (train)",
+        "cilium/cilium#37195 (val)",
+        "cilium/cilium#37811 (val)",
+        "cilium/cilium#38213 (val)",
+        "cilium/cilium#39043 (val)",
+        "cilium/cilium#39597 (val)",
+        "cilium/cilium#40153 (val)",
+        "cilium/cilium#40594 (test)",
+        "cilium/cilium#41786 (test)",
+        "cilium/cilium#41801 (test)",
+        "cilium/cilium#42021 (test)",
+        "cilium/cilium#42389 (test)",
+        "cilium/cilium#42792 (test)",
+        "cilium/cilium#43458 (test)",
+        "cilium/cilium#43825 (test)",
+        "cilium/cilium#44354 (test)",
+        "cilium/cilium#44924 (test)"
+      ],
+      [
+        "cilium/cilium#35287 (train)",
+        "cilium/cilium#36883 (val)",
+        "cilium/cilium#38541 (val)"
+      ],
+      [
+        "cilium/cilium#35706 (train)",
+        "cilium/cilium#35765 (train)",
+        "cilium/cilium#36008 (train)",
+        "cilium/cilium#36125 (train)",
+        "cilium/cilium#36145 (train)",
+        "cilium/cilium#36271 (train)",
+        "cilium/cilium#36436 (train)",
+        "cilium/cilium#36606 (train)",
+        "cilium/cilium#36698 (train)",
+        "cilium/cilium#36834 (val)",
+        "cilium/cilium#36847 (val)",
+        "cilium/cilium#36942 (val)"
+      ],
+      [
+        "cilium/cilium#35712 (train)",
+        "cilium/cilium#37199 (val)",
+        "cilium/cilium#39044 (val)",
+        "cilium/cilium#39686 (val)"
+      ],
+      [
+        "cilium/cilium#35729 (train)",
+        "cilium/cilium#38903 (val)"
+      ]
+    ]
+  },
+  "splits": {
+    "train": {
+      "file": "data/processed/prpilot_train.parquet",
+      "file_sha256": "sha256:ab3b4e94983b2a02dd583fdf0b14daf96ed355b6aab6c2169c9e098dc2d0fcc2",
+      "rows_hash": "sha256:3ef2e8adc06eb747feb2a515a9b74dab0a572f8e4cd454650f41a411c5273986",
+      "prs": 15810,
+      "by_repo": {
+        "cilium/cilium": 5407,
+        "kubernetes/kubernetes": 5698,
+        "pandas-dev/pandas": 4705
+      },
+      "flagged": 3444,
+      "flagged_share": 0.2178,
+      "diff_source": {
+        "final_pr_diff": 3386,
+        "open_time": 12395,
+        "unavailable": 29
+      },
+      "diff_inflated": 29,
+      "diff_truncated": 2524,
+      "bot_authored": 635,
+      "with_type": 12246,
+      "primary_type": {
+        "none": 3564,
+        "refactor": 3500,
+        "bug": 2307,
+        "feature": 2071,
+        "docs": 1795,
+        "ci/build": 1136,
+        "test": 816,
+        "other": 566,
+        "dependency": 55
+      },
+      "with_reviewer": 14253,
+      "with_reviewed_reviewer": 13896,
+      "with_issue": 3405,
+      "reverted": 120,
+      "reverted_rate": 0.0076
+    },
+    "val": {
+      "file": "data/processed/prpilot_val.parquet",
+      "file_sha256": "sha256:707a9e8db175b795522040efbd8dede6a334b77d17a25b6a880a600aea55d486",
+      "rows_hash": "sha256:65a2b30e066c1beb3bea9319e182f297f1b17cad4cbfdb25b50ede1a4a01b769",
+      "prs": 3355,
+      "by_repo": {
+        "cilium/cilium": 1645,
+        "kubernetes/kubernetes": 1321,
+        "pandas-dev/pandas": 389
+      },
+      "flagged": 278,
+      "flagged_share": 0.0829,
+      "diff_source": {
+        "open_time": 3091,
+        "final_pr_diff": 262,
+        "unavailable": 2
+      },
+      "diff_inflated": 14,
+      "diff_truncated": 654,
+      "bot_authored": 195,
+      "with_type": 2435,
+      "primary_type": {
+        "none": 920,
+        "refactor": 716,
+        "feature": 536,
+        "bug": 450,
+        "ci/build": 295,
+        "docs": 249,
+        "test": 151,
+        "other": 19,
+        "dependency": 19
+      },
+      "with_reviewer": 3113,
+      "with_reviewed_reviewer": 3016,
+      "with_issue": 720,
+      "reverted": 18,
+      "reverted_rate": 0.0054
+    },
+    "test": {
+      "file": "data/processed/prpilot_test.parquet",
+      "file_sha256": "sha256:5787eaedc5f9633b80fc4ffa0cc84bff4a5d848bee9197598a7d36bc324012e7",
+      "rows_hash": "sha256:e5f4ddc9205b06e90dcacf53ff53d8bd1383e562717eca3e8168fa4fe42abdd8",
+      "prs": 9573,
+      "by_repo": {
+        "cilium/cilium": 2263,
+        "kubernetes/kubernetes": 2239,
+        "numpy/numpy": 3603,
+        "pandas-dev/pandas": 1468
+      },
+      "flagged": 794,
+      "flagged_share": 0.0829,
+      "diff_source": {
+        "open_time": 8807,
+        "final_pr_diff": 763,
+        "unavailable": 3
+      },
+      "diff_inflated": 28,
+      "diff_truncated": 1445,
+      "bot_authored": 724,
+      "with_type": 5562,
+      "primary_type": {
+        "none": 4011,
+        "refactor": 1405,
+        "bug": 1089,
+        "feature": 890,
+        "docs": 719,
+        "ci/build": 604,
+        "other": 416,
+        "test": 391,
+        "dependency": 48
+      },
+      "with_reviewer": 7250,
+      "with_reviewed_reviewer": 7101,
+      "with_issue": 2190,
+      "reverted": 40,
+      "reverted_rate": 0.0042
+    }
+  }
+}
