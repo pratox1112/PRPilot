@@ -1,5 +1,8 @@
 """Stage A: find every merged PR to the default branch, opened in the data range.
 
+Search's `base:` qualifier is not an exact match (numpy's `maintenance/*` PRs come back for
+`base:main`), so rows are filtered on `baseRefName` afterwards and the dropped ones counted.
+
 GitHub search returns at most 1,000 results per query, so the range is walked in weekly
 windows and any window that still reports more than 1,000 hits is split in half until it
 fits. Results (one JSON line per PR) go to data/interim/index/<owner>__<repo>.jsonl.
@@ -114,14 +117,20 @@ def discover_repo(gh: GitHubGraphQL, repo: str, start: date, end: date) -> tuple
         for pr in fetch_window(gh, q):
             if start.isoformat() <= pr["createdAt"][:10] <= end.isoformat():
                 seen[pr["number"]] = {"repo": repo, **pr}
-    rows = sorted(seen.values(), key=lambda r: r["number"])
+    fetched = sorted(seen.values(), key=lambda r: r["number"])
+    # `base:main` also matches other branches (numpy's maintenance/* backports); Phase 1
+    # decision 2 keeps default-branch PRs only, so filter on the exact branch name here.
+    rows = [r for r in fetched if r["baseRefName"] == branch]
     stats = {
         "default_branch": branch,
         "windows": len(windows),
         "search_reported": expected,
-        "fetched_unique": len(rows),
+        "fetched_unique": len(fetched),
         "overfull_days": overfull,
-        "off_branch": sum(r["baseRefName"] != branch for r in rows),
+        "off_branch_dropped": dict(
+            Counter(r["baseRefName"] for r in fetched if r["baseRefName"] != branch)
+        ),
+        "kept": len(rows),
         "by_month": dict(sorted(Counter(r["createdAt"][:7] for r in rows).items())),
     }
     return rows, stats

@@ -31,8 +31,9 @@ def test_search_q_filters_merged_default_branch_and_created():
 class FakeGH:
     """Search counts by window length; 2 PRs per day, one created outside the range."""
 
-    def __init__(self, per_day=2, limit_days=None):
+    def __init__(self, per_day=2, limit_days=None, off_branch_every=0):
         self.per_day = per_day
+        self.off_branch_every = off_branch_every
 
     def query(self, query, variables):
         if "defaultBranchRef" in query:
@@ -50,7 +51,11 @@ class FakeGH:
                         "number": day.toordinal() * 10 + i,
                         "createdAt": f"{day}T10:00:00Z",
                         "mergedAt": f"{day}T12:00:00Z",
-                        "baseRefName": "main",
+                        "baseRefName": (
+                            "maintenance/1.0.x"
+                            if self.off_branch_every and i % self.off_branch_every == 1
+                            else "main"
+                        ),
                         "isDraft": False,
                         "author": {"__typename": "User", "login": "u"},
                     }
@@ -73,6 +78,14 @@ def test_plan_windows_splits_until_under_limit():
 
 def test_discover_repo_counts_and_dedupes():
     rows, stats = discover_repo(FakeGH(), "o/r", date(2024, 1, 1), date(2024, 1, 10))
-    assert stats["fetched_unique"] == len(rows) == 20
+    assert stats["fetched_unique"] == stats["kept"] == len(rows) == 20
     assert stats["search_reported"] == 20 and stats["default_branch"] == "main"
-    assert stats["by_month"] == {"2024-01": 20}
+    assert stats["by_month"] == {"2024-01": 20} and stats["off_branch_dropped"] == {}
+
+
+def test_discover_repo_drops_prs_to_other_branches():
+    gh = FakeGH(off_branch_every=2)  # search's base:main also returns maintenance/* PRs
+    rows, stats = discover_repo(gh, "o/r", date(2024, 1, 1), date(2024, 1, 10))
+    assert stats["fetched_unique"] == 20 and stats["kept"] == len(rows) == 10
+    assert stats["off_branch_dropped"] == {"maintenance/1.0.x": 10}
+    assert {r["baseRefName"] for r in rows} == {"main"}

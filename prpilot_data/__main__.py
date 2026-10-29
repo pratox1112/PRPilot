@@ -330,6 +330,8 @@ def cmd_discover(repo: str | None, month: str | None) -> None:
     from prpilot_data import discover
     from prpilot_data.github_api import GitHubGraphQL
 
+    if not month:
+        require_clean_tree()
     load_dotenv(REPO_ROOT / ".env")
     gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", discover.QUERY_VERSION)
     repos = [repo] if repo else selected_repos()
@@ -344,8 +346,10 @@ def cmd_discover(repo: str | None, month: str | None) -> None:
         rows, stats = discover.discover_repo(gh, r, start, end)
         all_stats[r] = stats
         print(
-            f"{r}: {stats['fetched_unique']} PRs (search reported {stats['search_reported']}), "
-            f"{stats['windows']} windows, overfull days {stats['overfull_days'] or '-'}"
+            f"{r}: {stats['kept']} PRs kept of {stats['fetched_unique']} found "
+            f"(search reported {stats['search_reported']}; other branches dropped "
+            f"{stats['off_branch_dropped'] or '-'}), {stats['windows']} windows, "
+            f"overfull days {stats['overfull_days'] or '-'}"
         )
         if not month:
             discover.write_index(rows, INDEX_DIR / f"{r.replace('/', '__')}.jsonl")
@@ -358,7 +362,7 @@ def cmd_discover(repo: str | None, month: str | None) -> None:
                 "meta": run_metadata(["httpx"]),
                 "range": [str(start), str(end)],
                 "repos": all_stats,
-                "total_prs": sum(s["fetched_unique"] for s in all_stats.values()),
+                "total_prs": sum(s["kept"] for s in all_stats.values()),
                 "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
             },
         )

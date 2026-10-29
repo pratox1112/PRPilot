@@ -1,0 +1,113 @@
+{
+  "stage": "C: open-time diffs, truncated to the student token budget",
+  "meta": {
+    "timestamp_utc": "2026-10-29T09:58:17+00:00",
+    "git": {
+      "commit": "4c4a6ce23b64714ef8f860983706f84ce3b09d91",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1",
+      "tokenizers": "0.23.3",
+      "huggingface-hub": "2.3.0"
+    }
+  },
+  "query_version": "diffs-v1",
+  "tokenizer": {
+    "model": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+  },
+  "diff_token_budget": 6000,
+  "repos": {
+    "cilium/cilium": {
+      "prs": 9397,
+      "diff_source": {
+        "final_pr_diff": 1546,
+        "open_time": 7838,
+        "unavailable": 13
+      },
+      "head_source": {
+        "final_head": 1557,
+        "last_commit_before_open": 3444,
+        "before_first_force_push": 3940,
+        "gharchive": 456
+      },
+      "base_source": {
+        "first_parent_at_open": 8941,
+        "gharchive": 456
+      },
+      "truncated": 1885,
+      "too_large_to_count": 30,
+      "full_diff_tokens_median": 1187
+    },
+    "kubernetes/kubernetes": {
+      "prs": 9263,
+      "diff_source": {
+        "open_time": 7059,
+        "final_pr_diff": 2186,
+        "unavailable": 18
+      },
+      "head_source": {
+        "last_commit_before_open": 3343,
+        "final_head": 2201,
+        "before_first_force_push": 3297,
+        "gharchive": 422
+      },
+      "base_source": {
+        "first_parent_at_open": 8841,
+        "gharchive": 422
+      },
+      "truncated": 1947,
+      "too_large_to_count": 31,
+      "full_diff_tokens_median": 1386.0
+    },
+    "numpy/numpy": {
+      "prs": 4438,
+      "diff_source": {
+        "open_time": 4037,
+        "final_pr_diff": 399,
+        "unavailable": 2
+      },
+      "head_source": {
+        "last_commit_before_open": 2997,
+        "before_first_force_push": 828,
+        "final_head": 398,
+        "gharchive": 215
+      },
+      "base_source": {
+        "first_parent_at_open": 4223,
+        "gharchive": 215
+      },
+      "truncated": 1101,
+      "too_large_to_count": 1,
+      "full_diff_tokens_median": 926
+    },
+    "pandas-dev/pandas": {
+      "prs": 6582,
+      "diff_source": {
+        "open_time": 6272,
+        "final_pr_diff": 309,
+        "unavailable": 1
+      },
+      "head_source": {
+        "last_commit_before_open": 5593,
+        "before_first_force_push": 311,
+        "final_head": 305,
+        "gharchive": 373
+      },
+      "base_source": {
+        "first_parent_at_open": 6209,
+        "gharchive": 373
+      },
+      "truncated": 469,
+      "too_large_to_count": 1,
+      "full_diff_tokens_median": 805
+    }
+  },
+  "github_calls": {
+    "network": 29605,
+    "cache_hits": 856
+  }
+}
