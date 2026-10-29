@@ -1,0 +1,47 @@
+{
+  "stage": "B follow-up: complete connections that hit their page size",
+  "meta": {
+    "timestamp_utc": "2026-10-29T02:32:45+00:00",
+    "git": {
+      "commit": "7a3b0f199f21b799e91935d76dfb6320c6b61439",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "repos": {
+    "cilium/cilium": {
+      "prs": 76,
+      "reviews": 55,
+      "comments": 18,
+      "timelineItems": 2,
+      "commits": 1,
+      "reviewRequests": 8
+    },
+    "kubernetes/kubernetes": {
+      "prs": 257,
+      "reviews": 210,
+      "comments": 69,
+      "timelineItems": 7,
+      "labelEvents": 13,
+      "commits": 1
+    },
+    "numpy/numpy": {
+      "prs": 10,
+      "reviews": 7,
+      "comments": 6
+    },
+    "pandas-dev/pandas": {
+      "prs": 20,
+      "commits": 4,
+      "reviews": 15,
+      "comments": 4
+    }
+  },
+  "github_calls": {
+    "network": 543,
+    "cache_hits": 0
+  }
+}
