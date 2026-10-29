@@ -271,6 +271,8 @@ def cmd_diffs(repo: str | None, limit: int | None) -> None:
             nodes = sorted(nodes, key=lambda n: n["number"])[:limit]
         slug = r.replace("/", "__")
         out = out_dir / (f"{slug}.trial.jsonl" if limit else f"{slug}.jsonl")
+        if limit:
+            out.unlink(missing_ok=True)  # trials start fresh; only the full run resumes
         written = diffs.process_repo(gh, nodes, archive, index, count_tokens, out)
         stats[r] = diffs.summarize(read_jsonl(out))
         print(f"{r}: {written} new rows; {stats[r]}")

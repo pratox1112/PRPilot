@@ -102,7 +102,7 @@ def test_open_time_diff_uses_reconstructed_head_against_base_at_open():
     assert got["errors"] == []
 
 
-def test_falls_back_to_final_head_then_pr_diff():
+def test_falls_back_to_pr_diff_never_final_head_against_old_base():
     gh = FakeGH(
         {
             "/repos/o/r/compare/base0...h1": "",  # empty compare is not accepted
@@ -110,13 +110,16 @@ def test_falls_back_to_final_head_then_pr_diff():
         }
     )
     got = fetch_open_time_diff(gh, pr_node(), None, INDEX)
-    assert got["diff_source"] == "final_pr_diff"
-    assert got["errors"][0] == "open_time: empty diff" and got["errors"][1].startswith("final_head")
-    assert gh.paths == [
-        "/repos/o/r/compare/base0...h1",
-        "/repos/o/r/compare/base0...final",
-        "/repos/o/r/pulls/7",
-    ]
+    assert got["diff_source"] == "final_pr_diff" and got["errors"] == ["open_time: empty diff"]
+    assert gh.paths == ["/repos/o/r/compare/base0...h1", "/repos/o/r/pulls/7"]
+
+
+def test_unresolved_head_goes_straight_to_pr_diff():
+    late = pr_node(commits={"totalCount": 1, "nodes": [pr_node()["commits"]["nodes"][1]]})
+    gh = FakeGH({"/repos/o/r/pulls/7": "diff --git a/y b/y\n"})
+    got = fetch_open_time_diff(gh, late, None, INDEX)
+    assert (got["head_source"], got["diff_source"]) == ("final_head", "final_pr_diff")
+    assert gh.paths == ["/repos/o/r/pulls/7"]
 
 
 def test_archive_base_and_head_are_used_when_present():
@@ -131,7 +134,7 @@ def test_archive_base_and_head_are_used_when_present():
 
 def test_unavailable_when_everything_fails():
     got = fetch_open_time_diff(FakeGH({}), pr_node(), None, INDEX)
-    assert got["diff_source"] == "unavailable" and got["diff"] == "" and len(got["errors"]) == 3
+    assert got["diff_source"] == "unavailable" and got["diff"] == "" and len(got["errors"]) == 2
 
 
 def test_diff_row_lists_files_from_full_diff_even_when_truncated(monkeypatch):

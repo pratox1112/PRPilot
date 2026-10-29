@@ -8,8 +8,10 @@ The diff GitHub shows today is the final one. The open-time diff is
   was opened, read off the branch's first-parent history. It cannot be today's branch:
   repos that merge with merge commits make the open-time head an ancestor of the branch, and
   `compare` against it would return an empty diff.
-If a compare fails (commit gone after a force push, diff too large), the fallbacks are the
-final head with the same base, then the PR's final diff; every row says which one it got.
+If the head is unresolved or the compare fails (commit gone, diff too large), the fallback is
+the PR's final diff, flagged; every row says which one it got. Not the final head against the
+base at open: PRs rebased before merging would then include every branch change in between
+(seen in the trial: 10-60 MB "diffs" for cilium PRs).
 The full diff is reduced to the 6,000-token budget here; the file list comes from the full one.
 """
 
@@ -146,19 +148,15 @@ def fetch_open_time_diff(
     base, base_source = choose_base(node, archive, index)
     row = {"head_sha": head, "head_source": head_source, "base_sha": base}
     row["base_source"] = base_source
-    attempts = [] if head_source == "final_head" else [("open_time", head)]
-    if node["headRefOid"] != head or head_source == "final_head":
-        attempts.append(("final_head", node["headRefOid"]))
     errors = []
-    for source, sha in attempts if base else []:
+    if head_source != "final_head" and base:
         try:
-            diff = compare_diff(gh, repo, base, sha)
+            diff = compare_diff(gh, repo, base, head)
+            if diff.strip():
+                return {**row, "diff_source": "open_time", "errors": errors, "diff": diff}
+            errors.append("open_time: empty diff")
         except FETCH_ERRORS as e:
-            errors.append(f"{source}: {str(e)[:200]}")
-            continue
-        if diff.strip():
-            return {**row, "diff_source": source, "errors": errors, "diff": diff}
-        errors.append(f"{source}: empty diff")
+            errors.append(f"open_time: {str(e)[:200]}")
     try:
         diff = pr_diff(gh, repo, node["number"])
         return {**row, "diff_source": "final_pr_diff", "errors": errors, "diff": diff}

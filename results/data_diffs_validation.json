@@ -1,0 +1,55 @@
+{
+  "stage": "C check: open-time head and base reconstruction vs GH Archive (post-trim)",
+  "meta": {
+    "timestamp_utc": "2026-10-29T04:03:27+00:00",
+    "git": {
+      "commit": "57d96d8c1ec70db8de781e83ffa9a4b35582a765",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "query_version": "diffs-v1",
+  "sample_seed": 0,
+  "post_trim_prs": 1466,
+  "head_reconstruction": {
+    "before_first_force_push:agree": 419,
+    "before_first_force_push:differ": 62,
+    "last_commit_before_open:agree": 825,
+    "last_commit_before_open:differ": 19,
+    "unresolved:differ": 141
+  },
+  "head_agree": 1244,
+  "base_sample": 200,
+  "base_outcomes": {
+    "same_sha": 191,
+    "different_diff": 3,
+    "same_diff": 6
+  },
+  "base_diff_agree": {
+    "agree": 197,
+    "n": 200,
+    "rate": 0.985
+  },
+  "base_differing": [
+    {
+      "repo": "numpy/numpy",
+      "number": 30432
+    },
+    {
+      "repo": "numpy/numpy",
+      "number": 30923
+    },
+    {
+      "repo": "numpy/numpy",
+      "number": 30973
+    }
+  ],
+  "github_calls": {
+    "network": 18,
+    "cache_hits": 768
+  }
+}
