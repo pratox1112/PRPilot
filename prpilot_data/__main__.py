@@ -36,6 +36,11 @@ uv run python -m prpilot_data truth
     CODEOWNERS requests, closing issues). Reads stage B; fetches only the repos of closing
     issues (read-only, cached).
 
+uv run --group data python -m prpilot_data dataset
+    Stage E: joins stages B-D and the Phase 0 revert scan into one row per PR, splits by
+    opening date, drops cross-split duplicates and writes data/processed/*.parquet with hashes.
+    No network.
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -359,6 +364,97 @@ def cmd_truth() -> None:
     print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
 
 
+def cmd_dataset() -> None:
+    from prpilot_data import dataset
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    repos_cfg = tomllib.loads(REPOS_CONFIG.read_text(encoding="utf-8"))["repos"]
+    reverts_path = REPO_ROOT / "results" / "feasibility_reverts.json"
+    reverts = dataset.load_reverts(reverts_path)
+    interim = REPO_ROOT / "data" / "interim"
+    sources = {}
+    rows = []
+    for r in selected_repos():
+        slug = r.replace("/", "__")
+        paths = {
+            "index": INDEX_DIR / f"{slug}.jsonl",
+            "timeline": interim / "timeline" / f"{slug}.jsonl",
+            "diffs": interim / "diffs" / f"{slug}.jsonl",
+            "truth": interim / "truth" / f"{slug}.jsonl",
+        }
+        sources[r] = {k: dataset.file_sha256(p) for k, p in paths.items()}
+        keep = {row["number"] for row in read_jsonl(paths["index"])}
+        nodes = {n["number"]: n for n in read_jsonl(paths["timeline"]) if n["number"] in keep}
+        diffs = {d["number"]: d for d in read_jsonl(paths["diffs"]) if d["number"] in keep}
+        truth = {t["number"]: t for t in read_jsonl(paths["truth"])}
+        missing = keep - nodes.keys() | keep - diffs.keys() | keep - truth.keys()
+        if missing:
+            raise SystemExit(f"{r}: {len(missing)} indexed PRs lack stage B/C/D rows")
+        role = repos_cfg[r]["split_role"]
+        for n in sorted(keep):
+            node = nodes[n]
+            rows.append(
+                dataset.build_row(
+                    node,
+                    diffs[n],
+                    truth[n],
+                    reverts.get((r, n)),
+                    dataset.split_of(node["createdAt"], role),
+                )
+            )
+        print(f"{r}: {len(keep)} PRs")
+    kept, duplicates = dataset.drop_cross_split_duplicates(rows)
+    dataset.check_no_leakage(kept)
+    out_dir = REPO_ROOT / "data" / "processed"
+    splits = {}
+    for split in dataset.SPLITS:
+        part = [row for row in kept if row["split"] == split]
+        path = out_dir / f"prpilot_{split}.parquet"
+        splits[split] = {
+            "file": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "file_sha256": dataset.write_parquet(part, path),
+            "rows_hash": content_hash(part),
+            **dataset.summarize(part),
+        }
+        s = splits[split]
+        print(
+            f"{split}: {s['prs']} PRs {s['by_repo']}; flagged {s['flagged']} "
+            f"({s['flagged_share']}); with type {s['with_type']}, reviewer {s['with_reviewer']}, "
+            f"issue {s['with_issue']}, reverted {s['reverted']}"
+        )
+    path = write_result(
+        "data_dataset",
+        {
+            "stage": "E: cleaned dataset, one row per PR, split by opening date",
+            "meta": meta,
+            "split_rule": {
+                "train": f"opened <= {dataset.TRAIN_END}",
+                "val": f"opened <= {dataset.VAL_END}",
+                "test": f"opened <= {dataset.TEST_END}, plus every PR of held-out repos",
+                "held_out": sorted(
+                    k for k in selected_repos() if repos_cfg[k]["split_role"] == "held_out"
+                ),
+            },
+            "inflated_rule": (
+                f"open-time files > {dataset.FILES_FACTOR} x final + {dataset.FILES_EXTRA}"
+            ),
+            "sources": sources,
+            "reverts_source": {
+                "file": "results/feasibility_reverts.json",
+                "sha256": dataset.file_sha256(reverts_path),
+            },
+            "duplicates": duplicates,
+            "splits": splits,
+        },
+    )
+    print(
+        f"duplicates across splits: {duplicates['cross_split_groups']} groups, "
+        f"dropped {duplicates['dropped_by_split']}"
+    )
+    print(f"wrote {path} and {out_dir}")
+
+
 def cmd_validate() -> None:
     from prpilot_data.github_api import GitHubGraphQL
     from prpilot_data.validate_open_time import QUERY_VERSION, load_truth, validate
@@ -503,6 +599,7 @@ def main() -> None:
     df.add_argument("--repo")
     df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
     sub.add_parser("truth")
+    sub.add_parser("dataset")
     t = sub.add_parser("timeline")
     t.add_argument("--repo")
     t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
@@ -525,6 +622,8 @@ def main() -> None:
         cmd_diffs(args.repo, args.limit)
     elif args.cmd == "truth":
         cmd_truth()
+    elif args.cmd == "dataset":
+        cmd_dataset()
     else:
         cmd_validate()
 
