@@ -1,0 +1,89 @@
+{
+  "stage": "B: GraphQL timeline per PR",
+  "meta": {
+    "timestamp_utc": "2026-10-28T20:37:44+00:00",
+    "git": {
+      "commit": "2e30e0d128cf469acdb81c5db971ed81fb322342",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "query_version": "timeline-v1",
+  "repos": {
+    "cilium/cilium": {
+      "requested": 9397,
+      "written": 9397,
+      "missing": 0,
+      "failed": [],
+      "capped": {
+        "files": 166,
+        "closingIssuesReferences": 0,
+        "labelEvents": 0,
+        "reviewRequests": 8,
+        "reviews": 55,
+        "comments": 18,
+        "userContentEdits": 0,
+        "timelineItems": 2,
+        "commits": 1
+      }
+    },
+    "kubernetes/kubernetes": {
+      "requested": 9263,
+      "written": 9263,
+      "missing": 0,
+      "failed": [],
+      "capped": {
+        "files": 167,
+        "closingIssuesReferences": 0,
+        "labelEvents": 13,
+        "reviewRequests": 0,
+        "reviews": 210,
+        "comments": 69,
+        "userContentEdits": 0,
+        "timelineItems": 7,
+        "commits": 1
+      }
+    },
+    "numpy/numpy": {
+      "requested": 4438,
+      "written": 4438,
+      "missing": 0,
+      "failed": [],
+      "capped": {
+        "files": 6,
+        "closingIssuesReferences": 0,
+        "labelEvents": 0,
+        "reviewRequests": 0,
+        "reviews": 7,
+        "comments": 6,
+        "userContentEdits": 0,
+        "timelineItems": 0,
+        "commits": 0
+      }
+    },
+    "pandas-dev/pandas": {
+      "requested": 6582,
+      "written": 6582,
+      "missing": 0,
+      "failed": [],
+      "capped": {
+        "files": 14,
+        "closingIssuesReferences": 0,
+        "labelEvents": 0,
+        "reviewRequests": 0,
+        "reviews": 15,
+        "comments": 4,
+        "userContentEdits": 0,
+        "timelineItems": 0,
+        "commits": 4
+      }
+    }
+  },
+  "github_calls": {
+    "network": 1055,
+    "cache_hits": 1918
+  }
+}

@@ -15,6 +15,14 @@ uv run python -m prpilot_data timeline [--repo owner/name] [--limit N]
     Stage B: fetches the GraphQL timeline of every discovered PR (read-only, cached,
     resumable). With --limit it fetches only the first N PRs of each repo (a trial run).
 
+uv run --group data python -m prpilot_data gharchive-post-trim --budget-gib N
+    Stage A': open-time head SHAs from GH Archive for 2025-10..2026-03 (payloads after GitHub's
+    2025-10-07 trim still carry them). Dry-run first; refuses to run above N GiB.
+
+uv run python -m prpilot_data complete
+    Stage B follow-up: refetches, page by page, every connection whose single page was full
+    (reviews, comments, label events, review requests, renames/force pushes, commits).
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -107,6 +115,80 @@ def cmd_sample(day_set: str, budget_gib: float) -> None:
     for day, s in summary.items():
         print(day, s)
     print(f"billed {job.total_bytes_billed / 2**30:.1f} GiB; wrote {path} and {raw_path}")
+
+
+def cmd_post_trim(budget_gib: float) -> None:
+    from collections import Counter
+
+    bigquery, client, params = client_and_config()
+    sql = gharchive.post_trim_sql()
+    e = estimate(bigquery, client, params, sql)
+    cfg = bigquery.QueryJobConfig(
+        query_parameters=params, maximum_bytes_billed=gharchive.byte_cap(e, budget_gib)
+    )
+    job = client.query(sql, job_config=cfg)
+    keep = ("repo", "number", "head_sha", "base_sha", "base_ref", "event_created_at")
+    rows = [{k: r[k] for k in keep} for r in job.result()]
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    # Not named *_opened.jsonl: open-time-validate globs those as its truth set.
+    raw_path = RAW_DIR / "post_trim_heads.jsonl"
+    with raw_path.open("w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, default=str, ensure_ascii=False) + "\n")
+    by_repo = Counter(r["repo"] for r in rows)
+    with_sha = sum(bool(r["head_sha"]) for r in rows)
+    path = write_result(
+        "data_gharchive_post_trim",
+        {
+            "stage": "A': GH Archive open-time head SHAs after the 2025-10-07 payload trim",
+            "meta": run_metadata(["google-cloud-bigquery"]),
+            "months": gharchive.POST_TRIM_MONTHS,
+            "bytes_estimated": e.bytes_processed,
+            "bytes_billed": job.total_bytes_billed,
+            "opened_events": len(rows),
+            "with_head_sha": with_sha,
+            "by_repo": dict(by_repo),
+            "raw_file": str(raw_path.relative_to(REPO_ROOT)).replace("\\", "/"),
+        },
+    )
+    print(f"{len(rows)} opened events ({with_sha} with head SHA): {dict(by_repo)}")
+    print(f"billed {job.total_bytes_billed / 2**30:.1f} GiB; wrote {path} and {raw_path}")
+
+
+def cmd_complete() -> None:
+    from collections import Counter
+
+    from prpilot_data import complete
+    from prpilot_data.github_api import GitHubGraphQL
+
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", complete.QUERY_VERSION)
+    stats = {}
+    for r in selected_repos():
+        path = REPO_ROOT / "data" / "interim" / "timeline" / f"{r.replace('/', '__')}.jsonl"
+        rows = read_jsonl(path)
+        counts: Counter = Counter()
+        for row in rows:
+            _, keys = complete.complete_node(gh, row)
+            counts.update(keys)
+            counts["prs"] += bool(keys)
+        tmp = path.with_suffix(".jsonl.tmp")
+        with tmp.open("w", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        os.replace(tmp, path)
+        stats[r] = dict(counts)
+        print(f"{r}: completed {dict(counts)}")
+    path = write_result(
+        "data_timeline_complete",
+        {
+            "stage": "B follow-up: complete connections that hit their page size",
+            "meta": run_metadata(["httpx"]),
+            "repos": stats,
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+        },
+    )
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
 
 
 def cmd_validate() -> None:
@@ -240,6 +322,9 @@ def main() -> None:
     d = sub.add_parser("discover")
     d.add_argument("--repo")
     d.add_argument("--month", help="YYYY-MM: trial run for one month, counts only")
+    pt = sub.add_parser("gharchive-post-trim")
+    pt.add_argument("--budget-gib", type=float, required=True)
+    sub.add_parser("complete")
     t = sub.add_parser("timeline")
     t.add_argument("--repo")
     t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
@@ -252,6 +337,10 @@ def main() -> None:
         cmd_discover(args.repo, args.month)
     elif args.cmd == "timeline":
         cmd_timeline(args.repo, args.limit)
+    elif args.cmd == "gharchive-post-trim":
+        cmd_post_trim(args.budget_gib)
+    elif args.cmd == "complete":
+        cmd_complete()
     else:
         cmd_validate()
 
