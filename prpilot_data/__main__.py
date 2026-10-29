@@ -321,10 +321,22 @@ def cmd_truth() -> None:
         nodes = [n for n in timeline_nodes(r) if n["number"] in keep]
         with_links = [n["number"] for n in nodes if n["closingIssuesReferences"]["totalCount"]]
         links = ground_truth.fetch_issue_links(gh, r, with_links)
+        # Ready-for-review times only matter where the author is the actor of a request.
+        with_author_requests = [
+            n["number"]
+            for n in nodes
+            if any(
+                (e.get("actor") or {}).get("login") == (n.get("author") or {}).get("login")
+                for e in n["reviewRequests"]["nodes"]
+            )
+        ]
+        ready = ground_truth.fetch_ready_events(gh, r, with_author_requests)
         bots = ground_truth.repo_bots(repos_cfg, r)
         mapping = types_cfg["repos"][r]
         rows = [
-            ground_truth.truth_row(n, bots, mapping, priority, links.get(n["number"], []))
+            ground_truth.truth_row(
+                n, bots, mapping, priority, links.get(n["number"], []), ready.get(n["number"], [])
+            )
             for n in sorted(nodes, key=lambda n: n["number"])
         ]
         with (out_dir / f"{slug}.jsonl").open("w", encoding="utf-8") as f:

@@ -3,6 +3,7 @@ from prpilot_data.ground_truth import (
     label_truth,
     links_query,
     mentions_issue,
+    ready_query,
     repo_bots,
     reviewer_truth,
     summarize,
@@ -105,6 +106,24 @@ def test_codeowners_requests_at_open_are_excluded_later_author_requests_kept():
     out = reviewer_truth(node(reviewRequests={"nodes": requests}), BOTS)
     assert out["reviewers"] == ["carol"]
     assert out["excluded_requests"] == {"codeowners_at_open": 1}
+
+
+def test_codeowners_requests_when_a_draft_is_marked_ready_are_excluded():
+    requests = [
+        request(BOB, AUTHOR, "2025-01-03T10:00:01Z"),  # code owners, right after "ready"
+        request(CAROL, AUTHOR, "2025-01-03T12:00:00Z"),  # author asked two hours later
+    ]
+    n = node(reviewRequests={"nodes": requests})
+    out = reviewer_truth(n, BOTS, ["2025-01-03T10:00:00Z"])
+    assert out["reviewers"] == ["carol"]
+    assert out["excluded_requests"] == {"codeowners_at_ready": 1}
+    # without the ready event, the same request would have counted as human
+    assert reviewer_truth(n, BOTS)["reviewers"] == ["bob", "carol"]
+
+
+def test_ready_query_asks_for_ready_events():
+    q = ready_query([3])
+    assert "READY_FOR_REVIEW_EVENT" in q and "pr3: pullRequest(number: 3)" in q
 
 
 def test_human_request_from_someone_else_at_open_counts():

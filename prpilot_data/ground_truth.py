@@ -7,9 +7,12 @@
 - Reviewers: users who submitted a review before the merge, plus users whose review was
   requested by a human. Requests made by a bot only count when a human asked for them with a
   `/cc @login` command (kubernetes' k8s-ci-robot); otherwise they are automatic assignment.
-  Requests made by the PR author within CODEOWNERS_WINDOW of opening are CODEOWNERS
-  auto-requests (GitHub records them with the author as actor) and are excluded. The author
-  and bots are never target reviewers.
+  Requests made by the PR author within CODEOWNERS_WINDOW of opening, or of being marked
+  ready for review (drafts get their code owners only then), are CODEOWNERS auto-requests
+  (GitHub records them with the author as actor) and are excluded. Code-owner requests after
+  later pushes cannot be told apart (GitHub has no push times) and remain; the data card
+  says so, and `reviewer_evidence` keeps "reviewed" separate. The author and bots are never
+  target reviewers.
 - Issues: the PR's closing issue references, with the issue's repository (an issue in another
   repo cannot be found by searching this repo's issues), and whether the open-time title or
   body already names the issue (Phase 1 decision 5: recall is reported both ways).
@@ -24,7 +27,7 @@ from prpilot_data.labels import RepoBots, attribute_labels, is_bot, is_human_app
 from prpilot_data.open_time import parse_ts, reconstruct
 
 CODEOWNERS_WINDOW = timedelta(minutes=2)
-LINKS_QUERY_VERSION = "issue-links-v1"
+LINKS_QUERY_VERSION = "issue-links-v1"  # cache key for the issue-link and ready-event queries
 LINKS_BATCH = 25
 
 
@@ -76,10 +79,22 @@ def _cc_by_human(node: dict, login: str, before: str, bots: RepoBots) -> str | N
     return None
 
 
-def reviewer_truth(node: dict, bots: RepoBots) -> dict:
+def reviewer_truth(node: dict, bots: RepoBots, ready_at: list[str] = ()) -> dict:
+    """`ready_at`: times the PR was marked ready for review. GitHub requests code owners when
+    a PR opens, or for a draft only when it is marked ready, so both moments count."""
     author = (node.get("author") or {}).get("login")
     opened = parse_ts(node["createdAt"])
+    ready = [parse_ts(t) for t in ready_at]
     merged = node.get("mergedAt") or "9999"
+
+    def codeowners_moment(at: str) -> str | None:
+        t = parse_ts(at)
+        if timedelta(0) <= t - opened <= CODEOWNERS_WINDOW:
+            return "codeowners_at_open"
+        if any(timedelta(0) <= t - r <= CODEOWNERS_WINDOW for r in ready):
+            return "codeowners_at_ready"
+        return None
+
     requested: dict[str, str] = {}
     excluded: Counter = Counter()
     for event in node["reviewRequests"]["nodes"]:
@@ -99,10 +114,8 @@ def reviewer_truth(node: dict, bots: RepoBots) -> dict:
                 requested.setdefault(login, "cc_command")
             else:
                 excluded["bot_request"] += 1
-        elif actor.get("login") == author and parse_ts(event["createdAt"]) - opened <= (
-            CODEOWNERS_WINDOW
-        ):
-            excluded["codeowners_at_open"] += 1
+        elif actor.get("login") == author and codeowners_moment(event["createdAt"]):
+            excluded[codeowners_moment(event["createdAt"])] += 1
         else:
             requested.setdefault(login, "human_request")
     reviewed = {
@@ -181,8 +194,43 @@ def fetch_issue_links(gh: GitHubGraphQL, repo: str, numbers: list[int]) -> dict[
     return out
 
 
+def ready_query(numbers: list[int]) -> str:
+    aliases = "\n".join(
+        f"  pr{n}: pullRequest(number: {n}) {{ timelineItems(first: 50, "
+        "itemTypes: [READY_FOR_REVIEW_EVENT]) { nodes { ... on ReadyForReviewEvent "
+        "{ createdAt } } } }"
+        for n in numbers
+    )
+    return f"""query($owner: String!, $name: String!) {{
+  repository(owner: $owner, name: $name) {{
+{aliases}
+  }}
+  rateLimit {{ cost remaining resetAt }}
+}}"""
+
+
+def fetch_ready_events(gh: GitHubGraphQL, repo: str, numbers: list[int]) -> dict[int, list[str]]:
+    """When each PR was marked ready for review (stage B did not fetch these)."""
+    owner, name = repo.split("/")
+    out = {}
+    numbers = sorted(numbers)
+    for i in range(0, len(numbers), LINKS_BATCH):
+        chunk = numbers[i : i + LINKS_BATCH]
+        data = gh.query(ready_query(chunk), {"owner": owner, "name": name})["repository"]
+        for n in chunk:
+            out[n] = [e["createdAt"] for e in data[f"pr{n}"]["timelineItems"]["nodes"] if e]
+        if (i // LINKS_BATCH + 1) % 100 == 0:
+            print(f"  {repo}: ready-for-review events for {i + len(chunk)}/{len(numbers)} PRs")
+    return out
+
+
 def truth_row(
-    node: dict, bots: RepoBots, mapping: dict, priority: list[str], links: list[dict]
+    node: dict,
+    bots: RepoBots,
+    mapping: dict,
+    priority: list[str],
+    links: list[dict],
+    ready_at: list[str] = (),
 ) -> dict:
     author = node.get("author")
     return {
@@ -194,7 +242,8 @@ def truth_row(
         "author_is_bot": is_bot(author, bots),
         "author_association": node.get("authorAssociation"),
         **label_truth(node, bots, mapping, priority),
-        **reviewer_truth(node, bots),
+        **reviewer_truth(node, bots, ready_at),
+        "ready_for_review_at": list(ready_at),
         **issue_truth(node, links),
     }
 
