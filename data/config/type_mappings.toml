@@ -113,7 +113,9 @@ primary_type_priority = [
 "release-note/ci" = "ci/build"
 "dependencies" = "dependency"
 "kind/performance" = "other"
-"release-note/misc" = "other"      # REVIEW: very common catch-all
+# release-note/misc is not mapped (Phase 1 decision 3, 2026-10-27): a very common catch-all
+# changelog section, not a PR type. PRs whose only type-like label is release-note/misc get
+# no type. It was mapped to "other" during Phase 0 (feasibility counts include it).
 
 [repos."containerd/containerd"]
 "kind/bug" = "bug"

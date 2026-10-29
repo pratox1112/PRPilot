@@ -31,6 +31,11 @@ uv run --group data python -m prpilot_data diffs [--repo owner/name] [--limit N]
     Stage C: open-time diff per PR (REST compare, read-only, cached, resumable), cut to
     6,000 Qwen3-1.7B tokens. With --limit it fetches only the first N PRs per repo (trial).
 
+uv run python -m prpilot_data truth
+    Stage D: ground truth per indexed PR (human-applied labels, type, reviewers without bot or
+    CODEOWNERS requests, closing issues). Reads stage B; fetches only the repos of closing
+    issues (read-only, cached).
+
 uv run python -m prpilot_data open-time-validate
     Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
     compares it with the GH Archive payloads.
@@ -54,6 +59,7 @@ from prpilot_data.records import (
 )
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
+TYPES_CONFIG = REPO_ROOT / "data" / "config" / "type_mappings.toml"
 RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
 INDEX_DIR = REPO_ROOT / "data" / "interim" / "index"
 
@@ -293,6 +299,54 @@ def cmd_diffs(repo: str | None, limit: int | None) -> None:
         print(f"wrote {path} and {out_dir}")
 
 
+def cmd_truth() -> None:
+    from prpilot_data import ground_truth
+    from prpilot_data.github_api import GitHubGraphQL
+
+    require_clean_tree()
+    meta = run_metadata(["httpx"])  # taken before the run, so later edits cannot taint it
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(
+        REPO_ROOT / "data" / "raw" / "github_graphql", ground_truth.LINKS_QUERY_VERSION
+    )
+    repos_cfg = tomllib.loads(REPOS_CONFIG.read_text(encoding="utf-8"))
+    types_cfg = tomllib.loads(TYPES_CONFIG.read_text(encoding="utf-8"))
+    priority = types_cfg["primary_type_priority"]
+    out_dir = REPO_ROOT / "data" / "interim" / "truth"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stats = {}
+    for r in selected_repos():
+        slug = r.replace("/", "__")
+        keep = {row["number"] for row in read_jsonl(INDEX_DIR / f"{slug}.jsonl")}
+        nodes = [n for n in timeline_nodes(r) if n["number"] in keep]
+        with_links = [n["number"] for n in nodes if n["closingIssuesReferences"]["totalCount"]]
+        links = ground_truth.fetch_issue_links(gh, r, with_links)
+        bots = ground_truth.repo_bots(repos_cfg, r)
+        mapping = types_cfg["repos"][r]
+        rows = [
+            ground_truth.truth_row(n, bots, mapping, priority, links.get(n["number"], []))
+            for n in sorted(nodes, key=lambda n: n["number"])
+        ]
+        with (out_dir / f"{slug}.jsonl").open("w", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        stats[r] = ground_truth.summarize(rows)
+        print(f"{r}: {stats[r]}")
+    path = write_result(
+        "data_truth",
+        {
+            "stage": "D: ground truth from maintainer actions (labels, type, reviewers, issues)",
+            "meta": meta,
+            "type_mappings_hash": content_hash(types_cfg),
+            "repos_config_hash": content_hash(repos_cfg),
+            "codeowners_window_s": ground_truth.CODEOWNERS_WINDOW.total_seconds(),
+            "repos": stats,
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+        },
+    )
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
+
+
 def cmd_validate() -> None:
     from prpilot_data.github_api import GitHubGraphQL
     from prpilot_data.validate_open_time import QUERY_VERSION, load_truth, validate
@@ -436,6 +490,7 @@ def main() -> None:
     df = sub.add_parser("diffs")
     df.add_argument("--repo")
     df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
+    sub.add_parser("truth")
     t = sub.add_parser("timeline")
     t.add_argument("--repo")
     t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
@@ -456,6 +511,8 @@ def main() -> None:
         cmd_diffs_validate(args.sample)
     elif args.cmd == "diffs":
         cmd_diffs(args.repo, args.limit)
+    elif args.cmd == "truth":
+        cmd_truth()
     else:
         cmd_validate()
 
