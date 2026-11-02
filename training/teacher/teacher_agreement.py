@@ -70,7 +70,7 @@ def main() -> None:
     args = parser.parse_args()
 
     raw = Path(args.inputs).read_bytes()
-    rows = [json.loads(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
+    rows = [json.loads(line) for line in raw.decode("utf-8").split("\n") if line.strip()]
     repo, revision = os.environ["TEACHER_REPO"], os.environ["TEACHER_REVISION"]
 
     start = time.perf_counter()

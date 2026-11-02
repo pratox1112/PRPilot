@@ -1,0 +1,64 @@
+{
+  "step": "Phase 1 step 2: GH Archive payload completeness",
+  "meta": {
+    "timestamp_utc": "2026-10-28T03:05:10+00:00",
+    "git": {
+      "commit": "a22eb4f5799055e97b746ce30ea694d42731194b",
+      "dirty": false
+    },
+    "python": "3.12.10",
+    "packages": {
+      "google-cloud-bigquery": "3.46.2"
+    }
+  },
+  "sample_days": [
+    "20230615",
+    "20250616",
+    "20260216"
+  ],
+  "repos": [
+    "cilium/cilium",
+    "kubernetes/kubernetes",
+    "numpy/numpy",
+    "pandas-dev/pandas"
+  ],
+  "bytes_estimated": 32351423764,
+  "bytes_billed": 32351715328,
+  "opened_events": 85,
+  "completeness_by_day": {
+    "2023-06-15": {
+      "events": 49,
+      "title": 1.0,
+      "body": 0.959,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 16306
+    },
+    "2025-06-16": {
+      "events": 23,
+      "title": 1.0,
+      "body": 1.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 1.0,
+      "pr_created_at": 1.0,
+      "median_payload_chars": 17466
+    },
+    "2026-02-16": {
+      "events": 13,
+      "title": 0.0,
+      "body": 0.0,
+      "head_sha": 1.0,
+      "base_sha": 1.0,
+      "base_ref": 1.0,
+      "author": 0.0,
+      "pr_created_at": 0.0,
+      "median_payload_chars": 515
+    }
+  },
+  "raw_file": "data/raw/gharchive/sample_opened.jsonl"
+}

@@ -21,6 +21,16 @@ class GraphQLError(RuntimeError):
     pass
 
 
+def rest_retry_wait(headers, attempt: int) -> float:
+    """Seconds to wait before retrying a 403/429/5xx: GitHub's retry-after if given; the reset
+    time if the hourly budget is used up (backoff would give up long before it refills)."""
+    if headers.get("retry-after"):
+        return int(headers["retry-after"])
+    if headers.get("x-ratelimit-remaining") == "0" and headers.get("x-ratelimit-reset"):
+        return max(int(headers["x-ratelimit-reset"]) - time.time(), 0) + 5
+    return min(2**attempt * 5, 300)
+
+
 class GitHubGraphQL:
     def __init__(self, cache_dir: Path, query_version: str, token: str | None = None):
         token = token or os.getenv("GITHUB_TOKEN")
@@ -57,14 +67,22 @@ class GitHubGraphQL:
             self.cache_hits += 1
             return path_key.read_text(encoding="utf-8")
         for attempt in range(6):
-            resp = self.client.get(f"https://api.github.com{path}", headers={"Accept": accept})
+            try:
+                resp = self.client.get(f"https://api.github.com{path}", headers={"Accept": accept})
+            except httpx.TransportError as e:
+                self.calls += 1
+                wait = min(2**attempt * 5, 300)
+                print(f"  {type(e).__name__} on {path}; retrying in {wait}s", file=sys.stderr)
+                time.sleep(wait)
+                continue
             self.calls += 1
             if resp.status_code in (403, 429) or resp.status_code >= 500:
-                wait = int(resp.headers.get("retry-after", 0)) or min(2**attempt * 5, 300)
+                wait = rest_retry_wait(resp.headers, attempt)
                 print(f"  HTTP {resp.status_code} on {path}; retrying in {wait}s", file=sys.stderr)
                 time.sleep(wait)
                 continue
             resp.raise_for_status()
+            self._respect_rest_limit(resp.headers)
             path_key.parent.mkdir(parents=True, exist_ok=True)
             path_key.write_text(resp.text, encoding="utf-8")
             return resp.text
@@ -72,7 +90,14 @@ class GitHubGraphQL:
 
     def _post(self, query: str, variables: dict, attempts: int = 6) -> dict:
         for attempt in range(attempts):
-            resp = self.client.post(API_URL, json={"query": query, "variables": variables})
+            try:
+                resp = self.client.post(API_URL, json={"query": query, "variables": variables})
+            except httpx.TransportError as e:  # dropped connection, timeout, laptop sleep
+                self.calls += 1
+                wait = min(2**attempt * 5, 300)
+                print(f"  {type(e).__name__}; retrying in {wait}s", file=sys.stderr)
+                time.sleep(wait)
+                continue
             self.calls += 1
             if resp.status_code in (403, 429) or resp.status_code >= 500:
                 wait = int(resp.headers.get("retry-after", 0)) or min(2**attempt * 5, 300)
@@ -86,6 +111,16 @@ class GitHubGraphQL:
             self._respect_rate_limit(body["data"].get("rateLimit"))
             return body["data"]
         raise GraphQLError(f"gave up after {attempts} attempts")
+
+    @staticmethod
+    def _respect_rest_limit(headers) -> None:
+        """REST has its own hourly budget (5,000 requests), reported in response headers."""
+        remaining = headers.get("x-ratelimit-remaining")
+        if remaining is None or int(remaining) > MIN_REMAINING:
+            return
+        wait = max(int(headers["x-ratelimit-reset"]) - time.time(), 0) + 5
+        print(f"  REST rate limit low ({remaining} left); sleeping {wait:.0f}s", file=sys.stderr)
+        time.sleep(wait)
 
     @staticmethod
     def _respect_rate_limit(rate: dict | None) -> None:

@@ -155,3 +155,68 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   - This was the train window, so choosing the mode on it does not touch the test set (hard rule 4).
 - Next: 0.9 Phase 0 review
 
+## Phase 1 — Data pipeline
+
+### 2026-10-28 — Task 1.1 — Data package
+- Status: done
+- What changed: `prpilot_data/` package (GitHub client, label attribution, input preparation and record helpers moved from `scripts/feasibility/` unchanged; Phase 0 scripts import them from the package). CLI `python -m prpilot_data`.
+- Results: n/a
+- Dataset hash: n/a
+- Notes / decisions / problems: Phase 1 guidelines approved 2026-10-27 with all eight recommended choices (merged default-branch PRs only; drop cilium `release-note/misc` from the type mapping; keep bot-authored PRs with a flag; report issue recall with/without explicit `Fixes #N`; GH Archive after cost estimate; 6,000-token diff budget with the student tokenizer; `prpilot_data/` package).
+- Next: 1.2
+
+### 2026-10-28 — Task 1.2 — Open-time inputs: GH Archive check and GraphQL reconstruction
+- Status: done
+- What changed: `prpilot_data/gharchive.py` (dry-run-first BigQuery queries with a byte cap), `prpilot_data/open_time.py` (title from the earliest `RenamedTitleEvent.previousTitle`; body from the oldest edit-history entry; head commit = last commit before opening, or the commit before the first force push), `prpilot_data/validate_open_time.py`.
+- Results:
+  - GH Archive payload completeness: `opened` events carry title/body/author until GitHub trimmed event payloads on 2025-10-07; head and base SHA are present throughout → results/data_gharchive_sample.json @ a22eb4f5799055e97b746ce30ea694d42731194b, results/data_gharchive_validation.json @ 0f721931c5ee9efc8001744c6a1999a3667a209d (16 days, 554 opened PR events; 179.5 GiB billed, inside the free tier).
+  - GraphQL reconstruction vs GH Archive truth (N = 554; title/body N = 475 before the trim), 0 s clock tolerance: title 475/475 = 100% (naive final value 82.5%); body 475/475 = 100% (naive 64.0%); head SHA 462/554 = 83.4% (naive 48.6%) → results/data_open_time_validation.json @ b42ff988ec000d4fca0d7df4aad679be364064bb (clean tree).
+  - Open-time head commit still fetchable by SHA: not force-pushed 334/335; force-pushed 154/219 (70%) (same file).
+- Dataset hash: validation sample `truth_hash` in the results file
+- Notes / decisions / problems:
+  - The body rule first used the oldest `createdAt`, which matched only 42/72: GitHub stores the original and the first edit with the same timestamp. The original is the last entry in the API's (newest-first) order; fixed and re-validated.
+  - Head-SHA misses: 81 force-pushed PRs whose earlier commits GraphQL returns as null (flagged `unresolved`, final-diff fallback), 13 silently wrong guesses (about 2.3%).
+  - 0 s tolerance beats 5 min overall (462 vs 457 correct).
+  - Owner decision (option B): GraphQL reconstruction for all PRs, plus GH Archive head SHAs for the post-trim months 2025-10..2026-03 (est. 634 GiB, within the free tier). Unresolved heads are flagged and metrics are reported for clean vs flagged PRs. A full GH Archive query (~13.3 TiB, ~$77) was not run; it would raise correct open-time diffs from about 83% to about 88%, limited by commits that no longer exist.
+- Next: 1.3 (stage A discovery at full scale)
+
+
+### 2026-10-29 — Task 1.3 — Stages A–C at full scale: PRs, history, open-time diffs
+- Status: done
+- What changed: `prpilot_data/discover.py` (stage A, exact base-branch filter), `timeline.py` and `complete.py` (stage B, GraphQL history with every capped connection refetched page by page), `gharchive.py` post-trim query (stage A′), `diffs.py` and `tokens.py` (stage C: open-time `compare/<base at open>...<head at open>`, cut to 6,000 Qwen3-1.7B tokens); `require_clean_tree()` before every recorded run, REST rate-limit handling.
+- Results:
+  - Stage A: 28,845 merged default-branch PRs opened 2023-01-01..2026-03-31 (cilium 9,397, kubernetes 9,263, pandas 6,582, numpy 3,603) → results/data_discover.json @ 1c1a675a692d94b0e9608c8fa89a8a4934a333ef.
+  - Stage A′: 2,484 GH Archive `opened` events with head SHA, 634.3 GiB billed (free tier) → results/data_gharchive_post_trim.json @ 65a3c54321911fdaee01549dbadb0a43422e79dd.
+  - Stage B → results/data_timeline.json @ 2e30e0d128cf469acdb81c5db971ed81fb322342, results/data_timeline_complete.json @ 7a3b0f199f21b799e91935d76dfb6320c6b61439.
+  - Stage C check vs GH Archive (post-trim PRs): heads 1,244/1,466 agree; bases 197/200 = 98.5% give a byte-identical diff → results/data_diffs_validation.json @ 57d96d8c1ec70db8de781e83ffa9a4b35582a765.
+  - Stage C (default-branch PRs): open-time diff 25,206, final-diff fallback 4,440, unavailable 34 (rows include the 835 numpy backports dropped later; the dataset counts below are after that filter) → results/data_diffs.json @ 4c4a6ce23b64714ef8f860983706f84ce3b09d91.
+- Dataset hash: per-repo input hashes in results/data_dataset.json `sources`
+- Notes / decisions / problems:
+  - First diff trial used the final head as fallback: PRs rebased before merging produced 10–60 MB diffs. Fallback changed to the PR's final diff, flagged.
+  - GitHub search's `base:main` also matches `maintenance/*`; discovery had included 835 numpy backport PRs (their inflated diffs gave it away). Fixed with an exact `baseRefName` check and re-run.
+  - The first stage A′ record was `dirty: true` (an uncommitted results file at run time). Re-run on a clean tree on 2026-11-02 after the free tier reset: the same 2,484 rows (order differs; no `ORDER BY`), so nothing downstream changed.
+  - 2023 heads are often unresolved (GitHub no longer returns commits from before old force pushes); a GH Archive query for 2023 (~$20–25) was not run.
+- Next: 1.4
+
+### 2026-10-29 — Task 1.4 — Ground truth from maintainer actions
+- Status: done
+- What changed: `prpilot_data/ground_truth.py` (stage D): human labels and type (bot filter, kubernetes slash-command attribution, removed labels dropped); reviewers = reviewed before merge or requested by a person, excluding bot requests without a human `/cc`, CODEOWNERS (author-actor requests within 2 min of opening or of ready-for-review) and team requests; closing issues with their repo and whether named at open. Cilium `release-note/misc` removed from the type mapping (decision 3).
+- Results: with a type: cilium 5,198, kubernetes 9,148, pandas 4,789, numpy 1,134; excluded CODEOWNERS requests at open / at ready: cilium 7,350 / 7,682, pandas 1,541 / 670 → results/data_truth.json @ fc9e735811cd0219e9f3a42982c3518bfac8cbff (clean tree).
+- Dataset hash: type mappings `sha256:1817bb63b28f83abc3025849351cfec81bcceb8def17036a1bda9c6f55a30309`, repos config `sha256:70921de97acbe1c207b65d150326788daeb63846fa532618e0ecf0d1815932a1`
+- Notes / decisions / problems:
+  - First run counted cilium code-owner requests made when a draft is marked ready for review as human requests (11,795 `human_request`); with the ready-for-review rule 4,812 remain. Requests after later pushes cannot be told apart (no push times); `reviewer_evidence` keeps `reviewed` separate.
+  - Other fixes before the record: pending (unsubmitted) reviews no longer count; the issue-mention regex no longer matches hex colours (`#12ab34`).
+  - Types are imbalanced (kubernetes mostly refactor, pandas mostly docs, `dependency` nearly empty because dependency bots label their own PRs): Phase 2 reports macro-F1 per class and per repo.
+- Next: 1.5
+
+### 2026-11-02 — Task 1.5 — Dataset, splits, spot check, test freeze
+- Status: done
+- What changed: `prpilot_data/dataset.py` (stage E: one row per PR, open-time inputs, targets incl. reverted from the Phase 0 revert scan, `flagged` / `diff_inflated`, time splits, cross-split duplicate removal, leakage check, Parquet + hashes), `spot_check.py`, `data/config/frozen_test.toml` (the build refuses to change the test split), data card `data/README.md`; pyarrow 25.0.1 in the `data` group.
+- Results: train 15,810 / val 3,355 / test 9,573 PRs; flagged 21.8% / 8.3% / 8.3%; reverted 120 / 18 / 40; 27 cross-split duplicate groups (train 63 and val 44 rows dropped) → results/data_dataset.json @ 6f74e6f5c0d184eb424babef912766f704b54593 (clean tree).
+- Dataset hash: **test (frozen) rows_hash `sha256:e5f4ddc9205b06e90dcacf53ff53d8bd1383e562717eca3e8168fa4fe42abdd8`**, file `sha256:5787eaedc5f9633b80fc4ffa0cc84bff4a5d848bee9197598a7d36bc324012e7`; train rows_hash `sha256:3ef2e8adc06eb747feb2a515a9b74dab0a572f8e4cd454650f41a411c5273986`; val rows_hash `sha256:65a2b30e066c1beb3bea9319e182f297f1b17cad4cbfdb25b50ede1a4a01b769`
+- Notes / decisions / problems:
+  - Spot check (§4.6): owner reviewed 40 random train/val PRs (cilium 14, kubernetes 13, pandas 13, seed 0) on GitHub on 2026-11-02; labels and actors, reviewers and issues all correct. Test split not sampled.
+  - Duplicates are recurring cilium PRs (release README updates, renovate updates); only older copies are dropped, so the test split is never reduced.
+  - `author_association` is GitHub's current value (no open-time source); documented in the data card.
+  - Test split frozen 2026-11-02, before any training or prompt tuning (hard rule 4).
+- Next: PR to `main`, then the Phase 1 review stop before Phase 2

@@ -26,8 +26,6 @@ from collections import Counter
 import httpx
 from common import REPO_ROOT, content_hash, run_metadata, write_result
 from dotenv import load_dotenv
-from github_graphql import GitHubGraphQL
-from label_attribution import attribute_labels, is_human_applied
 from label_volume import (
     CACHE_DIR,
     PAGE_SIZE,
@@ -38,7 +36,10 @@ from label_volume import (
     load_bots,
     search_q,
 )
-from pr_inputs import changed_files, strip_label_commands, truncate_diff
+
+from prpilot_data.github_api import GitHubGraphQL
+from prpilot_data.inputs import changed_files, strip_label_commands, truncate_diff
+from prpilot_data.labels import attribute_labels, is_human_applied
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 MAPPINGS_CONFIG = REPO_ROOT / "data" / "config" / "type_mappings.toml"
@@ -162,7 +163,11 @@ def main() -> None:
                 print(f"  fetched inputs for {i}/{SAMPLE_SIZE}")
     file_hash = "sha256:" + hashlib.sha256(OUT_PATH.read_bytes()).hexdigest()
 
-    rows = [json.loads(line) for line in OUT_PATH.read_text(encoding="utf-8").splitlines()]
+    rows = [
+        json.loads(line)
+        for line in OUT_PATH.read_text(encoding="utf-8").split("\n")
+        if line.strip()
+    ]
     flags = Counter()
     for r in rows:
         for k, v in r["context"]["flags"].items():

@@ -1,0 +1,12 @@
+# Test split frozen on 2026-11-02, after the owner's spot check and before any training or
+# prompt tuning (hard rule 4). `python -m prpilot_data dataset` refuses to write a test split
+# whose rows hash differs from this one. Never edit this to make a rebuild pass.
+#
+# rows_hash: sha256 of the canonical JSON of the test rows (records.content_hash), independent
+# of the Parquet writer. file_sha256: the Parquet file written by pyarrow 25.0.1.
+# Both are recorded in results/data_dataset.json @ 6f74e6f5c0d184eb424babef912766f704b54593.
+
+[test]
+rows_hash = "sha256:e5f4ddc9205b06e90dcacf53ff53d8bd1383e562717eca3e8168fa4fe42abdd8"
+file_sha256 = "sha256:5787eaedc5f9633b80fc4ffa0cc84bff4a5d848bee9197598a7d36bc324012e7"
+prs = 9573

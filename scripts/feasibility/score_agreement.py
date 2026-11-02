@@ -20,6 +20,7 @@ from common import REPO_ROOT, run_metadata, write_result
 from pydantic import ValidationError
 
 from prpilot_core.agents.triage_format import parse_static, strip_think
+from prpilot_data.records import read_jsonl
 
 INPUTS = REPO_ROOT / "data" / "processed" / "teacher_agreement_inputs.jsonl"
 GO_THRESHOLD = 0.60
@@ -87,12 +88,11 @@ def main() -> None:
 
     in_bytes = INPUTS.read_bytes()
     truth = {}
-    for line in in_bytes.decode("utf-8").splitlines():
-        r = json.loads(line)
+    for r in read_jsonl(INPUTS):
         truth[(r["repo"], r["number"])] = r
     out_path = Path(args.outputs)
     out_bytes = out_path.read_bytes()
-    lines = out_bytes.decode("utf-8").splitlines()
+    lines = [ln for ln in out_bytes.decode("utf-8").split("\n") if ln.strip()]
     teacher_meta = json.loads(lines[0])["meta"]
     outputs = {(r["repo"], r["number"]): r for r in map(json.loads, lines[1:])}
 

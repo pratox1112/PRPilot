@@ -1,0 +1,30 @@
+{
+  "stage": "A': GH Archive open-time head SHAs after the 2025-10-07 payload trim",
+  "meta": {
+    "timestamp_utc": "2026-11-02T22:20:57+00:00",
+    "git": {
+      "commit": "65a3c54321911fdaee01549dbadb0a43422e79dd",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "google-cloud-bigquery": "3.46.2"
+    }
+  },
+  "months": [
+    "202510",
+    "202603"
+  ],
+  "bytes_estimated": 681107807152,
+  "bytes_billed": 681108832256,
+  "opened_events": 2484,
+  "with_head_sha": 2484,
+  "by_repo": {
+    "numpy/numpy": 272,
+    "pandas-dev/pandas": 612,
+    "cilium/cilium": 788,
+    "kubernetes/kubernetes": 812
+  },
+  "raw_file": "data/raw/gharchive/post_trim_heads.jsonl"
+}

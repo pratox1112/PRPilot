@@ -1,0 +1,660 @@
+"""Command line for the data pipeline.
+
+uv run --group data python -m prpilot_data gharchive-estimate
+    Dry-runs the sample and full GH Archive queries; prints bytes and cost. Free.
+
+uv run --group data python -m prpilot_data gharchive-sample --days sample|validation --budget-gib N
+    Runs a day-sample query (only if its estimate is <= N GiB) and reports how many
+    `opened` events still carry the open-time fields.
+
+uv run python -m prpilot_data discover [--repo owner/name] [--month YYYY-MM]
+    Stage A: lists merged default-branch PRs opened in the data range (read-only GitHub
+    search, cached). With --month it only prints counts for that month (a trial run).
+
+uv run python -m prpilot_data timeline [--repo owner/name] [--limit N]
+    Stage B: fetches the GraphQL timeline of every discovered PR (read-only, cached,
+    resumable). With --limit it fetches only the first N PRs of each repo (a trial run).
+
+uv run --group data python -m prpilot_data gharchive-post-trim --budget-gib N
+    Stage A': open-time head SHAs from GH Archive for 2025-10..2026-03 (payloads after GitHub's
+    2025-10-07 trim still carry them). Dry-run first; refuses to run above N GiB.
+
+uv run python -m prpilot_data complete
+    Stage B follow-up: refetches, page by page, every connection whose single page was full
+    (reviews, comments, label events, review requests, renames/force pushes, commits).
+
+uv run python -m prpilot_data diffs-validate [--sample 200]
+    Stage C check: GraphQL open-time heads and first-parent bases vs GH Archive on the
+    post-trim PRs (where GH Archive has the true head and base).
+
+uv run --group data python -m prpilot_data diffs [--repo owner/name] [--limit N]
+    Stage C: open-time diff per PR (REST compare, read-only, cached, resumable), cut to
+    6,000 Qwen3-1.7B tokens. With --limit it fetches only the first N PRs per repo (trial).
+
+uv run python -m prpilot_data truth
+    Stage D: ground truth per indexed PR (human-applied labels, type, reviewers without bot or
+    CODEOWNERS requests, closing issues). Reads stage B; fetches only the repos of closing
+    issues (read-only, cached).
+
+uv run --group data python -m prpilot_data dataset
+    Stage E: joins stages B-D and the Phase 0 revert scan into one row per PR, splits by
+    opening date, drops cross-split duplicates and writes data/processed/*.parquet with hashes.
+    No network.
+
+uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
+    Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
+    every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
+
+uv run python -m prpilot_data open-time-validate
+    Rebuilds the open-time state of every sampled PR from GraphQL (read-only, cached) and
+    compares it with the GH Archive payloads.
+"""
+
+import argparse
+import json
+import os
+import tomllib
+
+from dotenv import load_dotenv
+
+from prpilot_data import gharchive
+from prpilot_data.records import (
+    REPO_ROOT,
+    content_hash,
+    read_jsonl,
+    require_clean_tree,
+    run_metadata,
+    write_result,
+)
+
+REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
+TYPES_CONFIG = REPO_ROOT / "data" / "config" / "type_mappings.toml"
+FROZEN_CONFIG = REPO_ROOT / "data" / "config" / "frozen_test.toml"
+RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
+INDEX_DIR = REPO_ROOT / "data" / "interim" / "index"
+
+
+def selected_repos() -> list[str]:
+    cfg = tomllib.loads(REPOS_CONFIG.read_text(encoding="utf-8"))["repos"]
+    return sorted(r for r, c in cfg.items() if c.get("status") == "selected")
+
+
+def client_and_config():
+    from google.cloud import bigquery
+
+    load_dotenv(REPO_ROOT / ".env")
+    project = os.getenv("GCP_PROJECT")
+    if not project:
+        raise SystemExit("GCP_PROJECT is not set in .env")
+    params = [bigquery.ArrayQueryParameter("repos", "STRING", selected_repos())]
+    return bigquery, bigquery.Client(project=project), params
+
+
+def estimate(bigquery, client, params, sql: str) -> gharchive.Estimate:
+    cfg = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False, query_parameters=params)
+    return gharchive.Estimate(client.query(sql, job_config=cfg).total_bytes_processed)
+
+
+def cmd_estimate() -> None:
+    bigquery, client, params = client_and_config()
+    for name, sql in [
+        ("sample (3 days)", gharchive.sample_sql()),
+        (
+            f"validation ({len(gharchive.VALIDATION_DAYS)} days)",
+            gharchive.days_sql(gharchive.VALIDATION_DAYS),
+        ),
+        ("post-trim only (2025-10..2026-03)", gharchive.post_trim_sql()),
+        ("full (2023-01..2026-03)", gharchive.full_sql()),
+    ]:
+        e = estimate(bigquery, client, params, sql)
+        print(
+            f"{name}: {e.gib:,.1f} GiB scanned, ~${e.usd():,.2f} at on-demand list price "
+            "(first 1 TiB per month is free)"
+        )
+
+
+def cmd_sample(day_set: str, budget_gib: float) -> None:
+    bigquery, client, params = client_and_config()
+    days = gharchive.DAY_SETS[day_set]
+    sql = gharchive.days_sql(days)
+    e = estimate(bigquery, client, params, sql)
+    cfg = bigquery.QueryJobConfig(
+        query_parameters=params, maximum_bytes_billed=gharchive.byte_cap(e, budget_gib)
+    )
+    job = client.query(sql, job_config=cfg)
+    rows = [dict(r) for r in job.result()]
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    raw_path = RAW_DIR / f"{day_set}_opened.jsonl"
+    with raw_path.open("w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, default=str, ensure_ascii=False) + "\n")
+    summary = gharchive.completeness(rows)
+    path = write_result(
+        f"data_gharchive_{day_set}",
+        {
+            "step": "Phase 1 step 2: GH Archive payload completeness",
+            "meta": run_metadata(["google-cloud-bigquery"]),
+            "days": days,
+            "repos": selected_repos(),
+            "bytes_estimated": e.bytes_processed,
+            "bytes_billed": job.total_bytes_billed,
+            "opened_events": len(rows),
+            "completeness_by_day": summary,
+            "raw_file": str(raw_path.relative_to(REPO_ROOT)).replace("\\", "/"),
+        },
+    )
+    for day, s in summary.items():
+        print(day, s)
+    print(f"billed {job.total_bytes_billed / 2**30:.1f} GiB; wrote {path} and {raw_path}")
+
+
+def cmd_post_trim(budget_gib: float) -> None:
+    from collections import Counter
+
+    require_clean_tree()
+    bigquery, client, params = client_and_config()
+    sql = gharchive.post_trim_sql()
+    e = estimate(bigquery, client, params, sql)
+    cfg = bigquery.QueryJobConfig(
+        query_parameters=params, maximum_bytes_billed=gharchive.byte_cap(e, budget_gib)
+    )
+    job = client.query(sql, job_config=cfg)
+    keep = ("repo", "number", "head_sha", "base_sha", "base_ref", "event_created_at")
+    rows = [{k: r[k] for k in keep} for r in job.result()]
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    # Not named *_opened.jsonl: open-time-validate globs those as its truth set.
+    raw_path = RAW_DIR / "post_trim_heads.jsonl"
+    with raw_path.open("w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, default=str, ensure_ascii=False) + "\n")
+    by_repo = Counter(r["repo"] for r in rows)
+    with_sha = sum(bool(r["head_sha"]) for r in rows)
+    path = write_result(
+        "data_gharchive_post_trim",
+        {
+            "stage": "A': GH Archive open-time head SHAs after the 2025-10-07 payload trim",
+            "meta": run_metadata(["google-cloud-bigquery"]),
+            "months": gharchive.POST_TRIM_MONTHS,
+            "bytes_estimated": e.bytes_processed,
+            "bytes_billed": job.total_bytes_billed,
+            "opened_events": len(rows),
+            "with_head_sha": with_sha,
+            "by_repo": dict(by_repo),
+            "raw_file": str(raw_path.relative_to(REPO_ROOT)).replace("\\", "/"),
+        },
+    )
+    print(f"{len(rows)} opened events ({with_sha} with head SHA): {dict(by_repo)}")
+    print(f"billed {job.total_bytes_billed / 2**30:.1f} GiB; wrote {path} and {raw_path}")
+
+
+def cmd_complete() -> None:
+    from collections import Counter
+
+    from prpilot_data import complete
+    from prpilot_data.github_api import GitHubGraphQL
+
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", complete.QUERY_VERSION)
+    stats = {}
+    for r in selected_repos():
+        path = REPO_ROOT / "data" / "interim" / "timeline" / f"{r.replace('/', '__')}.jsonl"
+        rows = read_jsonl(path)
+        counts: Counter = Counter()
+        for row in rows:
+            _, keys = complete.complete_node(gh, row)
+            counts.update(keys)
+            counts["prs"] += bool(keys)
+        tmp = path.with_suffix(".jsonl.tmp")
+        with tmp.open("w", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        os.replace(tmp, path)
+        stats[r] = dict(counts)
+        print(f"{r}: completed {dict(counts)}")
+    path = write_result(
+        "data_timeline_complete",
+        {
+            "stage": "B follow-up: complete connections that hit their page size",
+            "meta": run_metadata(["httpx"]),
+            "repos": stats,
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+        },
+    )
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
+
+
+def timeline_nodes(repo: str) -> list[dict]:
+    return read_jsonl(
+        REPO_ROOT / "data" / "interim" / "timeline" / f"{repo.replace('/', '__')}.jsonl"
+    )
+
+
+def base_index(gh, diffs, repo: str, nodes: list[dict]):
+    branch = diffs.base_branch(nodes)
+    chain = diffs.first_parent_chain(diffs.fetch_history(gh, repo, branch))
+    print(f"{repo}: {len(chain)} first-parent commits on {branch} since {diffs.HISTORY_SINCE}")
+    return diffs.BaseIndex(chain)
+
+
+def cmd_diffs_validate(sample: int) -> None:
+    from prpilot_data import diffs
+    from prpilot_data.github_api import GitHubGraphQL
+
+    require_clean_tree()
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", diffs.QUERY_VERSION)
+    archive = diffs.load_archive(RAW_DIR / "post_trim_heads.jsonl")
+    nodes, indexes = {}, {}
+    for r in selected_repos():
+        repo_nodes = timeline_nodes(r)
+        nodes.update({(r, n["number"]): n for n in repo_nodes})
+        indexes[r] = base_index(gh, diffs, r, repo_nodes)
+    report = diffs.validate(gh, nodes, archive, indexes, sample)
+    path = write_result(
+        "data_diffs_validation",
+        {
+            "stage": "C check: open-time head and base reconstruction vs GH Archive (post-trim)",
+            "meta": run_metadata(["httpx"]),
+            "query_version": diffs.QUERY_VERSION,
+            "sample_seed": 0,
+            **report,
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+        },
+    )
+    print(f"heads: {report['head_agree']}/{report['post_trim_prs']} agree with GH Archive")
+    print(f"   by method {report['head_reconstruction']}")
+    print(f"bases ({report['base_sample']} sampled): {report['base_outcomes']}")
+    print(f"   diff agreement {report['base_diff_agree']}")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
+
+
+def cmd_diffs(repo: str | None, limit: int | None) -> None:
+    from prpilot_data import diffs, tokens
+    from prpilot_data.github_api import GitHubGraphQL
+
+    if not limit:
+        require_clean_tree()
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", diffs.QUERY_VERSION)
+    count_tokens = tokens.load_counter()
+    archive = diffs.load_archive(RAW_DIR / "post_trim_heads.jsonl")
+    out_dir = REPO_ROOT / "data" / "interim" / "diffs"
+    stats = {}
+    for r in [repo] if repo else selected_repos():
+        nodes = timeline_nodes(r)
+        index = base_index(gh, diffs, r, nodes)
+        if limit:
+            nodes = sorted(nodes, key=lambda n: n["number"])[:limit]
+        slug = r.replace("/", "__")
+        out = out_dir / (f"{slug}.trial.jsonl" if limit else f"{slug}.jsonl")
+        if limit:
+            out.unlink(missing_ok=True)  # trials start fresh; only the full run resumes
+        written = diffs.process_repo(gh, nodes, archive, index, count_tokens, out)
+        stats[r] = diffs.summarize(read_jsonl(out))
+        print(f"{r}: {written} new rows; {stats[r]}")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not limit and not repo:
+        path = write_result(
+            "data_diffs",
+            {
+                "stage": "C: open-time diffs, truncated to the student token budget",
+                "meta": run_metadata(["httpx", "tokenizers", "huggingface-hub"]),
+                "query_version": diffs.QUERY_VERSION,
+                "tokenizer": {"model": tokens.STUDENT_MODEL, "revision": tokens.STUDENT_REVISION},
+                "diff_token_budget": diffs.DIFF_TOKENS,
+                "repos": stats,
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {out_dir}")
+
+
+def cmd_truth() -> None:
+    from prpilot_data import ground_truth
+    from prpilot_data.github_api import GitHubGraphQL
+
+    require_clean_tree()
+    meta = run_metadata(["httpx"])  # taken before the run, so later edits cannot taint it
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(
+        REPO_ROOT / "data" / "raw" / "github_graphql", ground_truth.LINKS_QUERY_VERSION
+    )
+    repos_cfg = tomllib.loads(REPOS_CONFIG.read_text(encoding="utf-8"))
+    types_cfg = tomllib.loads(TYPES_CONFIG.read_text(encoding="utf-8"))
+    priority = types_cfg["primary_type_priority"]
+    out_dir = REPO_ROOT / "data" / "interim" / "truth"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stats = {}
+    for r in selected_repos():
+        slug = r.replace("/", "__")
+        keep = {row["number"] for row in read_jsonl(INDEX_DIR / f"{slug}.jsonl")}
+        nodes = [n for n in timeline_nodes(r) if n["number"] in keep]
+        with_links = [n["number"] for n in nodes if n["closingIssuesReferences"]["totalCount"]]
+        links = ground_truth.fetch_issue_links(gh, r, with_links)
+        # Ready-for-review times only matter where the author is the actor of a request.
+        with_author_requests = [
+            n["number"]
+            for n in nodes
+            if any(
+                (e.get("actor") or {}).get("login") == (n.get("author") or {}).get("login")
+                for e in n["reviewRequests"]["nodes"]
+            )
+        ]
+        ready = ground_truth.fetch_ready_events(gh, r, with_author_requests)
+        bots = ground_truth.repo_bots(repos_cfg, r)
+        mapping = types_cfg["repos"][r]
+        rows = [
+            ground_truth.truth_row(
+                n, bots, mapping, priority, links.get(n["number"], []), ready.get(n["number"], [])
+            )
+            for n in sorted(nodes, key=lambda n: n["number"])
+        ]
+        with (out_dir / f"{slug}.jsonl").open("w", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        stats[r] = ground_truth.summarize(rows)
+        print(f"{r}: {stats[r]}")
+    path = write_result(
+        "data_truth",
+        {
+            "stage": "D: ground truth from maintainer actions (labels, type, reviewers, issues)",
+            "meta": meta,
+            "type_mappings_hash": content_hash(types_cfg),
+            "repos_config_hash": content_hash(repos_cfg),
+            "codeowners_window_s": ground_truth.CODEOWNERS_WINDOW.total_seconds(),
+            "repos": stats,
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+        },
+    )
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}; wrote {path}")
+
+
+def cmd_dataset() -> None:
+    from prpilot_data import dataset
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    repos_cfg = tomllib.loads(REPOS_CONFIG.read_text(encoding="utf-8"))["repos"]
+    reverts_path = REPO_ROOT / "results" / "feasibility_reverts.json"
+    reverts = dataset.load_reverts(reverts_path)
+    interim = REPO_ROOT / "data" / "interim"
+    sources = {}
+    rows = []
+    for r in selected_repos():
+        slug = r.replace("/", "__")
+        paths = {
+            "index": INDEX_DIR / f"{slug}.jsonl",
+            "timeline": interim / "timeline" / f"{slug}.jsonl",
+            "diffs": interim / "diffs" / f"{slug}.jsonl",
+            "truth": interim / "truth" / f"{slug}.jsonl",
+        }
+        sources[r] = {k: dataset.file_sha256(p) for k, p in paths.items()}
+        keep = {row["number"] for row in read_jsonl(paths["index"])}
+        nodes = {n["number"]: n for n in read_jsonl(paths["timeline"]) if n["number"] in keep}
+        diffs = {d["number"]: d for d in read_jsonl(paths["diffs"]) if d["number"] in keep}
+        truth = {t["number"]: t for t in read_jsonl(paths["truth"])}
+        missing = keep - nodes.keys() | keep - diffs.keys() | keep - truth.keys()
+        if missing:
+            raise SystemExit(f"{r}: {len(missing)} indexed PRs lack stage B/C/D rows")
+        role = repos_cfg[r]["split_role"]
+        for n in sorted(keep):
+            node = nodes[n]
+            rows.append(
+                dataset.build_row(
+                    node,
+                    diffs[n],
+                    truth[n],
+                    reverts.get((r, n)),
+                    dataset.split_of(node["createdAt"], role),
+                )
+            )
+        print(f"{r}: {len(keep)} PRs")
+    kept, duplicates = dataset.drop_cross_split_duplicates(rows)
+    dataset.check_no_leakage(kept)
+    dataset.check_frozen_test(
+        FROZEN_CONFIG, content_hash([row for row in kept if row["split"] == "test"])
+    )
+    out_dir = REPO_ROOT / "data" / "processed"
+    splits = {}
+    for split in dataset.SPLITS:
+        part = [row for row in kept if row["split"] == split]
+        path = out_dir / f"prpilot_{split}.parquet"
+        splits[split] = {
+            "file": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "file_sha256": dataset.write_parquet(part, path),
+            "rows_hash": content_hash(part),
+            **dataset.summarize(part),
+        }
+        s = splits[split]
+        print(
+            f"{split}: {s['prs']} PRs {s['by_repo']}; flagged {s['flagged']} "
+            f"({s['flagged_share']}); with type {s['with_type']}, reviewer {s['with_reviewer']}, "
+            f"issue {s['with_issue']}, reverted {s['reverted']}"
+        )
+    path = write_result(
+        "data_dataset",
+        {
+            "stage": "E: cleaned dataset, one row per PR, split by opening date",
+            "meta": meta,
+            "split_rule": {
+                "train": f"opened <= {dataset.TRAIN_END}",
+                "val": f"opened <= {dataset.VAL_END}",
+                "test": f"opened <= {dataset.TEST_END}, plus every PR of held-out repos",
+                "held_out": sorted(
+                    k for k in selected_repos() if repos_cfg[k]["split_role"] == "held_out"
+                ),
+            },
+            "inflated_rule": (
+                f"open-time files > {dataset.FILES_FACTOR} x final + {dataset.FILES_EXTRA}"
+            ),
+            "sources": sources,
+            "reverts_source": {
+                "file": "results/feasibility_reverts.json",
+                "sha256": dataset.file_sha256(reverts_path),
+            },
+            "duplicates": duplicates,
+            "splits": splits,
+        },
+    )
+    print(
+        f"duplicates across splits: {duplicates['cross_split_groups']} groups, "
+        f"dropped {duplicates['dropped_by_split']}"
+    )
+    print(f"wrote {path} and {out_dir}")
+
+
+def cmd_spot_check(n: int, seed: int) -> None:
+    import pyarrow.parquet as pq
+
+    from prpilot_data import spot_check
+
+    processed = REPO_ROOT / "data" / "processed"
+    rows = []
+    for split in ("train", "val"):
+        rows += pq.read_table(processed / f"prpilot_{split}.parquet").to_pylist()
+    picked = spot_check.sample(rows, n, seed)
+    out = REPO_ROOT / "data" / "interim" / "spot_check.md"
+    out.write_text(spot_check.report(picked, seed), encoding="utf-8")
+    print(f"wrote {len(picked)} PRs to {out}")
+
+
+def cmd_validate() -> None:
+    from prpilot_data.github_api import GitHubGraphQL
+    from prpilot_data.validate_open_time import QUERY_VERSION, load_truth, validate
+
+    load_dotenv(REPO_ROOT / ".env")
+    paths = sorted(RAW_DIR.glob("*_opened.jsonl"))
+    if not paths:
+        raise SystemExit(f"no GH Archive samples in {RAW_DIR}; run gharchive-sample first")
+    truth = load_truth(paths)
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", QUERY_VERSION)
+    report = validate(gh, truth)
+    path = write_result(
+        "data_open_time_validation",
+        {
+            "step": "Phase 1 step 2: GraphQL open-time reconstruction vs GH Archive",
+            "meta": run_metadata(["httpx"]),
+            "truth_files": [str(p.relative_to(REPO_ROOT)).replace("\\", "/") for p in paths],
+            "truth_hash": content_hash(sorted(f"{r}#{n}" for r, n in truth)),
+            "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            **report,
+        },
+    )
+    for tol, r in report["by_tolerance"].items():
+        print(f"== tolerance {tol}: head methods {r['head_methods']}")
+        for period in ("before_trim", "after_trim"):
+            s = r[period]
+            print(f"   {period:12}", {f: (v["agree"], v["n"]) for f, v in s.items()})
+    print(f"open-time head commit still fetchable: {report['true_head_commit_fetchable']}")
+    print(f"fetched {report['prs_fetched']}/{report['prs_in_truth']} PRs; wrote {path}")
+
+
+def cmd_discover(repo: str | None, month: str | None) -> None:
+    from datetime import date, timedelta
+
+    from prpilot_data import discover
+    from prpilot_data.github_api import GitHubGraphQL
+
+    if not month:
+        require_clean_tree()
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", discover.QUERY_VERSION)
+    repos = [repo] if repo else selected_repos()
+    if month:
+        y, m = map(int, month.split("-"))
+        start = date(y, m, 1)
+        end = date(y + m // 12, m % 12 + 1, 1) - timedelta(days=1)
+    else:
+        start, end = discover.RANGE_START, discover.RANGE_END
+    all_stats = {}
+    for r in repos:
+        rows, stats = discover.discover_repo(gh, r, start, end)
+        all_stats[r] = stats
+        print(
+            f"{r}: {stats['kept']} PRs kept of {stats['fetched_unique']} found "
+            f"(search reported {stats['search_reported']}; other branches dropped "
+            f"{stats['off_branch_dropped'] or '-'}), {stats['windows']} windows, "
+            f"overfull days {stats['overfull_days'] or '-'}"
+        )
+        if not month:
+            discover.write_index(rows, INDEX_DIR / f"{r.replace('/', '__')}.jsonl")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not month:
+        path = write_result(
+            "data_discover",
+            {
+                "stage": "A: discover merged default-branch PRs",
+                "meta": run_metadata(["httpx"]),
+                "range": [str(start), str(end)],
+                "repos": all_stats,
+                "total_prs": sum(s["kept"] for s in all_stats.values()),
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {INDEX_DIR}")
+
+
+def cmd_timeline(repo: str | None, limit: int | None) -> None:
+    from collections import Counter
+
+    from prpilot_data import timeline
+    from prpilot_data.github_api import GitHubGraphQL
+
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", timeline.QUERY_VERSION)
+    repos = [repo] if repo else selected_repos()
+    out_dir = REPO_ROOT / "data" / "interim" / "timeline"
+    stats = {}
+    for r in repos:
+        slug = r.replace("/", "__")
+        numbers = timeline.read_index(INDEX_DIR / f"{slug}.jsonl")
+        if limit:
+            numbers = sorted(numbers)[:limit]
+        out = out_dir / (f"{slug}.trial.jsonl" if limit else f"{slug}.jsonl")
+        written, missing, failed = timeline.fetch_repo(gh, r, numbers, out)
+        capped: Counter = Counter()
+        for row in read_jsonl(out):
+            for k, v in timeline.capped_counts(row).items():
+                capped[k] += v
+        stats[r] = {
+            "requested": len(numbers),
+            "written": written,
+            "missing": missing,
+            "failed": failed,
+            "capped": dict(capped),
+        }
+        print(
+            f"{r}: {written}/{len(numbers)} written, {missing} missing, {len(failed)} failed; "
+            f"capped {dict(capped)}"
+        )
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not limit:
+        path = write_result(
+            "data_timeline",
+            {
+                "stage": "B: GraphQL timeline per PR",
+                "meta": run_metadata(["httpx"]),
+                "query_version": timeline.QUERY_VERSION,
+                "repos": stats,
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {out_dir}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="python -m prpilot_data")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("gharchive-estimate")
+    s = sub.add_parser("gharchive-sample")
+    s.add_argument("--days", choices=sorted(gharchive.DAY_SETS), default="sample")
+    s.add_argument("--budget-gib", type=float, required=True)
+    sub.add_parser("open-time-validate")
+    d = sub.add_parser("discover")
+    d.add_argument("--repo")
+    d.add_argument("--month", help="YYYY-MM: trial run for one month, counts only")
+    pt = sub.add_parser("gharchive-post-trim")
+    pt.add_argument("--budget-gib", type=float, required=True)
+    sub.add_parser("complete")
+    dv = sub.add_parser("diffs-validate")
+    dv.add_argument("--sample", type=int, default=200)
+    df = sub.add_parser("diffs")
+    df.add_argument("--repo")
+    df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
+    sub.add_parser("truth")
+    sub.add_parser("dataset")
+    sc = sub.add_parser("spot-check")
+    sc.add_argument("--n", type=int, default=40)
+    sc.add_argument("--seed", type=int, default=0)
+    t = sub.add_parser("timeline")
+    t.add_argument("--repo")
+    t.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
+    args = parser.parse_args()
+    if args.cmd == "gharchive-estimate":
+        cmd_estimate()
+    elif args.cmd == "gharchive-sample":
+        cmd_sample(args.days, args.budget_gib)
+    elif args.cmd == "discover":
+        cmd_discover(args.repo, args.month)
+    elif args.cmd == "timeline":
+        cmd_timeline(args.repo, args.limit)
+    elif args.cmd == "gharchive-post-trim":
+        cmd_post_trim(args.budget_gib)
+    elif args.cmd == "complete":
+        cmd_complete()
+    elif args.cmd == "diffs-validate":
+        cmd_diffs_validate(args.sample)
+    elif args.cmd == "diffs":
+        cmd_diffs(args.repo, args.limit)
+    elif args.cmd == "truth":
+        cmd_truth()
+    elif args.cmd == "dataset":
+        cmd_dataset()
+    elif args.cmd == "spot-check":
+        cmd_spot_check(args.n, args.seed)
+    else:
+        cmd_validate()
+
+
+if __name__ == "__main__":
+    main()
