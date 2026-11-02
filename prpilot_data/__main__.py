@@ -41,6 +41,10 @@ uv run --group data python -m prpilot_data dataset
     opening date, drops cross-split duplicates and writes data/processed/*.parquet with hashes.
     No network.
 
+uv run python -m prpilot_data issues [--repo owner/name] [--pages N]
+    Every issue (any state, with created/closed times) and every label (with creation time)
+    per repo, for the open-time candidate lists. Read-only, cached. --pages: trial run.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -463,6 +467,53 @@ def cmd_dataset() -> None:
     print(f"wrote {path} and {out_dir}")
 
 
+def cmd_issues(repo: str | None, pages: int | None) -> None:
+    from prpilot_data import issues
+    from prpilot_data.github_api import GitHubGraphQL
+
+    if not pages:
+        require_clean_tree()
+    meta = run_metadata(["httpx"])
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", issues.QUERY_VERSION)
+    out_dir = REPO_ROOT / "data" / "interim" / "issues"
+    stats = {}
+    for r in [repo] if repo else selected_repos():
+        slug = r.replace("/", "__")
+        out = out_dir / (f"{slug}.trial.jsonl" if pages else f"{slug}.jsonl")
+        written, total = issues.fetch_issues(gh, r, out, pages)
+        labels = issues.fetch_labels(gh, r)
+        (out_dir / f"{slug}.labels.json").write_text(
+            json.dumps(labels, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        fetched = {row["number"] for row in read_jsonl(out)}
+        # Coverage: closing issues of our PRs (same repo) that the fetch returned.
+        truth = read_jsonl(REPO_ROOT / "data" / "interim" / "truth" / f"{slug}.jsonl")
+        targets = {i["number"] for t in truth for i in t["issues"] if i["same_repo"]}
+        stats[r] = {
+            "issues_written": written,
+            "issues_total_reported": total,
+            "labels": len(labels),
+            "closing_issues_found": len(targets & fetched),
+            "closing_issues": len(targets),
+        }
+        print(f"{r}: {stats[r]}")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not pages and not repo:
+        path = write_result(
+            "data_issues",
+            {
+                "stage": "Issues and labels per repo, for open-time candidate lists",
+                "meta": meta,
+                "query_version": issues.QUERY_VERSION,
+                "body_chars": issues.BODY_CHARS,
+                "repos": stats,
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {out_dir}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -623,6 +674,9 @@ def main() -> None:
     df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
     sub.add_parser("truth")
     sub.add_parser("dataset")
+    iss = sub.add_parser("issues")
+    iss.add_argument("--repo")
+    iss.add_argument("--pages", type=int, help="trial run: only the first N pages per repo")
     sc = sub.add_parser("spot-check")
     sc.add_argument("--n", type=int, default=40)
     sc.add_argument("--seed", type=int, default=0)
@@ -650,6 +704,8 @@ def main() -> None:
         cmd_truth()
     elif args.cmd == "dataset":
         cmd_dataset()
+    elif args.cmd == "issues":
+        cmd_issues(args.repo, args.pages)
     elif args.cmd == "spot-check":
         cmd_spot_check(args.n, args.seed)
     else:
