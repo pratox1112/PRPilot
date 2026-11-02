@@ -1,10 +1,11 @@
 {
   "stage": "A': GH Archive open-time head SHAs after the 2025-10-07 payload trim",
   "meta": {
-    "timestamp_utc": "2026-10-29T02:58:06+00:00",
+    "timestamp_utc": "2026-11-02T22:20:57+00:00",
     "git": {
-      "commit": "7a3b0f199f21b799e91935d76dfb6320c6b61439",
-      "dirty": true
+      "commit": "65a3c54321911fdaee01549dbadb0a43422e79dd",
+      "dirty": false,
+      "dirty_paths": []
     },
     "python": "3.12.10",
     "packages": {
