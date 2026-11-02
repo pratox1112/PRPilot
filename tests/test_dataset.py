@@ -4,6 +4,7 @@ import pytest
 
 from prpilot_data.dataset import (
     build_row,
+    check_frozen_test,
     check_no_leakage,
     drop_cross_split_duplicates,
     is_inflated,
@@ -164,3 +165,12 @@ def test_summary_and_parquet_round_trip(tmp_path):
     assert digest.startswith("sha256:") and write_parquet(rows, path) == digest  # deterministic
     back = pq.read_table(path).to_pylist()
     assert back[0]["issues"] == TRUTH["issues"] and back[1]["primary_type"] is None
+
+
+def test_frozen_test_split_cannot_change(tmp_path):
+    p = tmp_path / "frozen_test.toml"
+    check_frozen_test(p, "sha256:any")  # nothing frozen yet
+    p.write_text('[test]\nrows_hash = "sha256:aa"\n', encoding="utf-8")
+    check_frozen_test(p, "sha256:aa")
+    with pytest.raises(SystemExit, match="must not change"):
+        check_frozen_test(p, "sha256:bb")

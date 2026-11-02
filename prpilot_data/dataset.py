@@ -19,6 +19,7 @@
 
 import hashlib
 import json
+import tomllib
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -166,6 +167,18 @@ def check_no_leakage(rows: list[dict]) -> None:
     crossing = [k for k, s in splits_of.items() if len(s) > 1]
     if crossing:
         raise ValueError(f"{len(crossing)} duplicate groups span splits, e.g. {crossing[0][0]!r}")
+
+
+def check_frozen_test(path: Path, rows_hash: str) -> None:
+    """Hard rule 4: once the test split is frozen, a rebuild may not change it."""
+    if not path.exists():
+        return
+    frozen = tomllib.loads(path.read_text(encoding="utf-8"))["test"]["rows_hash"]
+    if rows_hash != frozen:
+        raise SystemExit(
+            f"the rebuilt test split ({rows_hash}) differs from the frozen one ({frozen}) "
+            f"in {path.name}; the test split must not change"
+        )
 
 
 def summarize(rows: list[dict]) -> dict:

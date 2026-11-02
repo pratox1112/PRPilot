@@ -69,6 +69,7 @@ from prpilot_data.records import (
 
 REPOS_CONFIG = REPO_ROOT / "data" / "config" / "repos.toml"
 TYPES_CONFIG = REPO_ROOT / "data" / "config" / "type_mappings.toml"
+FROZEN_CONFIG = REPO_ROOT / "data" / "config" / "frozen_test.toml"
 RAW_DIR = REPO_ROOT / "data" / "raw" / "gharchive"
 INDEX_DIR = REPO_ROOT / "data" / "interim" / "index"
 
@@ -410,6 +411,9 @@ def cmd_dataset() -> None:
         print(f"{r}: {len(keep)} PRs")
     kept, duplicates = dataset.drop_cross_split_duplicates(rows)
     dataset.check_no_leakage(kept)
+    dataset.check_frozen_test(
+        FROZEN_CONFIG, content_hash([row for row in kept if row["split"] == "test"])
+    )
     out_dir = REPO_ROOT / "data" / "processed"
     splits = {}
     for split in dataset.SPLITS:
