@@ -1,0 +1,51 @@
+{
+  "stage": "Issues and labels per repo, for open-time candidate lists",
+  "meta": {
+    "timestamp_utc": "2026-11-02T23:39:38+00:00",
+    "git": {
+      "commit": "3fe6ae2f87f65c4ee97f84c93b8241067b68a95b",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "query_version": "issues-v1",
+  "body_chars": 2000,
+  "repos": {
+    "cilium/cilium": {
+      "issues_written": 12448,
+      "issues_total_reported": 12448,
+      "labels": 199,
+      "closing_issues_found": 1363,
+      "closing_issues": 1363
+    },
+    "kubernetes/kubernetes": {
+      "issues_written": 49951,
+      "issues_total_reported": 49951,
+      "labels": 216,
+      "closing_issues_found": 1821,
+      "closing_issues": 1821
+    },
+    "numpy/numpy": {
+      "issues_written": 14159,
+      "issues_total_reported": 14159,
+      "labels": 98,
+      "closing_issues_found": 845,
+      "closing_issues": 845
+    },
+    "pandas-dev/pandas": {
+      "issues_written": 28667,
+      "issues_total_reported": 28667,
+      "labels": 157,
+      "closing_issues_found": 2179,
+      "closing_issues": 2179
+    }
+  },
+  "github_calls": {
+    "network": 2101,
+    "cache_hits": 16
+  }
+}
