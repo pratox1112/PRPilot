@@ -39,7 +39,24 @@ Rules:
 - summary and rationale: at most 3 sentences each.
 - labels: only names listed in <repo_labels>; an empty list is allowed.
 - reviewers: at most 3 logins from <repo_eligible_reviewers>, best first, never the PR author.
-- related_issues: only numbers listed in <repo_open_issues>; an empty list is allowed."""
+  That list is ordered by how much each person reviewed the same files before.
+- related_issues: only numbers listed in <repo_open_issues>; an empty list is allowed.
+  That list is ordered by relevance; issues the pull request names come first."""
+
+
+MAX_BODY_CHARS = 6000  # ~1,500 tokens; release-note bodies of dependency PRs run to 25k tokens
+MAX_FILES_LISTED = 100  # vendoring PRs touch thousands of files; the diff outline has the rest
+BODY_CUT_MARK = "\n[... body truncated ...]"
+
+
+def _cap_body(body: str) -> str:
+    return body if len(body) <= MAX_BODY_CHARS else body[:MAX_BODY_CHARS] + BODY_CUT_MARK
+
+
+def _file_list(files: tuple[str, ...]) -> str:
+    shown = "\n".join(files[:MAX_FILES_LISTED])
+    extra = len(files) - MAX_FILES_LISTED
+    return shown + (f"\n[... and {extra} more files]" if extra > 0 else "")
 
 
 def _block(tag: str, text: str) -> str:
@@ -49,17 +66,22 @@ def _block(tag: str, text: str) -> str:
 
 
 def build_user_prompt(pr: PRContext, rules: RepoRules) -> str:
-    issues = "\n".join(f"#{n}: {title}" for n, title in sorted(rules.open_issues.items()))
+    """Reviewers and issues appear in the order given (best first); `open_issues` keeps its
+    insertion order and `reviewer_order` ranks the eligible reviewers. Without a ranking the
+    lists are sorted, so the prompt is still deterministic."""
+    issue_order = list(rules.open_issues) if rules.issues_ranked else sorted(rules.open_issues)
+    issues = "\n".join(f"#{n}: {rules.open_issues[n]}" for n in issue_order)
+    reviewers = list(rules.reviewer_order) or sorted(rules.eligible_reviewers)
     return "\n".join(
         [
             _block("repo_labels", "\n".join(sorted(rules.labels))),
-            _block("repo_eligible_reviewers", "\n".join(sorted(rules.eligible_reviewers))),
+            _block("repo_eligible_reviewers", "\n".join(reviewers)),
             _block("repo_open_issues", issues),
             _block("pr_title", pr.title),
             _block("pr_author", pr.author),
             _block("pr_base_branch", pr.base_branch),
-            _block("pr_body", pr.body),
-            _block("pr_changed_files", "\n".join(pr.changed_files)),
+            _block("pr_body", _cap_body(pr.body)),
+            _block("pr_changed_files", _file_list(pr.changed_files)),
             _block("pr_diff", pr.diff),
         ]
     )

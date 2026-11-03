@@ -49,6 +49,10 @@ uv run --group data python -m prpilot_data candidates
     Open-time candidate lists per PR (labels, top-20 reviewers, top-20 issues) from the
     dataset, issues and labels. No network. Writes data/processed/candidates.jsonl.
 
+uv run --group data python -m prpilot_data prompts
+    Renders every PR's exact model input (shared system prompt + user prompt) into
+    data/processed/prompts_{split}.jsonl, with hashes and prompt token counts. No network.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -593,6 +597,56 @@ def cmd_candidates() -> None:
     print(f"wrote {path} and {out}")
 
 
+def cmd_prompts() -> None:
+    import statistics
+
+    from prpilot_data import dataset, prompts, tokens
+
+    require_clean_tree()
+    meta = run_metadata(["tokenizers", "pyarrow"])
+    rows = load_splits()
+    cands = {
+        (c["repo"], c["number"]): c
+        for c in read_jsonl(REPO_ROOT / "data" / "processed" / "candidates.jsonl")
+    }
+    count = tokens.load_counter()
+    out_dir = REPO_ROOT / "data" / "processed"
+    splits = {}
+    for split in dataset.SPLITS:
+        part = [r for r in rows if r["split"] == split]
+        path = out_dir / f"prompts_{split}.jsonl"
+        lengths = []
+        with path.open("w", encoding="utf-8", newline="") as f:
+            for r in part:
+                p = prompts.pack_row(r, cands[(r["repo"], r["number"])])
+                f.write(json.dumps(p, ensure_ascii=False) + "\n")
+                lengths.append(sum(count(m["content"]) for m in p["messages"]))
+        lengths.sort()
+        splits[split] = {
+            "file": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "file_sha256": dataset.file_sha256(path),
+            "prs": len(part),
+            "prompt_tokens": {
+                "median": statistics.median(lengths),
+                "p95": lengths[int(0.95 * (len(lengths) - 1))],
+                "max": lengths[-1],
+            },
+        }
+        print(f"{split}: {splits[split]}")
+    path = write_result(
+        "data_prompts",
+        {
+            "stage": "Prompt packs: exact model inputs per PR",
+            "meta": meta,
+            "pack_version": prompts.PACK_VERSION,
+            "tokenizer": {"model": tokens.STUDENT_MODEL, "revision": tokens.STUDENT_REVISION},
+            "token_count_note": "system + user message content, without chat-template tokens",
+            "splits": splits,
+        },
+    )
+    print(f"wrote {path} and {out_dir}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -757,6 +811,7 @@ def main() -> None:
     iss.add_argument("--repo")
     iss.add_argument("--pages", type=int, help="trial run: only the first N pages per repo")
     sub.add_parser("candidates")
+    sub.add_parser("prompts")
     sc = sub.add_parser("spot-check")
     sc.add_argument("--n", type=int, default=40)
     sc.add_argument("--seed", type=int, default=0)
@@ -788,6 +843,8 @@ def main() -> None:
         cmd_issues(args.repo, args.pages)
     elif args.cmd == "candidates":
         cmd_candidates()
+    elif args.cmd == "prompts":
+        cmd_prompts()
     elif args.cmd == "spot-check":
         cmd_spot_check(args.n, args.seed)
     else:
