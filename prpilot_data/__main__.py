@@ -53,6 +53,14 @@ uv run --group data python -m prpilot_data prompts
     Renders every PR's exact model input (shared system prompt + user prompt) into
     data/processed/prompts_{split}.jsonl, with hashes and prompt token counts. No network.
 
+uv run --group data python -m prpilot_data targets
+    Writes data/processed/targets_{split}.jsonl: the maintainer answers per PR in the shape
+    the eval harness scores, with hashes. No network.
+
+uv run --group data python -m prpilot_data rules-baseline [--split val]
+    Baseline 1: keyword, path and history rules, written as replies
+    (data/processed/replies/rules_<split>.jsonl) for the eval harness. No network.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -647,6 +655,73 @@ def cmd_prompts() -> None:
     print(f"wrote {path} and {out_dir}")
 
 
+def cmd_targets() -> None:
+    from prpilot_data import dataset, targets
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    rows = load_splits()
+    cands = {
+        (c["repo"], c["number"]): c
+        for c in read_jsonl(REPO_ROOT / "data" / "processed" / "candidates.jsonl")
+    }
+    out_dir = REPO_ROOT / "data" / "processed"
+    splits = {}
+    for split in dataset.SPLITS:
+        path = out_dir / f"targets_{split}.jsonl"
+        with path.open("w", encoding="utf-8", newline="") as f:
+            for r in rows:
+                if r["split"] == split:
+                    t = targets.target_row(r, cands[(r["repo"], r["number"])]["labels"])
+                    f.write(json.dumps(t, ensure_ascii=False) + "\n")
+        splits[split] = {
+            "file": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "file_sha256": dataset.file_sha256(path),
+        }
+        print(f"{split}: {splits[split]}")
+    path = write_result(
+        "data_targets",
+        {"stage": "Targets files for the eval harness", "meta": meta, "splits": splits},
+    )
+    print(f"wrote {path}")
+
+
+def cmd_rules_baseline(split: str) -> None:
+    from prpilot_data import dataset, rules_baseline
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    rows = load_splits()
+    processed = REPO_ROOT / "data" / "processed"
+    cands = {(c["repo"], c["number"]): c for c in read_jsonl(processed / "candidates.jsonl")}
+    hist = rules_baseline.history_predictions(rows)
+    out_dir = processed / "replies"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"rules_{split}.jsonl"
+    with out.open("w", encoding="utf-8", newline="") as f:
+        for r in rows:
+            if r["split"] == split:
+                key = (r["repo"], r["number"])
+                line = rules_baseline.reply_line(r, cands[key], hist[key])
+                f.write(json.dumps(line, ensure_ascii=False) + "\n")
+    runner = {
+        "name": "rules",
+        "model": None,
+        "split": split,
+        "pack_sha256": dataset.file_sha256(processed / f"prompts_{split}.jsonl"),
+        "meta": meta,
+        "settings": {
+            "label_rate": rules_baseline.LABEL_RATE,
+            "label_support": rules_baseline.LABEL_SUPPORT,
+            "many_files": rules_baseline.MANY_FILES,
+        },
+    }
+    out.with_name(f"rules_{split}.meta.json").write_text(
+        json.dumps(runner, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {out}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -812,6 +887,10 @@ def main() -> None:
     iss.add_argument("--pages", type=int, help="trial run: only the first N pages per repo")
     sub.add_parser("candidates")
     sub.add_parser("prompts")
+    sub.add_parser("targets")
+    rb = sub.add_parser("rules-baseline")
+    # No test: the test split is run once, at the end, for every system together.
+    rb.add_argument("--split", choices=["train", "val"], default="val")
     sc = sub.add_parser("spot-check")
     sc.add_argument("--n", type=int, default=40)
     sc.add_argument("--seed", type=int, default=0)
@@ -845,6 +924,10 @@ def main() -> None:
         cmd_candidates()
     elif args.cmd == "prompts":
         cmd_prompts()
+    elif args.cmd == "targets":
+        cmd_targets()
+    elif args.cmd == "rules-baseline":
+        cmd_rules_baseline(args.split)
     elif args.cmd == "spot-check":
         cmd_spot_check(args.n, args.seed)
     else:

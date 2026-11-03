@@ -36,6 +36,10 @@ jobs:
       - name: Unit tests
         run: uv run pytest
 
+      - name: Eval harness tests (own project and lock)
+        working-directory: eval
+        run: uv run --locked pytest
+
   secret-scan:
     runs-on: ubuntu-24.04
     steps:
