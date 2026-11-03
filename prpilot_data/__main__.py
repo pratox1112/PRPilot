@@ -45,6 +45,10 @@ uv run python -m prpilot_data issues [--repo owner/name] [--pages N]
     Every issue (any state, with created/closed times) and every label (with creation time)
     per repo, for the open-time candidate lists. Read-only, cached. --pages: trial run.
 
+uv run --group data python -m prpilot_data candidates
+    Open-time candidate lists per PR (labels, top-20 reviewers, top-20 issues) from the
+    dataset, issues and labels. No network. Writes data/processed/candidates.jsonl.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -514,6 +518,81 @@ def cmd_issues(repo: str | None, pages: int | None) -> None:
         print(f"wrote {path} and {out_dir}")
 
 
+def load_splits(columns: list[str] | None = None) -> list[dict]:
+    import pyarrow.parquet as pq
+
+    from prpilot_data import dataset
+
+    processed = REPO_ROOT / "data" / "processed"
+    rows = []
+    for split in dataset.SPLITS:
+        rows += pq.read_table(processed / f"prpilot_{split}.parquet", columns=columns).to_pylist()
+    return rows
+
+
+def cmd_candidates() -> None:
+    from prpilot_data import candidates, dataset
+
+    require_clean_tree()
+    meta = run_metadata(["numpy", "pyarrow"])
+    rows = load_splits()
+    issues_dir = REPO_ROOT / "data" / "interim" / "issues"
+    uses = candidates.label_vocabulary(rows)
+    reviewers = candidates.rank_reviewers(rows)
+    print(f"ranked reviewers for {len(reviewers)} PRs")
+    cands = {}
+    vocab_sizes = {}
+    for r in selected_repos():
+        slug = r.replace("/", "__")
+        repo_labels = json.loads((issues_dir / f"{slug}.labels.json").read_text(encoding="utf-8"))
+        index = candidates.IssueIndex(read_jsonl(issues_dir / f"{slug}.jsonl"))
+        repo_rows = [row for row in rows if row["repo"] == r]
+        sizes = []
+        for row in repo_rows:
+            labels = candidates.labels_at(row["created_at"], repo_labels, uses[r])
+            sizes.append(len(labels))
+            key = (r, row["number"])
+            cands[key] = candidates.candidate_row(row, labels, reviewers.get(key, []), index)
+        vocab_sizes[r] = {"min": min(sizes), "max": max(sizes)}
+        print(f"{r}: {len(repo_rows)} PRs, labels per PR {vocab_sizes[r]}")
+    out = REPO_ROOT / "data" / "processed" / "candidates.jsonl"
+    ordered = [cands[(row["repo"], row["number"])] for row in rows]
+    with out.open("w", encoding="utf-8", newline="") as f:
+        for c in ordered:
+            f.write(json.dumps(c, ensure_ascii=False) + "\n")
+    splits = {}
+    for split in dataset.SPLITS:
+        part = [row for row in rows if row["split"] == split]
+        splits[split] = {
+            "prs": len(part),
+            "rows_hash": content_hash([cands[(p["repo"], p["number"])] for p in part]),
+        }
+        # The rankings are the rules baseline, so on test they are a test result: not
+        # computed until the test split is run once (hard rule 4).
+        if split != "test":
+            splits[split].update(candidates.ceilings(part, cands))
+        print(f"{split}: {splits[split]}")
+    path = write_result(
+        "data_candidates",
+        {
+            "stage": "Open-time candidate lists: labels, reviewers, issues",
+            "meta": meta,
+            "rules": {
+                "label_min_uses": candidates.LABEL_MIN_USES,
+                "vocab_before": candidates.VOCAB_BEFORE,
+                "top_reviewers": candidates.TOP_REVIEWERS,
+                "top_issues": candidates.TOP_ISSUES,
+                "path_depth": candidates.PATH_DEPTH,
+                "max_files": candidates.MAX_FILES,
+                "bm25": {"k1": candidates.BM25_K1, "b": candidates.BM25_B},
+            },
+            "labels_per_pr": vocab_sizes,
+            "splits": splits,
+        },
+    )
+    print(f"wrote {path} and {out}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -677,6 +756,7 @@ def main() -> None:
     iss = sub.add_parser("issues")
     iss.add_argument("--repo")
     iss.add_argument("--pages", type=int, help="trial run: only the first N pages per repo")
+    sub.add_parser("candidates")
     sc = sub.add_parser("spot-check")
     sc.add_argument("--n", type=int, default=40)
     sc.add_argument("--seed", type=int, default=0)
@@ -706,6 +786,8 @@ def main() -> None:
         cmd_dataset()
     elif args.cmd == "issues":
         cmd_issues(args.repo, args.pages)
+    elif args.cmd == "candidates":
+        cmd_candidates()
     elif args.cmd == "spot-check":
         cmd_spot_check(args.n, args.seed)
     else:

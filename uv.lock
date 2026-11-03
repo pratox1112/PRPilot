@@ -1211,6 +1211,7 @@ dependencies = [
 data = [
     { name = "google-cloud-bigquery" },
     { name = "huggingface-hub" },
+    { name = "numpy" },
     { name = "pyarrow" },
     { name = "tokenizers" },
 ]
@@ -1243,6 +1244,7 @@ requires-dist = [
 data = [
     { name = "google-cloud-bigquery", specifier = "==3.46.2" },
     { name = "huggingface-hub", specifier = "==2.3.0" },
+    { name = "numpy", specifier = "==2.5.4" },
     { name = "pyarrow", specifier = "==25.0.1" },
     { name = "tokenizers", specifier = "==0.23.3" },
 ]
