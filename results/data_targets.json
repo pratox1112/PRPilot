@@ -1,0 +1,29 @@
+{
+  "stage": "Targets files for the eval harness",
+  "meta": {
+    "timestamp_utc": "2026-11-03T04:50:03+00:00",
+    "git": {
+      "commit": "043f3a301c5e84287e569ef59e8b78b60b18beec",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "pyarrow": "25.0.1"
+    }
+  },
+  "splits": {
+    "train": {
+      "file": "data/processed/targets_train.jsonl",
+      "file_sha256": "sha256:52b7c183a8c6f47ec704e8ded8a01a096acc2492fa23de700d01443ab22c3a49"
+    },
+    "val": {
+      "file": "data/processed/targets_val.jsonl",
+      "file_sha256": "sha256:24409ffbf6e0d6403cf8f49b17a32212dd4492331b177fb25fc8bc006dc67dc5"
+    },
+    "test": {
+      "file": "data/processed/targets_test.jsonl",
+      "file_sha256": "sha256:21572a352a4cbf1f95769a877ce023bcb9eadf001df890e6e40d917faea85236"
+    }
+  }
+}
