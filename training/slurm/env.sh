@@ -49,3 +49,7 @@ export TEACHER_REPO="Qwen/Qwen3.5-122B-A10B-GPTQ-Int4"
 export TEACHER_REVISION="30cd92cba9707a9aba09d1e490ed4b66b78e9606"
 
 mkdir -p "${HF_HUB_CACHE}" "${XDG_CACHE_HOME}" "${PRPILOT_SCRATCH}/envs" "${CONDA_PKGS_DIRS}" "${PRPILOT_SCRATCH}/outputs" "${PRPILOT_SCRATCH}/logs" "${PRPILOT_KEEP}"
+
+# Phase 2 baseline 2 / Phase 3 student base (same tokenizer pin as prpilot_data/tokens.py).
+export BASE_REPO="Qwen/Qwen3-1.7B"
+export BASE_REVISION="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
