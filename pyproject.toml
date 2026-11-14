@@ -37,6 +37,7 @@ screening = [
 ]
 vertex = [
     "google-genai==2.34.0",
+    "pydantic-ai-slim[google]==2.61.0",
 ]
 
 [build-system]
