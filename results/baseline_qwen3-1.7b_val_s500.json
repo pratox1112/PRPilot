@@ -34,10 +34,14 @@
       "transformers": "5.17.0"
     }
   },
-  "scored_at_utc": "2026-11-14T23:29:42+00:00",
+  "scored_at_utc": "2026-11-14T23:48:47+00:00",
   "git": {
-    "commit": "6f1f5951c01468a826bfa2054da62318aea46a42",
-    "dirty": true
+    "commit": "1b732c8273a44fdd839c4ef8f9343bd74671396b",
+    "dirty": false,
+    "dirty_paths": [
+      "results/baseline_rules_val_s500.json",
+      "results/baseline_teacher_val.json"
+    ]
   },
   "python": "3.12.10",
   "packages": {

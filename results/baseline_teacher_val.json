@@ -34,10 +34,11 @@
       "transformers": "5.17.0"
     }
   },
-  "scored_at_utc": "2026-11-13T20:47:34+00:00",
+  "scored_at_utc": "2026-11-14T23:48:16+00:00",
   "git": {
-    "commit": "bd0cef258285b98518e2cd01778744e2cfdcc311",
-    "dirty": true
+    "commit": "1b732c8273a44fdd839c4ef8f9343bd74671396b",
+    "dirty": false,
+    "dirty_paths": []
   },
   "python": "3.12.10",
   "packages": {
@@ -55,7 +56,8 @@
     "replies": {
       "file": "teacher_val_11852471.jsonl",
       "sha256": "sha256:e58e8f85c752c8d929f06e9610f733814f402f5f39f33a4b6e0a98112e0f2149"
-    }
+    },
+    "only": null
   },
   "prs": 3355,
   "metrics": {
