@@ -1,0 +1,454 @@
+{
+  "name": "gemini-3.8-flash-system_val_s500",
+  "runner": {
+    "name": "gemini-3.8-flash-system_val_s500",
+    "model": {
+      "repo": "vertex-ai:gemini-3.8-flash",
+      "revision": "gemini-3.8-flash"
+    },
+    "pack_file": "prompts_val_s500.jsonl",
+    "pack_sha256": "sha256:6e70fa0e9aa750671d1d8e451ccd7a8e539beede181bf114c2a7b9c40f3ff634",
+    "prs": 500,
+    "not_run_cap": 0,
+    "api_errors": 0,
+    "settings": {
+      "mode": "system (Pydantic AI agent, validator retries)",
+      "location": "global",
+      "thinking_level": "LOW",
+      "max_output_tokens": 8192,
+      "temperature": "model default",
+      "seed": 0,
+      "constrained_decoding": false,
+      "retries": 2,
+      "concurrency": 8
+    },
+    "agent": {
+      "valid_after_retries": 500,
+      "requests_per_pr": {
+        "1": 432,
+        "2": 67,
+        "3": 1
+      },
+      "errors": {}
+    },
+    "cost": {
+      "usd_estimated": 2.3589,
+      "price_per_mtok": {
+        "input": 0.75,
+        "output_incl_thinking": 3.75
+      },
+      "cap_usd": 10.0,
+      "note": "computed from usage metadata at the prices passed; the bill is the truth"
+    },
+    "timing_s": {
+      "this_session": 222.0
+    },
+    "meta": {
+      "timestamp_utc": "2026-11-14T23:39:30+00:00",
+      "git": {
+        "commit": "9fb7f03d705649f7a9152862e9329a95090ec5aa",
+        "dirty": false,
+        "dirty_paths": []
+      },
+      "python": "3.12.10",
+      "packages": {
+        "google-genai": "2.34.0",
+        "pydantic-ai-slim": "2.61.0"
+      }
+    },
+    "timestamp_utc": "2026-11-14T23:39:31+00:00",
+    "packages": {
+      "google-genai": "2.34.0",
+      "pydantic-ai-slim": "2.61.0",
+      "pydantic": "2.14.1"
+    }
+  },
+  "scored_at_utc": "2026-11-14T23:49:31+00:00",
+  "git": {
+    "commit": "1b732c8273a44fdd839c4ef8f9343bd74671396b",
+    "dirty": false,
+    "dirty_paths": [
+      "results/baseline_qwen3-1.7b-system_val_s500.json",
+      "results/baseline_qwen3-1.7b_val_s500.json",
+      "results/baseline_rules_val_s500.json",
+      "results/baseline_teacher_val.json",
+      "results/baseline_teacher_val_s500.json"
+    ]
+  },
+  "python": "3.12.10",
+  "packages": {
+    "jsonschema": "4.26.0"
+  },
+  "inputs": {
+    "pack": {
+      "file": "prompts_val_s500.jsonl",
+      "sha256": "sha256:6e70fa0e9aa750671d1d8e451ccd7a8e539beede181bf114c2a7b9c40f3ff634"
+    },
+    "targets": {
+      "file": "targets_val.jsonl",
+      "sha256": "sha256:24409ffbf6e0d6403cf8f49b17a32212dd4492331b177fb25fc8bc006dc67dc5"
+    },
+    "replies": {
+      "file": "gemini-3.8-flash-system_val_s500.jsonl",
+      "sha256": "sha256:f9c1d4218132cf965ca5d97ffbff800aab861a49f5395ff61fda0f5dda8d6561"
+    },
+    "only": null
+  },
+  "prs": 500,
+  "metrics": {
+    "maintainer_match": {
+      "value": 0.5923,
+      "n": 363,
+      "ci95": [
+        0.542,
+        0.6446
+      ]
+    },
+    "type_macro_f1": {
+      "value": 0.4777,
+      "n": 363,
+      "ci95": [
+        0.4373,
+        0.5724
+      ]
+    },
+    "label_micro_f1": {
+      "value": 0.3723,
+      "n": 500,
+      "ci95": [
+        0.3462,
+        0.3976
+      ]
+    },
+    "reviewer_recall_at_3": {
+      "value": 0.583,
+      "n": 458,
+      "ci95": [
+        0.5342,
+        0.625
+      ]
+    },
+    "reviewer_recall_at_3_reviewed_only": {
+      "value": 0.5611,
+      "n": 442,
+      "ci95": [
+        0.512,
+        0.605
+      ]
+    },
+    "issue_recall_at_5": {
+      "value": 0.9011,
+      "n": 91,
+      "ci95": [
+        0.8298,
+        0.9574
+      ]
+    },
+    "issue_recall_at_5_named_at_open": {
+      "value": 0.9634,
+      "n": 82,
+      "ci95": [
+        0.9146,
+        1.0
+      ]
+    },
+    "issue_recall_at_5_not_named": {
+      "value": 0.3333,
+      "n": 9,
+      "ci95": [
+        0.1111,
+        0.6667
+      ]
+    },
+    "json_validity": {
+      "value": 1.0,
+      "n": 500,
+      "ci95": [
+        1.0,
+        1.0
+      ]
+    },
+    "risk_auroc": {
+      "value": 0.7327,
+      "n": 500,
+      "positives": 3,
+      "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+    }
+  },
+  "per_type": {
+    "bug": {
+      "n": 70,
+      "recall": 0.6143,
+      "predicted": 63
+    },
+    "feature": {
+      "n": 84,
+      "recall": 0.5238,
+      "predicted": 54
+    },
+    "docs": {
+      "n": 44,
+      "recall": 0.8636,
+      "predicted": 47
+    },
+    "refactor": {
+      "n": 99,
+      "recall": 0.5051,
+      "predicted": 71
+    },
+    "test": {
+      "n": 20,
+      "recall": 0.9,
+      "predicted": 63
+    },
+    "ci/build": {
+      "n": 41,
+      "recall": 0.5122,
+      "predicted": 29
+    },
+    "dependency": {
+      "n": 2,
+      "recall": 0.5,
+      "predicted": 23
+    },
+    "other": {
+      "n": 3,
+      "recall": 0.0,
+      "predicted": 13
+    }
+  },
+  "breakdowns": {
+    "repo:cilium/cilium": {
+      "maintainer_match": {
+        "value": 0.6769,
+        "n": 130
+      },
+      "type_macro_f1": {
+        "value": 0.5364,
+        "n": 130
+      },
+      "label_micro_f1": {
+        "value": 0.3287,
+        "n": 250
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.4578,
+        "n": 249
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.4498,
+        "n": 249
+      },
+      "issue_recall_at_5": {
+        "value": 0.8286,
+        "n": 35
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 0.8966,
+        "n": 29
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.5,
+        "n": 6
+      },
+      "json_validity": {
+        "value": 1.0,
+        "n": 250
+      },
+      "risk_auroc": {
+        "value": 0.4197,
+        "n": 250,
+        "positives": 1,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    },
+    "repo:kubernetes/kubernetes": {
+      "maintainer_match": {
+        "value": 0.4922,
+        "n": 193
+      },
+      "type_macro_f1": {
+        "value": 0.5239,
+        "n": 193
+      },
+      "label_micro_f1": {
+        "value": 0.3583,
+        "n": 195
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.7063,
+        "n": 160
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.6667,
+        "n": 144
+      },
+      "issue_recall_at_5": {
+        "value": 0.9459,
+        "n": 37
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 1.0,
+        "n": 35
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.0,
+        "n": 2
+      },
+      "json_validity": {
+        "value": 1.0,
+        "n": 195
+      },
+      "risk_auroc": {
+        "value": 0.8601,
+        "n": 195,
+        "positives": 2,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    },
+    "repo:pandas-dev/pandas": {
+      "maintainer_match": {
+        "value": 0.8,
+        "n": 40
+      },
+      "type_macro_f1": {
+        "value": 0.5954,
+        "n": 40
+      },
+      "label_micro_f1": {
+        "value": 0.6852,
+        "n": 55
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.8163,
+        "n": 49
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.8163,
+        "n": 49
+      },
+      "issue_recall_at_5": {
+        "value": 0.9474,
+        "n": 19
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 1.0,
+        "n": 18
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.0,
+        "n": 1
+      },
+      "json_validity": {
+        "value": 1.0,
+        "n": 55
+      },
+      "risk_auroc": {
+        "value": null,
+        "n": 55,
+        "positives": 0,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    },
+    "clean": {
+      "maintainer_match": {
+        "value": 0.5766,
+        "n": 333
+      },
+      "type_macro_f1": {
+        "value": 0.4677,
+        "n": 333
+      },
+      "label_micro_f1": {
+        "value": 0.3706,
+        "n": 464
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.5745,
+        "n": 423
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.5539,
+        "n": 408
+      },
+      "issue_recall_at_5": {
+        "value": 0.9012,
+        "n": 81
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 0.9589,
+        "n": 73
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.375,
+        "n": 8
+      },
+      "json_validity": {
+        "value": 1.0,
+        "n": 464
+      },
+      "risk_auroc": {
+        "value": 0.7368,
+        "n": 464,
+        "positives": 3,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    },
+    "flagged": {
+      "maintainer_match": {
+        "value": 0.7667,
+        "n": 30
+      },
+      "type_macro_f1": {
+        "value": 0.7855,
+        "n": 30
+      },
+      "label_micro_f1": {
+        "value": 0.3905,
+        "n": 36
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.6857,
+        "n": 35
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.6471,
+        "n": 34
+      },
+      "issue_recall_at_5": {
+        "value": 0.9,
+        "n": 10
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 1.0,
+        "n": 9
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.0,
+        "n": 1
+      },
+      "json_validity": {
+        "value": 1.0,
+        "n": 36
+      },
+      "risk_auroc": {
+        "value": null,
+        "n": 36,
+        "positives": 0,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    }
+  },
+  "invalid_reasons": {},
+  "finish_reasons": {
+    "unknown": 500
+  },
+  "tokens_per_pr": {
+    "prompt_tokens": 5375.5,
+    "output_tokens": 183.0
+  },
+  "latency_s": {
+    "p50": 2.6,
+    "p95": 7.61
+  }
+}

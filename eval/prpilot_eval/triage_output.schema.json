@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "PRType": {
+      "enum": [
+        "bug",
+        "feature",
+        "docs",
+        "refactor",
+        "test",
+        "ci/build",
+        "dependency",
+        "other"
+      ],
+      "title": "PRType",
+      "type": "string"
+    },
+    "Risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Risk",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Structured triage result for one pull request.",
+  "properties": {
+    "labels": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "rationale": {
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "related_issues": {
+      "items": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      },
+      "title": "Related Issues",
+      "type": "array"
+    },
+    "reviewers": {
+      "description": "GitHub logins, ranked best first.",
+      "items": {
+        "maxLength": 39,
+        "pattern": "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$",
+        "type": "string"
+      },
+      "maxItems": 3,
+      "title": "Reviewers",
+      "type": "array"
+    },
+    "risk": {
+      "$ref": "#/$defs/Risk"
+    },
+    "summary": {
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/PRType"
+    }
+  },
+  "required": [
+    "summary",
+    "type",
+    "risk",
+    "labels",
+    "reviewers",
+    "related_issues",
+    "rationale"
+  ],
+  "title": "TriageOutput",
+  "type": "object"
+}

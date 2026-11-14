@@ -1,0 +1,12 @@
+{
+  "name": "teacher",
+  "pack_sha256": "sha256:27f4e675538d8d2f6bc62eda2a995bff92dea2e4846598dbd489495e9ff8cb0f",
+  "source": {
+    "file": "teacher_val_11852471.jsonl",
+    "sha256": "sha256:e58e8f85c752c8d929f06e9610f733814f402f5f39f33a4b6e0a98112e0f2149",
+    "model": {
+      "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+      "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+    }
+  }
+}

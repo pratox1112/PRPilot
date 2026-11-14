@@ -8,11 +8,11 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 |---|---|---|---|
 | Maintainer match [X]% on [N] PRs | [TBD] | | |
 | Student size | [TBD] | | |
-| Teacher model | [TBD] | | |
+| Teacher model | Qwen3.5-122B-A10B (GPTQ-Int4) @ `30cd92cb`; maintainer match 62.8% on 2,435 val PRs | results/baselines_val.json | 1b732c8 |
 | Teacher-relative accuracy [X]% | [TBD] | | |
 | JSON validity [X]% (model, first attempt, unconstrained) | [TBD] | | |
 | Valid output with retries [X]% (system) | [TBD] | | |
-| Frontier comparison model | [TBD] | | |
+| Frontier comparison model | Gemini 3.8 Flash on Vertex AI (500-PR val sample; $0.0039 per PR raw, $0.0047 with retries) | results/baselines_val.json | 1b732c8 |
 | Cost ratio [X]x vs frontier | [TBD] | | |
 | Shadow replay: [N] PRs, end-to-end maintainer match [X]% | [TBD] | | |
 | Injection block rate [X]% of [N] | [TBD] | | |
@@ -220,3 +220,53 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
   - `author_association` is GitHub's current value (no open-time source); documented in the data card.
   - Test split frozen 2026-11-02, before any training or prompt tuning (hard rule 4).
 - Next: PR to `main`, then the Phase 1 review stop before Phase 2
+
+## Phase 2 — Baselines and eval harness
+
+### 2026-11-02 — Task 2.1 — Issues, labels and open-time candidate lists
+- Status: done
+- What changed: `prpilot_data/issues.py` (every issue per repo with created/closed times, labels with creation time; query `issues-v1`), `prpilot_data/candidates.py` (labels created before open and applied by people >=10 times on PRs before 2025; top-20 reviewers from path history of PRs merged before open, never the author or bots; top-20 open issues by BM25, issues named in the PR first).
+- Results: issues cilium 12,448 / kubernetes 49,951 / numpy 14,159 / pandas 28,667, all closing issues found → results/data_issues.json @ 3fe6ae2 (clean). Val ceilings: a true reviewer in the top 20 for 91.6% (top 3: 57.9%, n=3,113); a linked issue in the top 20 for 89.8% (top 5: 88.9%, n=679); 95.2% of target labels in the list → results/data_candidates.json @ 0ee5e07 (clean). Test ceilings not computed (hard rule 4).
+- Dataset hash: candidates val rows_hash `sha256:199e2c3e22517221e86f14b7cfb7591dd5a47f96468b5e8b448176f280dc7162`
+- Notes / decisions / problems: IDF uses issues created before 2025 only, so later text never shapes earlier rankings.
+- Next: prompt packs
+
+### 2026-11-02 — Task 2.2 — Prompt packs, targets, eval harness, rules baseline
+- Status: done
+- What changed: prompt packs (`prpilot_data/prompts.py`, `prompts-v1`): every PR's exact messages rendered once and hashed, so every model sees byte-identical input; PR body capped at 6,000 chars and the file list at 100 (the uncapped max was 101k tokens). Targets files (`targets.py`). `eval/`: its own uv project and lock, no app imports, JSON Schema exported from `TriageOutput`, the metrics of roadmap §5.3 with bootstrap CIs (1,000 resamples, seed 0) and exact McNemar. Rules baseline (`rules_baseline.py`).
+- Results: val pack 3,355 PRs, prompt tokens median 2,913 / p95 8,346 / max 11,205, file `sha256:2306c061ee4ad3a4887c47e13d02135fb7710fd97ca7426e8af63bbbecc992fe` → results/data_prompts.json @ b72c196 (clean); targets → results/data_targets.json @ 043f3a3 (clean). Rules on val: maintainer match 48.0% (95% CI 46.1–49.9, n=2,435) → results/baseline_rules_val.json @ b48307e (clean).
+- Dataset hash: val targets `sha256:24409ffbf6e0d6403cf8f49b17a32212dd4492331b177fb25fc8bc006dc67dc5`
+- Notes / decisions / problems: harness and app validators agree on 16 hand cases (tests/test_eval_agreement.py) and on all 150 smoke replies. Phase 3 needs a max sequence length of ~12k.
+- Next: model baselines on Explorer
+
+### 2026-11-13 — Task 2.3 — Untuned Qwen3-1.7B and teacher baselines (Explorer)
+- Status: done
+- What changed: `training/baselines/vllm_replies.py` + `training/slurm/baseline_replies.sbatch`: one H200, greedy, no constrained decoding, no retries; replies + meta with the pack hash and code commit.
+- Results (val, n=2,435 typed PRs): Qwen3-1.7B thinking off: maintainer match 34.7% (CI 32.8–36.6), valid JSON 89.6% (job 11852470, 0.053 GPU-s/PR) → results/baseline_qwen3-1.7b_val.json @ bd0cef2 (clean). Teacher thinking on: 62.8% (CI 60.8–64.6), type macro-F1 0.52, valid JSON 98.8% (job 11852471, 1.09 GPU-s/PR) → results/baseline_teacher_val.json @ 1b732c8 (clean). Teacher vs rules: 538 vs 178 discordant, p<1e-6.
+- Dataset hash: val pack as in 2.2
+- Notes / decisions / problems: the vLLM env on scratch lost files to the purge (`packaging`, `libbz2`); rebuilt from the lock in ~/prpilot-keep (job 11852395). Teacher labels for all of train would take ~5 h on one H200.
+- Next: system pass, frontier baseline
+
+### 2026-11-14 — Task 2.4 — System pass: Qwen3-1.7B through the agent with retries
+- Status: done
+- What changed: `training/baselines/agent_replies.py` + `training/slurm/agent_replies.sbatch`: the real Pydantic AI triage agent (2 retries, both validation layers) against `vllm serve` on one H200; agent env from `uv.lock` (`setup_agent_env.sh`).
+- Results (all val, job 11874334): valid after retries 70.7% (2,373/3,355); retry rate 58.9%; rescue rate 50.3% (993/1,975); maintainer match 36.3% (CI 34.3–38.3) → results/baseline_qwen3-1.7b-system_val.json @ c3ecb66 (clean).
+- Dataset hash: val pack as in 2.2
+- Notes / decisions / problems: most failures are labels outside the repo list (the model writes the type, e.g. `docs`, as a label). First submit failed because Explorer sets `http_proxy` with no `no_proxy` (job 11874104); fixed in the sbatch.
+- Next: Gemini
+
+### 2026-11-14 — Task 2.5 — Frontier baseline: Gemini 3.8 Flash on Vertex AI
+- Status: done
+- What changed: `training/baselines/vertex_replies.py` (Vertex only, refuses AI Studio keys; free `countTokens` estimate first; hard cap reserving the worst case per request) and `vertex_agent_replies.py` (same agent and retries on Vertex). Seeded 500-PR val sample (`prompt-sample`, seed 0) and `prpilot_eval score --only` so every baseline is scored on the same PRs.
+- Results (500-PR sample, n=363 typed): Gemini raw maintainer match 53.4% (CI 48.3–58.9), valid JSON 88.8%, $1.97 total → results/baseline_gemini-3.8-flash_val_s500.json @ 6f1f595 (clean). Gemini with retries: 59.2% (CI 54.2–64.5), valid after retries 100%, rescue 68/68, $2.36 total → results/baseline_gemini-3.8-flash-system_val_s500.json @ 1b732c8 (clean). Same sample: teacher 60.1%, rules 48.5%. Teacher vs Gemini raw: 34 vs 10, p=0.0004; teacher vs Gemini with retries: 18 vs 15, p=0.73.
+- Dataset hash: sample `sha256:6e70fa0e9aa750671d1d8e451ccd7a8e539beede181bf114c2a7b9c40f3ff634` → results/data_prompts_val_s500.json @ e573529 (clean)
+- Notes / decisions / problems: online requests instead of batch (batch needs a GCS bucket and up to 24 h for ~$2 saving on 500 PRs). Prices from the Vertex AI pricing page (global, introductory through 2026-12-31): $0.75 input / $3.75 output per 1M, thinking billed as output; thinking level LOW (lowest allowed), temperature at the model default. Gemini's invalid replies: issue numbers written as `#33550` in the JSON (26), code fences (14), invented types (16). Costs come from usage metadata; the bill is the truth.
+- Next: summary, smoke suite
+
+### 2026-11-14 — Task 2.6 — Baseline summary and CI smoke suite
+- Status: done
+- What changed: `prpilot_eval summary` → results/baselines_val.json (headline metrics, system retry and rescue rates, cost per PR, every McNemar pair within a PR set). Smoke suite: 50 val PRs with recorded replies from Qwen3-1.7B, the teacher and Gemini (`scripts/make_smoke_suite.py`, no PR text committed); CI re-scores them and re-runs the app validator (~1 s). The harness now lists `dirty_paths` and ignores files under `results/` when judging a clean tree; reports scored after another report was written were re-scored.
+- Results: results/baselines_val.json @ 1b732c8 (clean).
+- Dataset hash: n/a
+- Notes / decisions / problems: no test-split numbers in Phase 2 (hard rule 4); the test split is scored once, at the end.
+- Next: PR to `main`, then the Phase 2 review stop before Phase 3

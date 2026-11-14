@@ -1,0 +1,14 @@
+{
+  "name": "gemini-3.8-flash",
+  "pack_sha256": "sha256:27f4e675538d8d2f6bc62eda2a995bff92dea2e4846598dbd489495e9ff8cb0f",
+  "source": {
+    "file": "gemini-3.8-flash_val_s500.jsonl",
+    "sha256": "sha256:f91a214ff204b13bb162767cbcb73a57d3fee0506e4d02484e44a196647e1a98",
+    "model": {
+      "repo": "vertex-ai:gemini-3.8-flash",
+      "revision": [
+        "gemini-3.8-flash"
+      ]
+    }
+  }
+}

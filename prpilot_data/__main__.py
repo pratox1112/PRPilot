@@ -41,6 +41,31 @@ uv run --group data python -m prpilot_data dataset
     opening date, drops cross-split duplicates and writes data/processed/*.parquet with hashes.
     No network.
 
+uv run python -m prpilot_data issues [--repo owner/name] [--pages N]
+    Every issue (any state, with created/closed times) and every label (with creation time)
+    per repo, for the open-time candidate lists. Read-only, cached. --pages: trial run.
+
+uv run --group data python -m prpilot_data candidates
+    Open-time candidate lists per PR (labels, top-20 reviewers, top-20 issues) from the
+    dataset, issues and labels. No network. Writes data/processed/candidates.jsonl.
+
+uv run --group data python -m prpilot_data prompts
+    Renders every PR's exact model input (shared system prompt + user prompt) into
+    data/processed/prompts_{split}.jsonl, with hashes and prompt token counts. No network.
+
+uv run --group data python -m prpilot_data targets
+    Writes data/processed/targets_{split}.jsonl: the maintainer answers per PR in the shape
+    the eval harness scores, with hashes. No network.
+
+uv run --group data python -m prpilot_data rules-baseline [--split val]
+    Baseline 1: keyword, path and history rules, written as replies
+    (data/processed/replies/rules_<split>.jsonl) for the eval harness. No network.
+
+uv run python -m prpilot_data prompt-sample [--split val] [--n 500] [--seed 0]
+    Seeded sample of a prompt pack (data/processed/prompts_<split>_s<n>.jsonl), lines copied
+    byte for byte, for the paid Gemini baseline. Other runs are scored on it with
+    `prpilot_eval score --only`.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -463,6 +488,279 @@ def cmd_dataset() -> None:
     print(f"wrote {path} and {out_dir}")
 
 
+def cmd_issues(repo: str | None, pages: int | None) -> None:
+    from prpilot_data import issues
+    from prpilot_data.github_api import GitHubGraphQL
+
+    if not pages:
+        require_clean_tree()
+    meta = run_metadata(["httpx"])
+    load_dotenv(REPO_ROOT / ".env")
+    gh = GitHubGraphQL(REPO_ROOT / "data" / "raw" / "github_graphql", issues.QUERY_VERSION)
+    out_dir = REPO_ROOT / "data" / "interim" / "issues"
+    stats = {}
+    for r in [repo] if repo else selected_repos():
+        slug = r.replace("/", "__")
+        out = out_dir / (f"{slug}.trial.jsonl" if pages else f"{slug}.jsonl")
+        written, total = issues.fetch_issues(gh, r, out, pages)
+        labels = issues.fetch_labels(gh, r)
+        (out_dir / f"{slug}.labels.json").write_text(
+            json.dumps(labels, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        fetched = {row["number"] for row in read_jsonl(out)}
+        # Coverage: closing issues of our PRs (same repo) that the fetch returned.
+        truth = read_jsonl(REPO_ROOT / "data" / "interim" / "truth" / f"{slug}.jsonl")
+        targets = {i["number"] for t in truth for i in t["issues"] if i["same_repo"]}
+        stats[r] = {
+            "issues_written": written,
+            "issues_total_reported": total,
+            "labels": len(labels),
+            "closing_issues_found": len(targets & fetched),
+            "closing_issues": len(targets),
+        }
+        print(f"{r}: {stats[r]}")
+    print(f"github calls: network {gh.calls}, cache hits {gh.cache_hits}")
+    if not pages and not repo:
+        path = write_result(
+            "data_issues",
+            {
+                "stage": "Issues and labels per repo, for open-time candidate lists",
+                "meta": meta,
+                "query_version": issues.QUERY_VERSION,
+                "body_chars": issues.BODY_CHARS,
+                "repos": stats,
+                "github_calls": {"network": gh.calls, "cache_hits": gh.cache_hits},
+            },
+        )
+        print(f"wrote {path} and {out_dir}")
+
+
+def load_splits(columns: list[str] | None = None) -> list[dict]:
+    import pyarrow.parquet as pq
+
+    from prpilot_data import dataset
+
+    processed = REPO_ROOT / "data" / "processed"
+    rows = []
+    for split in dataset.SPLITS:
+        rows += pq.read_table(processed / f"prpilot_{split}.parquet", columns=columns).to_pylist()
+    return rows
+
+
+def cmd_candidates() -> None:
+    from prpilot_data import candidates, dataset
+
+    require_clean_tree()
+    meta = run_metadata(["numpy", "pyarrow"])
+    rows = load_splits()
+    issues_dir = REPO_ROOT / "data" / "interim" / "issues"
+    uses = candidates.label_vocabulary(rows)
+    reviewers = candidates.rank_reviewers(rows)
+    print(f"ranked reviewers for {len(reviewers)} PRs")
+    cands = {}
+    vocab_sizes = {}
+    for r in selected_repos():
+        slug = r.replace("/", "__")
+        repo_labels = json.loads((issues_dir / f"{slug}.labels.json").read_text(encoding="utf-8"))
+        index = candidates.IssueIndex(read_jsonl(issues_dir / f"{slug}.jsonl"))
+        repo_rows = [row for row in rows if row["repo"] == r]
+        sizes = []
+        for row in repo_rows:
+            labels = candidates.labels_at(row["created_at"], repo_labels, uses[r])
+            sizes.append(len(labels))
+            key = (r, row["number"])
+            cands[key] = candidates.candidate_row(row, labels, reviewers.get(key, []), index)
+        vocab_sizes[r] = {"min": min(sizes), "max": max(sizes)}
+        print(f"{r}: {len(repo_rows)} PRs, labels per PR {vocab_sizes[r]}")
+    out = REPO_ROOT / "data" / "processed" / "candidates.jsonl"
+    ordered = [cands[(row["repo"], row["number"])] for row in rows]
+    with out.open("w", encoding="utf-8", newline="") as f:
+        for c in ordered:
+            f.write(json.dumps(c, ensure_ascii=False) + "\n")
+    splits = {}
+    for split in dataset.SPLITS:
+        part = [row for row in rows if row["split"] == split]
+        splits[split] = {
+            "prs": len(part),
+            "rows_hash": content_hash([cands[(p["repo"], p["number"])] for p in part]),
+        }
+        # The rankings are the rules baseline, so on test they are a test result: not
+        # computed until the test split is run once (hard rule 4).
+        if split != "test":
+            splits[split].update(candidates.ceilings(part, cands))
+        print(f"{split}: {splits[split]}")
+    path = write_result(
+        "data_candidates",
+        {
+            "stage": "Open-time candidate lists: labels, reviewers, issues",
+            "meta": meta,
+            "rules": {
+                "label_min_uses": candidates.LABEL_MIN_USES,
+                "vocab_before": candidates.VOCAB_BEFORE,
+                "top_reviewers": candidates.TOP_REVIEWERS,
+                "top_issues": candidates.TOP_ISSUES,
+                "path_depth": candidates.PATH_DEPTH,
+                "max_files": candidates.MAX_FILES,
+                "bm25": {"k1": candidates.BM25_K1, "b": candidates.BM25_B},
+            },
+            "labels_per_pr": vocab_sizes,
+            "splits": splits,
+        },
+    )
+    print(f"wrote {path} and {out}")
+
+
+def cmd_prompts() -> None:
+    import statistics
+
+    from prpilot_data import dataset, prompts, tokens
+
+    require_clean_tree()
+    meta = run_metadata(["tokenizers", "pyarrow"])
+    rows = load_splits()
+    cands = {
+        (c["repo"], c["number"]): c
+        for c in read_jsonl(REPO_ROOT / "data" / "processed" / "candidates.jsonl")
+    }
+    count = tokens.load_counter()
+    out_dir = REPO_ROOT / "data" / "processed"
+    splits = {}
+    for split in dataset.SPLITS:
+        part = [r for r in rows if r["split"] == split]
+        path = out_dir / f"prompts_{split}.jsonl"
+        lengths = []
+        with path.open("w", encoding="utf-8", newline="") as f:
+            for r in part:
+                p = prompts.pack_row(r, cands[(r["repo"], r["number"])])
+                f.write(json.dumps(p, ensure_ascii=False) + "\n")
+                lengths.append(sum(count(m["content"]) for m in p["messages"]))
+        lengths.sort()
+        splits[split] = {
+            "file": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "file_sha256": dataset.file_sha256(path),
+            "prs": len(part),
+            "prompt_tokens": {
+                "median": statistics.median(lengths),
+                "p95": lengths[int(0.95 * (len(lengths) - 1))],
+                "max": lengths[-1],
+            },
+        }
+        print(f"{split}: {splits[split]}")
+    path = write_result(
+        "data_prompts",
+        {
+            "stage": "Prompt packs: exact model inputs per PR",
+            "meta": meta,
+            "pack_version": prompts.PACK_VERSION,
+            "tokenizer": {"model": tokens.STUDENT_MODEL, "revision": tokens.STUDENT_REVISION},
+            "token_count_note": "system + user message content, without chat-template tokens",
+            "splits": splits,
+        },
+    )
+    print(f"wrote {path} and {out_dir}")
+
+
+def cmd_targets() -> None:
+    from prpilot_data import dataset, targets
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    rows = load_splits()
+    cands = {
+        (c["repo"], c["number"]): c
+        for c in read_jsonl(REPO_ROOT / "data" / "processed" / "candidates.jsonl")
+    }
+    out_dir = REPO_ROOT / "data" / "processed"
+    splits = {}
+    for split in dataset.SPLITS:
+        path = out_dir / f"targets_{split}.jsonl"
+        with path.open("w", encoding="utf-8", newline="") as f:
+            for r in rows:
+                if r["split"] == split:
+                    t = targets.target_row(r, cands[(r["repo"], r["number"])]["labels"])
+                    f.write(json.dumps(t, ensure_ascii=False) + "\n")
+        splits[split] = {
+            "file": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "file_sha256": dataset.file_sha256(path),
+        }
+        print(f"{split}: {splits[split]}")
+    path = write_result(
+        "data_targets",
+        {"stage": "Targets files for the eval harness", "meta": meta, "splits": splits},
+    )
+    print(f"wrote {path}")
+
+
+def cmd_rules_baseline(split: str) -> None:
+    from prpilot_data import dataset, rules_baseline
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    rows = load_splits()
+    processed = REPO_ROOT / "data" / "processed"
+    cands = {(c["repo"], c["number"]): c for c in read_jsonl(processed / "candidates.jsonl")}
+    hist = rules_baseline.history_predictions(rows)
+    out_dir = processed / "replies"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"rules_{split}.jsonl"
+    with out.open("w", encoding="utf-8", newline="") as f:
+        for r in rows:
+            if r["split"] == split:
+                key = (r["repo"], r["number"])
+                line = rules_baseline.reply_line(r, cands[key], hist[key])
+                f.write(json.dumps(line, ensure_ascii=False) + "\n")
+    runner = {
+        "name": "rules",
+        "model": None,
+        "split": split,
+        "pack_sha256": dataset.file_sha256(processed / f"prompts_{split}.jsonl"),
+        "meta": meta,
+        "settings": {
+            "label_rate": rules_baseline.LABEL_RATE,
+            "label_support": rules_baseline.LABEL_SUPPORT,
+            "many_files": rules_baseline.MANY_FILES,
+        },
+    }
+    out.with_name(f"rules_{split}.meta.json").write_text(
+        json.dumps(runner, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {out}")
+
+
+def cmd_prompt_sample(split: str, n: int, seed: int) -> None:
+    import random
+    from collections import Counter
+
+    from prpilot_data import dataset
+
+    require_clean_tree()
+    meta = run_metadata([])
+    processed = REPO_ROOT / "data" / "processed"
+    parent = processed / f"prompts_{split}.jsonl"
+    lines = parent.read_bytes().decode("utf-8").splitlines(keepends=True)
+    keep = sorted(random.Random(seed).sample(range(len(lines)), n))
+    out = processed / f"prompts_{split}_s{n}.jsonl"
+    # Lines are copied byte for byte, so every sampled prompt is identical to the full pack's.
+    out.write_bytes("".join(lines[i] for i in keep).encode("utf-8"))
+    repos = Counter(json.loads(lines[i])["repo"] for i in keep)
+    path = write_result(
+        f"data_prompts_{split}_s{n}",
+        {
+            "stage": "Seeded sample of a prompt pack (paid-API baseline)",
+            "meta": meta,
+            "parent": {"file": parent.name, "sha256": dataset.file_sha256(parent)},
+            "sample": {
+                "file": str(out.relative_to(REPO_ROOT)).replace("\\", "/"),
+                "sha256": dataset.file_sha256(out),
+                "prs": n,
+                "seed": seed,
+                "per_repo": dict(sorted(repos.items())),
+            },
+        },
+    )
+    print(f"wrote {out} and {path}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -623,6 +921,20 @@ def main() -> None:
     df.add_argument("--limit", type=int, help="trial run: only the first N PRs per repo")
     sub.add_parser("truth")
     sub.add_parser("dataset")
+    iss = sub.add_parser("issues")
+    iss.add_argument("--repo")
+    iss.add_argument("--pages", type=int, help="trial run: only the first N pages per repo")
+    sub.add_parser("candidates")
+    sub.add_parser("prompts")
+    sub.add_parser("targets")
+    rb = sub.add_parser("rules-baseline")
+    # No test: the test split is run once, at the end, for every system together.
+    rb.add_argument("--split", choices=["train", "val"], default="val")
+    ps = sub.add_parser("prompt-sample")
+    # No test: the test split is run once, at the end, for every system together.
+    ps.add_argument("--split", choices=["train", "val"], default="val")
+    ps.add_argument("--n", type=int, default=500)
+    ps.add_argument("--seed", type=int, default=0)
     sc = sub.add_parser("spot-check")
     sc.add_argument("--n", type=int, default=40)
     sc.add_argument("--seed", type=int, default=0)
@@ -650,6 +962,18 @@ def main() -> None:
         cmd_truth()
     elif args.cmd == "dataset":
         cmd_dataset()
+    elif args.cmd == "issues":
+        cmd_issues(args.repo, args.pages)
+    elif args.cmd == "candidates":
+        cmd_candidates()
+    elif args.cmd == "prompts":
+        cmd_prompts()
+    elif args.cmd == "targets":
+        cmd_targets()
+    elif args.cmd == "rules-baseline":
+        cmd_rules_baseline(args.split)
+    elif args.cmd == "prompt-sample":
+        cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":
         cmd_spot_check(args.n, args.seed)
     else:

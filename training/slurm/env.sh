@@ -11,6 +11,9 @@ export HF_HUB_CACHE="${PRPILOT_SCRATCH}/hf-cache"
 # The conda env lives on scratch too (home is too small). If the purge removes it, rebuild
 # it with training/slurm/setup_vllm_env.sh.
 export PRPILOT_VLLM_ENV="${PRPILOT_SCRATCH}/envs/prpilot-vllm"
+# The app's own deps (uv.lock) for running the agent against a vLLM server; rebuild with
+# training/slurm/setup_agent_env.sh.
+export PRPILOT_AGENT_ENV="${PRPILOT_SCRATCH}/envs/prpilot-agent"
 export CONDA_PKGS_DIRS="${PRPILOT_SCRATCH}/conda-pkgs"
 export PIP_NO_CACHE_DIR=1
 # Ignore packages in ~/.local (user site). Without this, pip in our env sees and can even
@@ -49,3 +52,7 @@ export TEACHER_REPO="Qwen/Qwen3.5-122B-A10B-GPTQ-Int4"
 export TEACHER_REVISION="30cd92cba9707a9aba09d1e490ed4b66b78e9606"
 
 mkdir -p "${HF_HUB_CACHE}" "${XDG_CACHE_HOME}" "${PRPILOT_SCRATCH}/envs" "${CONDA_PKGS_DIRS}" "${PRPILOT_SCRATCH}/outputs" "${PRPILOT_SCRATCH}/logs" "${PRPILOT_KEEP}"
+
+# Phase 2 baseline 2 / Phase 3 student base (same tokenizer pin as prpilot_data/tokens.py).
+export BASE_REPO="Qwen/Qwen3-1.7B"
+export BASE_REVISION="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"

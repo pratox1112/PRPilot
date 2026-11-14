@@ -1,0 +1,54 @@
+{
+  "stage": "Prompt packs: exact model inputs per PR",
+  "meta": {
+    "timestamp_utc": "2026-11-03T00:53:29+00:00",
+    "git": {
+      "commit": "b72c196f387d7aea6ac96bb11a841f8dc2ccad92",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "tokenizers": "0.23.3",
+      "pyarrow": "25.0.1"
+    }
+  },
+  "pack_version": "prompts-v1",
+  "tokenizer": {
+    "model": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+  },
+  "token_count_note": "system + user message content, without chat-template tokens",
+  "splits": {
+    "train": {
+      "file": "data/processed/prompts_train.jsonl",
+      "file_sha256": "sha256:c56311b9a3311e238b6cd2b1d7ba7d4e97b83dc8beb187ccc553794b640cd387",
+      "prs": 15810,
+      "prompt_tokens": {
+        "median": 2693.0,
+        "p95": 8117,
+        "max": 11697
+      }
+    },
+    "val": {
+      "file": "data/processed/prompts_val.jsonl",
+      "file_sha256": "sha256:2306c061ee4ad3a4887c47e13d02135fb7710fd97ca7426e8af63bbbecc992fe",
+      "prs": 3355,
+      "prompt_tokens": {
+        "median": 2913,
+        "p95": 8346,
+        "max": 11205
+      }
+    },
+    "test": {
+      "file": "data/processed/prompts_test.jsonl",
+      "file_sha256": "sha256:f1caef7782bdc4592655b9ae6fee42d05076573f5ae5c0a3629f44b9f0386f53",
+      "prs": 9573,
+      "prompt_tokens": {
+        "median": 2678,
+        "p95": 8154,
+        "max": 11765
+      }
+    }
+  }
+}

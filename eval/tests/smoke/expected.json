@@ -1,0 +1,857 @@
+{
+ "source_sample": "sha256:6e70fa0e9aa750671d1d8e451ccd7a8e539beede181bf114c2a7b9c40f3ff634",
+ "runs": {
+  "qwen3-1.7b": {
+   "metrics": {
+    "maintainer_match": {
+     "value": 0.2857,
+     "n": 28,
+     "ci95": [
+      0.1304,
+      0.4643
+     ]
+    },
+    "type_macro_f1": {
+     "value": 0.2227,
+     "n": 28,
+     "ci95": [
+      0.0992,
+      0.351
+     ]
+    },
+    "label_micro_f1": {
+     "value": 0.078,
+     "n": 50,
+     "ci95": [
+      0.0309,
+      0.1281
+     ]
+    },
+    "reviewer_recall_at_3": {
+     "value": 0.32,
+     "n": 50,
+     "ci95": [
+      0.2,
+      0.44
+     ]
+    },
+    "reviewer_recall_at_3_reviewed_only": {
+     "value": 0.32,
+     "n": 50,
+     "ci95": [
+      0.2,
+      0.44
+     ]
+    },
+    "issue_recall_at_5": {
+     "value": 0.7,
+     "n": 10,
+     "ci95": [
+      0.375,
+      1.0
+     ]
+    },
+    "issue_recall_at_5_named_at_open": {
+     "value": 0.875,
+     "n": 8,
+     "ci95": [
+      0.625,
+      1.0
+     ]
+    },
+    "issue_recall_at_5_not_named": {
+     "value": 0.0,
+     "n": 2,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "json_validity": {
+     "value": 0.84,
+     "n": 50,
+     "ci95": [
+      0.74,
+      0.94
+     ]
+    },
+    "risk_auroc": {
+     "value": null,
+     "n": 50,
+     "positives": 0,
+     "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+    }
+   },
+   "app_verdicts": [
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    }
+   ]
+  },
+  "teacher": {
+   "metrics": {
+    "maintainer_match": {
+     "value": 0.6071,
+     "n": 28,
+     "ci95": [
+      0.4138,
+      0.7857
+     ]
+    },
+    "type_macro_f1": {
+     "value": 0.6853,
+     "n": 28,
+     "ci95": [
+      0.4954,
+      0.8214
+     ]
+    },
+    "label_micro_f1": {
+     "value": 0.2687,
+     "n": 50,
+     "ci95": [
+      0.1875,
+      0.3448
+     ]
+    },
+    "reviewer_recall_at_3": {
+     "value": 0.48,
+     "n": 50,
+     "ci95": [
+      0.34,
+      0.62
+     ]
+    },
+    "reviewer_recall_at_3_reviewed_only": {
+     "value": 0.48,
+     "n": 50,
+     "ci95": [
+      0.34,
+      0.62
+     ]
+    },
+    "issue_recall_at_5": {
+     "value": 0.7,
+     "n": 10,
+     "ci95": [
+      0.4,
+      1.0
+     ]
+    },
+    "issue_recall_at_5_named_at_open": {
+     "value": 0.875,
+     "n": 8,
+     "ci95": [
+      0.625,
+      1.0
+     ]
+    },
+    "issue_recall_at_5_not_named": {
+     "value": 0.0,
+     "n": 2,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "json_validity": {
+     "value": 1.0,
+     "n": 50,
+     "ci95": [
+      1.0,
+      1.0
+     ]
+    },
+    "risk_auroc": {
+     "value": null,
+     "n": 50,
+     "positives": 0,
+     "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+    }
+   },
+   "app_verdicts": [
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    }
+   ]
+  },
+  "gemini-3.8-flash": {
+   "metrics": {
+    "maintainer_match": {
+     "value": 0.5714,
+     "n": 28,
+     "ci95": [
+      0.3846,
+      0.7407
+     ]
+    },
+    "type_macro_f1": {
+     "value": 0.6745,
+     "n": 28,
+     "ci95": [
+      0.4861,
+      0.8207
+     ]
+    },
+    "label_micro_f1": {
+     "value": 0.3231,
+     "n": 50,
+     "ci95": [
+      0.243,
+      0.4035
+     ]
+    },
+    "reviewer_recall_at_3": {
+     "value": 0.38,
+     "n": 50,
+     "ci95": [
+      0.26,
+      0.52
+     ]
+    },
+    "reviewer_recall_at_3_reviewed_only": {
+     "value": 0.38,
+     "n": 50,
+     "ci95": [
+      0.26,
+      0.52
+     ]
+    },
+    "issue_recall_at_5": {
+     "value": 0.6,
+     "n": 10,
+     "ci95": [
+      0.2857,
+      0.8889
+     ]
+    },
+    "issue_recall_at_5_named_at_open": {
+     "value": 0.75,
+     "n": 8,
+     "ci95": [
+      0.375,
+      1.0
+     ]
+    },
+    "issue_recall_at_5_not_named": {
+     "value": 0.0,
+     "n": 2,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "json_validity": {
+     "value": 0.88,
+     "n": 50,
+     "ci95": [
+      0.78,
+      0.96
+     ]
+    },
+    "risk_auroc": {
+     "value": null,
+     "n": 50,
+     "positives": 0,
+     "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+    }
+   },
+   "app_verdicts": [
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": false,
+     "repo_rules": false
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    },
+    {
+     "static": true,
+     "repo_rules": true
+    }
+   ]
+  }
+ }
+}

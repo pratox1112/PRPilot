@@ -1,0 +1,110 @@
+{
+  "stage": "Open-time candidate lists: labels, reviewers, issues",
+  "meta": {
+    "timestamp_utc": "2026-11-03T00:33:24+00:00",
+    "git": {
+      "commit": "0ee5e0708f46e6cb1b009c32acf88f2fe026d799",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "numpy": "2.5.4",
+      "pyarrow": "25.0.1"
+    }
+  },
+  "rules": {
+    "label_min_uses": 10,
+    "vocab_before": "2025-01-01",
+    "top_reviewers": 20,
+    "top_issues": 20,
+    "path_depth": 3,
+    "max_files": 200,
+    "bm25": {
+      "k1": 1.2,
+      "b": 0.75
+    }
+  },
+  "labels_per_pr": {
+    "cilium/cilium": {
+      "min": 53,
+      "max": 74
+    },
+    "kubernetes/kubernetes": {
+      "min": 41,
+      "max": 43
+    },
+    "numpy/numpy": {
+      "min": 23,
+      "max": 25
+    },
+    "pandas-dev/pandas": {
+      "min": 73,
+      "max": 74
+    }
+  },
+  "splits": {
+    "train": {
+      "prs": 15810,
+      "rows_hash": "sha256:6c888e9189391ca3e31211c3f418c2a3235e4843a8cbd142a91e2c617092e671",
+      "reviewer_in_top20": {
+        "hits": 13048,
+        "n": 14253,
+        "rate": 0.9155
+      },
+      "reviewer_in_top3": {
+        "hits": 9222,
+        "n": 14253,
+        "rate": 0.647
+      },
+      "issue_in_top20": {
+        "hits": 2990,
+        "n": 3258,
+        "rate": 0.9177
+      },
+      "issue_in_top5": {
+        "hits": 2945,
+        "n": 3258,
+        "rate": 0.9039
+      },
+      "target_labels_in_vocabulary": {
+        "hits": 32756,
+        "n": 33747,
+        "rate": 0.9706
+      }
+    },
+    "val": {
+      "prs": 3355,
+      "rows_hash": "sha256:199e2c3e22517221e86f14b7cfb7591dd5a47f96468b5e8b448176f280dc7162",
+      "reviewer_in_top20": {
+        "hits": 2851,
+        "n": 3113,
+        "rate": 0.9158
+      },
+      "reviewer_in_top3": {
+        "hits": 1801,
+        "n": 3113,
+        "rate": 0.5785
+      },
+      "issue_in_top20": {
+        "hits": 610,
+        "n": 679,
+        "rate": 0.8984
+      },
+      "issue_in_top5": {
+        "hits": 604,
+        "n": 679,
+        "rate": 0.8895
+      },
+      "target_labels_in_vocabulary": {
+        "hits": 6581,
+        "n": 6915,
+        "rate": 0.9517
+      }
+    },
+    "test": {
+      "prs": 9573,
+      "rows_hash": "sha256:3c64059475dd8cf85db75bdde500287cf8ad24cea91a538c859ddcb88122bcd7"
+    }
+  }
+}

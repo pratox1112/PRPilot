@@ -11,6 +11,9 @@ class RepoRules:
     labels: frozenset[str]
     eligible_reviewers: frozenset[str]
     open_issues: Mapping[int, str] = field(default_factory=dict)
+    # Display order for the prompt (best first). Empty / False: the lists are shown sorted.
+    reviewer_order: tuple[str, ...] = ()
+    issues_ranked: bool = False
 
 
 @dataclass(frozen=True)
