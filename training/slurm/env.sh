@@ -11,6 +11,9 @@ export HF_HUB_CACHE="${PRPILOT_SCRATCH}/hf-cache"
 # The conda env lives on scratch too (home is too small). If the purge removes it, rebuild
 # it with training/slurm/setup_vllm_env.sh.
 export PRPILOT_VLLM_ENV="${PRPILOT_SCRATCH}/envs/prpilot-vllm"
+# The app's own deps (uv.lock) for running the agent against a vLLM server; rebuild with
+# training/slurm/setup_agent_env.sh.
+export PRPILOT_AGENT_ENV="${PRPILOT_SCRATCH}/envs/prpilot-agent"
 export CONDA_PKGS_DIRS="${PRPILOT_SCRATCH}/conda-pkgs"
 export PIP_NO_CACHE_DIR=1
 # Ignore packages in ~/.local (user site). Without this, pip in our env sees and can even
