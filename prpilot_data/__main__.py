@@ -61,6 +61,11 @@ uv run --group data python -m prpilot_data rules-baseline [--split val]
     Baseline 1: keyword, path and history rules, written as replies
     (data/processed/replies/rules_<split>.jsonl) for the eval harness. No network.
 
+uv run python -m prpilot_data prompt-sample [--split val] [--n 500] [--seed 0]
+    Seeded sample of a prompt pack (data/processed/prompts_<split>_s<n>.jsonl), lines copied
+    byte for byte, for the paid Gemini baseline. Other runs are scored on it with
+    `prpilot_eval score --only`.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -722,6 +727,40 @@ def cmd_rules_baseline(split: str) -> None:
     print(f"wrote {out}")
 
 
+def cmd_prompt_sample(split: str, n: int, seed: int) -> None:
+    import random
+    from collections import Counter
+
+    from prpilot_data import dataset
+
+    require_clean_tree()
+    meta = run_metadata([])
+    processed = REPO_ROOT / "data" / "processed"
+    parent = processed / f"prompts_{split}.jsonl"
+    lines = parent.read_bytes().decode("utf-8").splitlines(keepends=True)
+    keep = sorted(random.Random(seed).sample(range(len(lines)), n))
+    out = processed / f"prompts_{split}_s{n}.jsonl"
+    # Lines are copied byte for byte, so every sampled prompt is identical to the full pack's.
+    out.write_bytes("".join(lines[i] for i in keep).encode("utf-8"))
+    repos = Counter(json.loads(lines[i])["repo"] for i in keep)
+    path = write_result(
+        f"data_prompts_{split}_s{n}",
+        {
+            "stage": "Seeded sample of a prompt pack (paid-API baseline)",
+            "meta": meta,
+            "parent": {"file": parent.name, "sha256": dataset.file_sha256(parent)},
+            "sample": {
+                "file": str(out.relative_to(REPO_ROOT)).replace("\\", "/"),
+                "sha256": dataset.file_sha256(out),
+                "prs": n,
+                "seed": seed,
+                "per_repo": dict(sorted(repos.items())),
+            },
+        },
+    )
+    print(f"wrote {out} and {path}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -891,6 +930,11 @@ def main() -> None:
     rb = sub.add_parser("rules-baseline")
     # No test: the test split is run once, at the end, for every system together.
     rb.add_argument("--split", choices=["train", "val"], default="val")
+    ps = sub.add_parser("prompt-sample")
+    # No test: the test split is run once, at the end, for every system together.
+    ps.add_argument("--split", choices=["train", "val"], default="val")
+    ps.add_argument("--n", type=int, default=500)
+    ps.add_argument("--seed", type=int, default=0)
     sc = sub.add_parser("spot-check")
     sc.add_argument("--n", type=int, default=40)
     sc.add_argument("--seed", type=int, default=0)
@@ -928,6 +972,8 @@ def main() -> None:
         cmd_targets()
     elif args.cmd == "rules-baseline":
         cmd_rules_baseline(args.split)
+    elif args.cmd == "prompt-sample":
+        cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":
         cmd_spot_check(args.n, args.seed)
     else:

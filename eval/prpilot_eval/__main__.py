@@ -5,6 +5,8 @@ uv run --project eval python -m prpilot_eval score --pack P --targets T --replie
     prompt_tokens, output_tokens, latency_s; a `<replies>.meta.json` beside it says which
     model and which prompt pack produced them). Refuses replies made from a different pack.
     Writes the report to O and per-PR outcomes to O with `.records.jsonl`.
+    `--only S` scores just the PRs in S, a byte-identical sample of P (prpilot_data
+    prompt-sample), so full-pack runs can be compared with runs made on the sample.
 
 uv run --project eval python -m prpilot_eval compare --a A.records.jsonl --b B.records.jsonl
     Exact McNemar test on maintainer match between two scored runs (same PRs).
@@ -53,13 +55,21 @@ def percentile(values: list[float], q: float) -> float | None:
     return round(values[int(q * (len(values) - 1))], 3)
 
 
-def score(pack_path: Path, targets_path: Path, replies_path: Path) -> tuple[dict, list[dict]]:
+def score(
+    pack_path: Path, targets_path: Path, replies_path: Path, only_path: Path | None = None
+) -> tuple[dict, list[dict]]:
     meta_path = replies_path.with_name(replies_path.name.removesuffix(".jsonl") + ".meta.json")
     runner = json.loads(meta_path.read_text(encoding="utf-8"))
     pack_sha = sha256(pack_path)
     if runner.get("pack_sha256") != pack_sha:
         raise SystemExit(f"replies were made from pack {runner.get('pack_sha256')}, not {pack_sha}")
     pack = read_jsonl(pack_path)
+    if only_path is not None:
+        # Score a run made on the full pack on a sample of it (e.g. the paid-API sample).
+        full = {(p["repo"], p["number"]): p for p in pack}
+        pack = read_jsonl(only_path)
+        if any(full.get((p["repo"], p["number"])) != p for p in pack):
+            raise SystemExit(f"{only_path.name} is not a sample of {pack_path.name}")
     targets = {(t["repo"], t["number"]): t for t in read_jsonl(targets_path)}
     replies = {(r["repo"], r["number"]): r for r in read_jsonl(replies_path)}
     records, errors, finish = [], [], Counter()
@@ -75,7 +85,8 @@ def score(pack_path: Path, targets_path: Path, replies_path: Path) -> tuple[dict
         rec = metrics.per_pr(targets[key], parsed)
         rec["error"] = error
         records.append(rec)
-    got = [r for r in replies.values()]
+    keys = {(p["repo"], p["number"]) for p in pack}
+    got = [r for k, r in replies.items() if k in keys]
     report = {
         "name": runner["name"],
         "runner": runner,
@@ -87,6 +98,9 @@ def score(pack_path: Path, targets_path: Path, replies_path: Path) -> tuple[dict
             "pack": {"file": pack_path.name, "sha256": pack_sha},
             "targets": {"file": targets_path.name, "sha256": sha256(targets_path)},
             "replies": {"file": replies_path.name, "sha256": sha256(replies_path)},
+            "only": None
+            if only_path is None
+            else {"file": only_path.name, "sha256": sha256(only_path)},
         },
         "prs": len(pack),
         "metrics": metrics.summarize(records),
@@ -132,12 +146,13 @@ def main() -> None:
     s.add_argument("--targets", type=Path, required=True)
     s.add_argument("--replies", type=Path, required=True)
     s.add_argument("--out", type=Path, required=True)
+    s.add_argument("--only", type=Path, help="score only the PRs in this sample of --pack")
     c = sub.add_parser("compare")
     c.add_argument("--a", type=Path, required=True)
     c.add_argument("--b", type=Path, required=True)
     args = parser.parse_args()
     if args.cmd == "score":
-        report, records = score(args.pack, args.targets, args.replies)
+        report, records = score(args.pack, args.targets, args.replies, args.only)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         rec_path = args.out.with_name(args.out.name.removesuffix(".json") + ".records.jsonl")

@@ -170,3 +170,28 @@ def test_score_refuses_replies_from_another_pack_and_scores_missing_as_invalid(t
     assert report["tokens_per_pr"]["prompt_tokens"] == 10.0
     rec = write(tmp_path / "a.records.jsonl", records)
     assert compare(rec, rec)["p_value"] == 1.0
+
+
+def test_score_only_restricts_to_an_identical_sample(tmp_path):
+    rows = [{"repo": "o/r", "number": 1}, {"repo": "o/r", "number": 2}]
+    pack = write(tmp_path / "pack.jsonl", rows)
+    targets = write(tmp_path / "targets.jsonl", [target(), target(number=2)])
+    replies = write(
+        tmp_path / "m.jsonl",
+        [
+            {"repo": "o/r", "number": 1, "text": "not json", "prompt_tokens": 99},
+            {"repo": "o/r", "number": 2, "text": reply(), "prompt_tokens": 10},
+        ],
+    )
+    pack_sha = "sha256:" + hashlib.sha256(pack.read_bytes()).hexdigest()
+    (tmp_path / "m.meta.json").write_text(
+        json.dumps({"name": "m", "pack_sha256": pack_sha}), encoding="utf-8"
+    )
+    only = write(tmp_path / "s.jsonl", rows[1:])
+    report, records = score(pack, targets, replies, only)
+    assert report["prs"] == 1 and len(records) == 1
+    assert report["metrics"]["json_validity"]["value"] == 1.0
+    assert report["tokens_per_pr"]["prompt_tokens"] == 10.0
+    changed = write(tmp_path / "bad.jsonl", [{"repo": "o/r", "number": 2, "split": "x"}])
+    with pytest.raises(SystemExit, match="not a sample"):
+        score(pack, targets, replies, changed)
