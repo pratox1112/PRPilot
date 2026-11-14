@@ -20,6 +20,9 @@ source training/slurm/env.sh
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${PRPILOT_VLLM_ENV}"
 export HF_HUB_OFFLINE=1
+# Explorer sets http_proxy on every node; without this, requests to our local server (curl
+# health checks and the agent's HTTP client) are sent to the cluster proxy and never arrive.
+export no_proxy="127.0.0.1,localhost${no_proxy:+,${no_proxy}}" NO_PROXY="127.0.0.1,localhost${NO_PROXY:+,${NO_PROXY}}"
 
 NAME="$1"; PACK="${PRPILOT_SCRATCH}/data/$2"; MODEL="$3"; REVISION="$4"; MAX_LEN="$5"; shift 5
 test -f "${PACK}" || { echo "missing ${PACK}; scp it from the laptop first"; exit 1; }
@@ -36,12 +39,13 @@ vllm serve "${MODEL}" --revision "${REVISION}" --served-model-name "${SERVED}" \
 SERVER=$!
 trap 'kill ${SERVER} 2>/dev/null || true' EXIT
 
-for _ in $(seq 1 120); do
+# First start on new settings compiles kernels (~6 min); allow 20.
+for _ in $(seq 1 240); do
   curl -sf "http://127.0.0.1:${PORT}/health" >/dev/null && break
   kill -0 "${SERVER}" 2>/dev/null || { echo "vllm serve exited"; exit 1; }
   sleep 5
 done
-curl -sf "http://127.0.0.1:${PORT}/health" >/dev/null || { echo "server not ready after 10 min"; exit 1; }
+curl -sf "http://127.0.0.1:${PORT}/health" >/dev/null || { echo "server not ready after 20 min"; exit 1; }
 echo "server ready on port ${PORT}"
 
 "${PRPILOT_AGENT_ENV}/bin/python" training/baselines/agent_replies.py --name "${NAME}" \
