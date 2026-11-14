@@ -1,0 +1,12 @@
+{
+  "name": "qwen3-1.7b",
+  "pack_sha256": "sha256:27f4e675538d8d2f6bc62eda2a995bff92dea2e4846598dbd489495e9ff8cb0f",
+  "source": {
+    "file": "qwen3-1.7b_val_11852470.jsonl",
+    "sha256": "sha256:efaaafd78f710cd2f0506870d6debfecc6bb99daa55c7c88dc7a6ab3d3569f73",
+    "model": {
+      "repo": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    }
+  }
+}

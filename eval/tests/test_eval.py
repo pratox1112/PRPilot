@@ -195,3 +195,48 @@ def test_score_only_restricts_to_an_identical_sample(tmp_path):
     changed = write(tmp_path / "bad.jsonl", [{"repo": "o/r", "number": 2, "split": "x"}])
     with pytest.raises(SystemExit, match="not a sample"):
         score(pack, targets, replies, changed)
+
+
+def test_summary_groups_pairs_and_system_rates(tmp_path):
+    from prpilot_eval import summary
+
+    rows = [{"repo": "o/r", "number": 1}, {"repo": "o/r", "number": 2}]
+    pack = write(tmp_path / "pack.jsonl", rows)
+    targets = write(tmp_path / "targets.jsonl", [target(), target(number=2)])
+    pack_sha = "sha256:" + hashlib.sha256(pack.read_bytes()).hexdigest()
+    runners = {
+        "a": {"name": "a", "pack_sha256": pack_sha},
+        "b": {
+            "name": "b",
+            "pack_sha256": pack_sha,
+            "prs": 2,
+            "agent": {
+                "valid_after_retries": 1,
+                "requests_per_pr": {"1": 0, "3": 2},
+                "errors": {"UnexpectedModelBehavior": 1},
+            },
+            "cost": {"usd_estimated": 0.5, "price_per_mtok": {"input": 1, "output": 2}},
+        },
+    }
+    paths = []
+    for name, runner in runners.items():
+        replies = write(
+            tmp_path / f"{name}.jsonl",
+            [
+                {"repo": "o/r", "number": 1, "text": reply()},
+                {"repo": "o/r", "number": 2, "text": reply(type="docs")},
+            ],
+        )
+        (tmp_path / f"{name}.meta.json").write_text(json.dumps(runner), encoding="utf-8")
+        report, records = score(pack, targets, replies)
+        out = tmp_path / f"r_{name}.json"
+        out.write_text(json.dumps(report), encoding="utf-8")
+        write(tmp_path / f"r_{name}.records.jsonl", records)
+        paths.append(out)
+    g = summary.group("val", paths)
+    assert g["prs"] == 2 and len(g["mcnemar"]) == 1
+    a, b = g["baselines"]
+    assert a["mode"] == "model" and a["system"] is None and a["cost"] is None
+    assert b["system"]["retry_rate"]["value"] == 1.0
+    assert b["system"]["rescue_rate"] == {"value": 0.5, "n": 2}
+    assert b["cost"]["usd_per_pr"] == 0.25

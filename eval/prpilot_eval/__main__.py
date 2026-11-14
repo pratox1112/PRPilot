@@ -23,7 +23,7 @@ from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 
-from prpilot_eval import metrics, validate
+from prpilot_eval import metrics, summary, validate
 from prpilot_eval.stats import mcnemar_exact
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,8 +44,21 @@ def git_info() -> dict:
             ["git", *args], cwd=ROOT, capture_output=True, text=True, check=True
         ).stdout.strip()
 
-    status = run("status", "--porcelain")
-    return {"commit": run("rev-parse", "HEAD"), "dirty": bool(status)}
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "-uall"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout  # not stripped: each line starts with a two-letter status that may be a space
+    paths = [line[3:] for line in status.splitlines() if line.strip()]
+    # Reports written by earlier `score` runs land in results/ before they are committed; they
+    # are outputs, not code, so they do not make a score dirty. Every path is still listed.
+    return {
+        "commit": run("rev-parse", "HEAD"),
+        "dirty": any(not p.startswith("results/") for p in paths),
+        "dirty_paths": paths,
+    }
 
 
 def percentile(values: list[float], q: float) -> float | None:
@@ -147,6 +160,16 @@ def main() -> None:
     s.add_argument("--replies", type=Path, required=True)
     s.add_argument("--out", type=Path, required=True)
     s.add_argument("--only", type=Path, help="score only the PRs in this sample of --pack")
+    sm = sub.add_parser("summary")
+    sm.add_argument("--out", type=Path, required=True)
+    sm.add_argument(
+        "--group",
+        nargs="+",
+        action="append",
+        required=True,
+        metavar=("NAME", "REPORT"),
+        help="a group name, then the reports scored on the same PRs (repeatable)",
+    )
     c = sub.add_parser("compare")
     c.add_argument("--a", type=Path, required=True)
     c.add_argument("--b", type=Path, required=True)
@@ -167,6 +190,21 @@ def main() -> None:
             f"label F1 {m['label_micro_f1']['value']}"
         )
         print(f"wrote {args.out} and {rec_path}")
+    elif args.cmd == "summary":
+        out = {
+            "stage": "Phase 2 baselines on the validation split",
+            "made_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+            "git": git_info(),
+            "groups": {g[0]: summary.group(g[0], [Path(p) for p in g[1:]]) for g in args.group},
+        }
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+        for name, g in out["groups"].items():
+            print(f"{name} ({g['prs']} PRs):")
+            for e in g["baselines"]:
+                m = e["metrics"]["maintainer_match"]
+                print(f"  {e['name']}: maintainer match {m['value']} (n={m['n']})")
+        print(f"wrote {args.out}")
     else:
         print(json.dumps(compare(args.a, args.b), indent=2))
 
