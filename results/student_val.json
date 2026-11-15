@@ -1,0 +1,879 @@
+{
+  "stage": "Phase 2 baselines on the validation split",
+  "made_at_utc": "2026-11-15T18:33:58+00:00",
+  "git": {
+    "commit": "73e22522363a836533bdad1042f4e720c9ac75f2",
+    "dirty": false,
+    "dirty_paths": [
+      "results/student-base_val_checkpoint-1000.json",
+      "results/student-base_val_checkpoint-1000.records.jsonl",
+      "results/student-base_val_checkpoint-1016.json",
+      "results/student-base_val_checkpoint-1016.records.jsonl",
+      "results/student-base_val_checkpoint-200.json",
+      "results/student-base_val_checkpoint-200.records.jsonl",
+      "results/student-base_val_checkpoint-400.json",
+      "results/student-base_val_checkpoint-400.records.jsonl",
+      "results/student-base_val_checkpoint-600.json",
+      "results/student-base_val_checkpoint-600.records.jsonl",
+      "results/student-base_val_checkpoint-800.json",
+      "results/student-base_val_checkpoint-800.records.jsonl",
+      "results/student-base_val_final.json",
+      "results/student-base_val_final.records.jsonl"
+    ]
+  },
+  "groups": {
+    "val": {
+      "prs": 3355,
+      "baselines": [
+        {
+          "name": "rules",
+          "report": {
+            "file": "baseline_rules_val.json",
+            "sha256": "sha256:72b3628d4b2b6c8b4fb6fc2721aaebfff6ac026182b7453d54821cd523a28520"
+          },
+          "scored_at_commit": "b48307ec883a96c4fbd6e1cf6c3e0998e381e80a",
+          "model": null,
+          "mode": "model",
+          "settings": {
+            "label_rate": 0.5,
+            "label_support": 20,
+            "many_files": 20
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.4801,
+              "n": 2435,
+              "ci95": [
+                0.4605,
+                0.499
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.4016,
+              "n": 2435,
+              "ci95": [
+                0.3818,
+                0.4199
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.4146,
+              "n": 3355,
+              "ci95": [
+                0.404,
+                0.4263
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.5785,
+              "n": 3113,
+              "ci95": [
+                0.5616,
+                0.5965
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.5676,
+              "n": 3016,
+              "ci95": [
+                0.5507,
+                0.5853
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8895,
+              "n": 679,
+              "ci95": [
+                0.8666,
+                0.9127
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9716,
+              "n": 598,
+              "ci95": [
+                0.9582,
+                0.9849
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.284,
+              "n": 81,
+              "ci95": [
+                0.1852,
+                0.3827
+              ]
+            },
+            "json_validity": {
+              "value": 1.0,
+              "n": 3355,
+              "ci95": [
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.4839,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {},
+          "system": null,
+          "cost": null,
+          "tokens_per_pr": {
+            "prompt_tokens": null,
+            "output_tokens": null
+          },
+          "latency_s": {
+            "p50": null,
+            "p95": null
+          }
+        },
+        {
+          "name": "qwen3-1.7b_val",
+          "report": {
+            "file": "baseline_qwen3-1.7b_val.json",
+            "sha256": "sha256:0e39451dec8255b9f0f817116a18f14ba2f9448a0ba69da168a50990e362b3a6"
+          },
+          "scored_at_commit": "bd0cef258285b98518e2cd01778744e2cfdcc311",
+          "model": {
+            "repo": "Qwen/Qwen3-1.7B",
+            "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          },
+          "mode": "model",
+          "settings": {
+            "thinking": "off",
+            "max_tokens": 1024,
+            "max_model_len": 16384,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 0
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.3474,
+              "n": 2435,
+              "ci95": [
+                0.3275,
+                0.3659
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.2609,
+              "n": 2435,
+              "ci95": [
+                0.2448,
+                0.2757
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.1533,
+              "n": 3355,
+              "ci95": [
+                0.1446,
+                0.1611
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.2342,
+              "n": 3113,
+              "ci95": [
+                0.2199,
+                0.249
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.2347,
+              "n": 3016,
+              "ci95": [
+                0.2196,
+                0.2502
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8115,
+              "n": 679,
+              "ci95": [
+                0.7819,
+                0.8402
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.888,
+              "n": 598,
+              "ci95": [
+                0.8629,
+                0.9147
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.2469,
+              "n": 81,
+              "ci95": [
+                0.1605,
+                0.3333
+              ]
+            },
+            "json_validity": {
+              "value": 0.8963,
+              "n": 3355,
+              "ci95": [
+                0.8861,
+                0.9049
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.5567,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 340,
+            "json": 8
+          },
+          "system": null,
+          "cost": {
+            "gpu_seconds_per_pr": 0.053,
+            "gpu": "NVIDIA H200",
+            "method": "batch generation time on Explorer / PRs; not a serving cost"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 4068.7,
+            "output_tokens": 224.0
+          },
+          "latency_s": {
+            "p50": null,
+            "p95": null
+          }
+        },
+        {
+          "name": "teacher_val",
+          "report": {
+            "file": "baseline_teacher_val.json",
+            "sha256": "sha256:5c84ccdb7f593a4c7a4d76f2f3bd621ac23ca71532aec181d6ee20b69bd8076c"
+          },
+          "scored_at_commit": "1b732c8273a44fdd839c4ef8f9343bd74671396b",
+          "model": {
+            "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+            "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+          },
+          "mode": "model",
+          "settings": {
+            "thinking": "on",
+            "max_tokens": 8192,
+            "max_model_len": 32768,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 0
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.6279,
+              "n": 2435,
+              "ci95": [
+                0.6081,
+                0.6456
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.5156,
+              "n": 2435,
+              "ci95": [
+                0.4945,
+                0.5339
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.3615,
+              "n": 3355,
+              "ci95": [
+                0.3515,
+                0.3712
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.5451,
+              "n": 3113,
+              "ci95": [
+                0.5279,
+                0.5626
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.5318,
+              "n": 3016,
+              "ci95": [
+                0.5137,
+                0.5492
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8822,
+              "n": 679,
+              "ci95": [
+                0.8578,
+                0.9068
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9615,
+              "n": 598,
+              "ci95": [
+                0.9465,
+                0.9766
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.2963,
+              "n": 81,
+              "ci95": [
+                0.2099,
+                0.3951
+              ]
+            },
+            "json_validity": {
+              "value": 0.9881,
+              "n": 3355,
+              "ci95": [
+                0.9845,
+                0.992
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.6147,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 28,
+            "json": 12
+          },
+          "system": null,
+          "cost": {
+            "gpu_seconds_per_pr": 1.087,
+            "gpu": "NVIDIA H200",
+            "method": "batch generation time on Explorer / PRs; not a serving cost"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 4196.0,
+            "output_tokens": 2271.7
+          },
+          "latency_s": {
+            "p50": null,
+            "p95": null
+          }
+        },
+        {
+          "name": "student-base_val-checkpoint-1000",
+          "report": {
+            "file": "student-base_val_checkpoint-1000.json",
+            "sha256": "sha256:5870d1c5423be797945864d1a6ce9ddaf2240b97192a92c03f285f014b478e24"
+          },
+          "scored_at_commit": "73e22522363a836533bdad1042f4e720c9ac75f2",
+          "model": {
+            "repo": "Qwen/Qwen3-1.7B",
+            "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          },
+          "mode": "model",
+          "settings": {
+            "thinking": "off",
+            "max_tokens": 1024,
+            "max_model_len": 16384,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 0
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.6916,
+              "n": 2435,
+              "ci95": [
+                0.6724,
+                0.7089
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.5849,
+              "n": 2435,
+              "ci95": [
+                0.5473,
+                0.6168
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.4902,
+              "n": 3355,
+              "ci95": [
+                0.4794,
+                0.5006
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.4337,
+              "n": 3113,
+              "ci95": [
+                0.4152,
+                0.4499
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.4274,
+              "n": 3016,
+              "ci95": [
+                0.4094,
+                0.4437
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8321,
+              "n": 679,
+              "ci95": [
+                0.8043,
+                0.8606
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9365,
+              "n": 598,
+              "ci95": [
+                0.9164,
+                0.9565
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.0617,
+              "n": 81,
+              "ci95": [
+                0.0123,
+                0.1235
+              ]
+            },
+            "json_validity": {
+              "value": 0.9946,
+              "n": 3355,
+              "ci95": [
+                0.992,
+                0.997
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.5829,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 16,
+            "json": 2
+          },
+          "system": null,
+          "cost": {
+            "gpu_seconds_per_pr": 0.053,
+            "gpu": "NVIDIA H200",
+            "method": "batch generation time on Explorer / PRs; not a serving cost"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 4068.7,
+            "output_tokens": 146.8
+          },
+          "latency_s": {
+            "p50": null,
+            "p95": null
+          }
+        },
+        {
+          "name": "student-base_val-checkpoint-1016",
+          "report": {
+            "file": "student-base_val_checkpoint-1016.json",
+            "sha256": "sha256:19ee77053f24b253158beed9522ff74c1b146e293b66df0c4fb9cfda3685af42"
+          },
+          "scored_at_commit": "73e22522363a836533bdad1042f4e720c9ac75f2",
+          "model": {
+            "repo": "Qwen/Qwen3-1.7B",
+            "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          },
+          "mode": "model",
+          "settings": {
+            "thinking": "off",
+            "max_tokens": 1024,
+            "max_model_len": 16384,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 0
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.6924,
+              "n": 2435,
+              "ci95": [
+                0.6728,
+                0.7092
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.582,
+              "n": 2435,
+              "ci95": [
+                0.5447,
+                0.6135
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.4922,
+              "n": 3355,
+              "ci95": [
+                0.481,
+                0.5021
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.4317,
+              "n": 3113,
+              "ci95": [
+                0.4138,
+                0.4484
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.4264,
+              "n": 3016,
+              "ci95": [
+                0.4081,
+                0.4434
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8277,
+              "n": 679,
+              "ci95": [
+                0.7982,
+                0.8546
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9314,
+              "n": 598,
+              "ci95": [
+                0.9114,
+                0.9515
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.0617,
+              "n": 81,
+              "ci95": [
+                0.0123,
+                0.1235
+              ]
+            },
+            "json_validity": {
+              "value": 0.9955,
+              "n": 3355,
+              "ci95": [
+                0.9931,
+                0.9976
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.583,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 15
+          },
+          "system": null,
+          "cost": {
+            "gpu_seconds_per_pr": 0.052,
+            "gpu": "NVIDIA H200",
+            "method": "batch generation time on Explorer / PRs; not a serving cost"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 4068.7,
+            "output_tokens": 146.6
+          },
+          "latency_s": {
+            "p50": null,
+            "p95": null
+          }
+        },
+        {
+          "name": "student-base_val-final",
+          "report": {
+            "file": "student-base_val_final.json",
+            "sha256": "sha256:c6422acd0c9c3bef52c7407648c7c0edd671c106dad4a3b121ec7508d613b559"
+          },
+          "scored_at_commit": "73e22522363a836533bdad1042f4e720c9ac75f2",
+          "model": {
+            "repo": "Qwen/Qwen3-1.7B",
+            "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          },
+          "mode": "model",
+          "settings": {
+            "thinking": "off",
+            "max_tokens": 1024,
+            "max_model_len": 16384,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 0
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.6903,
+              "n": 2435,
+              "ci95": [
+                0.671,
+                0.7073
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.5807,
+              "n": 2435,
+              "ci95": [
+                0.5432,
+                0.6113
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.489,
+              "n": 3355,
+              "ci95": [
+                0.4781,
+                0.4992
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.4298,
+              "n": 3113,
+              "ci95": [
+                0.4116,
+                0.4464
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.4241,
+              "n": 3016,
+              "ci95": [
+                0.4058,
+                0.4398
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8292,
+              "n": 679,
+              "ci95": [
+                0.7994,
+                0.8565
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9348,
+              "n": 598,
+              "ci95": [
+                0.9147,
+                0.9548
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.0494,
+              "n": 81,
+              "ci95": [
+                0.0123,
+                0.1111
+              ]
+            },
+            "json_validity": {
+              "value": 0.9943,
+              "n": 3355,
+              "ci95": [
+                0.9917,
+                0.9967
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.5837,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 18,
+            "json": 1
+          },
+          "system": null,
+          "cost": {
+            "gpu_seconds_per_pr": 0.053,
+            "gpu": "NVIDIA H200",
+            "method": "batch generation time on Explorer / PRs; not a serving cost"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 4068.7,
+            "output_tokens": 146.6
+          },
+          "latency_s": {
+            "p50": null,
+            "p95": null
+          }
+        }
+      ],
+      "mcnemar": [
+        {
+          "a": "rules",
+          "b": "qwen3-1.7b_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 662,
+          "b_only": 339,
+          "p_value": 0.0
+        },
+        {
+          "a": "rules",
+          "b": "teacher_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 178,
+          "b_only": 538,
+          "p_value": 0.0
+        },
+        {
+          "a": "rules",
+          "b": "student-base_val-checkpoint-1000",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 131,
+          "b_only": 646,
+          "p_value": 0.0
+        },
+        {
+          "a": "rules",
+          "b": "student-base_val-checkpoint-1016",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 130,
+          "b_only": 647,
+          "p_value": 0.0
+        },
+        {
+          "a": "rules",
+          "b": "student-base_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 131,
+          "b_only": 643,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b_val",
+          "b": "teacher_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 143,
+          "b_only": 826,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b_val",
+          "b": "student-base_val-checkpoint-1000",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 120,
+          "b_only": 958,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b_val",
+          "b": "student-base_val-checkpoint-1016",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 123,
+          "b_only": 963,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b_val",
+          "b": "student-base_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 123,
+          "b_only": 958,
+          "p_value": 0.0
+        },
+        {
+          "a": "teacher_val",
+          "b": "student-base_val-checkpoint-1000",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 79,
+          "b_only": 234,
+          "p_value": 0.0
+        },
+        {
+          "a": "teacher_val",
+          "b": "student-base_val-checkpoint-1016",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 80,
+          "b_only": 237,
+          "p_value": 0.0
+        },
+        {
+          "a": "teacher_val",
+          "b": "student-base_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 81,
+          "b_only": 233,
+          "p_value": 0.0
+        },
+        {
+          "a": "student-base_val-checkpoint-1000",
+          "b": "student-base_val-checkpoint-1016",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 12,
+          "b_only": 14,
+          "p_value": 0.845019
+        },
+        {
+          "a": "student-base_val-checkpoint-1000",
+          "b": "student-base_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 12,
+          "b_only": 9,
+          "p_value": 0.663624
+        },
+        {
+          "a": "student-base_val-checkpoint-1016",
+          "b": "student-base_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 12,
+          "b_only": 7,
+          "p_value": 0.359283
+        }
+      ]
+    }
+  }
+}
