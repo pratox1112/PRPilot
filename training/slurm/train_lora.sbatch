@@ -20,6 +20,7 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${PRPILOT_TRAIN_ENV}"
 export HF_HUB_OFFLINE=1
 export MLFLOW_TRACKING_URI="file://${PRPILOT_SCRATCH}/mlruns"
+export MLFLOW_ALLOW_FILE_STORE=true  # mlflow 3.x refuses a file store otherwise; no sqlite deps in the env
 export TOKENIZERS_PARALLELISM=false
 
 NAME="$1"; CONFIG="$2"; shift 2

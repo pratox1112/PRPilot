@@ -147,7 +147,7 @@ def main() -> None:
                 gradient_accumulation_steps=t["grad_accum"],
                 learning_rate=t["learning_rate"],
                 lr_scheduler_type=t["scheduler"],
-                warmup_ratio=t["warmup_ratio"],
+                warmup_steps=t["warmup_ratio"],  # transformers 5.x: a float in [0, 1) is a ratio
                 weight_decay=t["weight_decay"],
                 bf16=True,
                 logging_steps=10,
