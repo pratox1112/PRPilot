@@ -1,0 +1,110 @@
+{
+  "stage": "Fine-tuning examples: agreement-filtered teacher replies, maintainer truth",
+  "meta": {
+    "timestamp_utc": "2026-11-15T19:18:12+00:00",
+    "git": {
+      "commit": "497e77097d41324c3047d8e701a8211dcd9a3b7d",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {}
+  },
+  "sft_version": "sft-v2-fill",
+  "pack": {
+    "file": "prompts_train.jsonl",
+    "sha256": "sha256:c56311b9a3311e238b6cd2b1d7ba7d4e97b83dc8beb187ccc553794b640cd387",
+    "prs": 15810
+  },
+  "teacher_replies": [
+    {
+      "file": "teacher_train_s0of4_11878148.jsonl",
+      "sha256": "sha256:e6006927b6e6f9565e1793d4bdc4390efb597463ee616232329cb7e5929468d8",
+      "shard": "0/4",
+      "slurm_job_id": "11878148",
+      "code_commit": "7bca2d3dc22d9040c8d57ae7fe0cedb181b13266",
+      "model": {
+        "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+        "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+      }
+    },
+    {
+      "file": "teacher_train_s1of4_11878149.jsonl",
+      "sha256": "sha256:a6ad98739a8384482b48d04a5424890305a21691ee31e3f3892c5320f651f369",
+      "shard": "1/4",
+      "slurm_job_id": "11878149",
+      "code_commit": "7bca2d3dc22d9040c8d57ae7fe0cedb181b13266",
+      "model": {
+        "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+        "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+      }
+    },
+    {
+      "file": "teacher_train_s2of4_11878150.jsonl",
+      "sha256": "sha256:e7035bf37e3e13825d4365d56847cdfa13fe4eef59df821ada92f39ad7b19960",
+      "shard": "2/4",
+      "slurm_job_id": "11878150",
+      "code_commit": "7bca2d3dc22d9040c8d57ae7fe0cedb181b13266",
+      "model": {
+        "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+        "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+      }
+    },
+    {
+      "file": "teacher_train_s3of4_11878151.jsonl",
+      "sha256": "sha256:956a060391aea35529ab0b5e59b2573a2353a04ff963213f9d796949cea6ff9c",
+      "shard": "3/4",
+      "slurm_job_id": "11878151",
+      "code_commit": "7bca2d3dc22d9040c8d57ae7fe0cedb181b13266",
+      "model": {
+        "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+        "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+      }
+    }
+  ],
+  "prs_without_reply": 0,
+  "outcome": {
+    "disagree": 3981,
+    "invalid": 150,
+    "kept": 8115,
+    "no_type": 3564
+  },
+  "agreement_on_valid_typed": {
+    "kept": 8115,
+    "n": 12096,
+    "rate": 0.6709
+  },
+  "kept_of_typed": {
+    "kept": 8115,
+    "n": 12246,
+    "rate": 0.6627
+  },
+  "per_type": {
+    "bug": 1846,
+    "ci/build": 784,
+    "dependency": 34,
+    "docs": 1697,
+    "feature": 1244,
+    "other": 64,
+    "refactor": 1839,
+    "test": 607
+  },
+  "per_repo": {
+    "cilium/cilium": 2366,
+    "kubernetes/kubernetes": 3186,
+    "pandas-dev/pandas": 2563
+  },
+  "rationale_mentions_replaced": {
+    "count": 652,
+    "of": 8115
+  },
+  "empty_answers": {
+    "reviewers": 73,
+    "related_issues": 4033,
+    "of": 8115
+  },
+  "file": {
+    "path": "data/processed/sft_train_fill.jsonl",
+    "sha256": "sha256:1457dcac75d589c20fd221204e3a84a7e7dcfda57b5ea62768394bd7bcb4f959"
+  }
+}
