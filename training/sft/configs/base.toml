@@ -1,0 +1,27 @@
+# Phase 3 base run: bf16 LoRA on Qwen3-1.7B (approved 2026-11-14; roadmap §6.2 values except
+# no 4-bit quantization and a 12,288-token max length, since prompts reach ~11.8k tokens).
+
+[model]
+repo = "Qwen/Qwen3-1.7B"
+revision = "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+
+[lora]
+r = 16
+alpha = 32
+dropout = 0.05
+target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+[train]
+learning_rate = 2e-4
+scheduler = "cosine"
+warmup_ratio = 0.03
+epochs = 2
+per_device_batch = 1
+grad_accum = 16
+max_len = 12288
+weight_decay = 0.0
+gradient_checkpointing = true
+save_steps = 200
+eval_steps = 200
+eval_examples = 300  # fixed first N val examples, for the loss curve only (selection is on val metrics)
+seed = 0

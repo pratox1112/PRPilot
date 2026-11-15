@@ -1,0 +1,8 @@
+# Phase 3 training env (LoRA on Qwen3-1.7B). CUDA 12.6 torch build: runs on the H200 nodes'
+# driver 570 without the cuda-compat hack. Exact versions are recorded in
+# ~/prpilot-keep/requirements-train.lock.txt by training/slurm/setup_train_env.sh.
+torch==2.13.0+cu126
+transformers==5.22.1
+peft==0.21.2
+accelerate==1.15.0
+mlflow-skinny==3.17.2

@@ -1,4 +1,5 @@
 """Phase 2 baselines on Explorer: one model's raw replies to a prompt pack, with vLLM.
+Also labels the train split with the teacher for Phase 3 (`--shard I/N` splits a pack over jobs).
 
 Reads the prompt pack written on the laptop (`python -m prpilot_data prompts`), so every
 model sees byte-identical inputs and this script needs no app code. Generates once per PR,
@@ -44,10 +45,14 @@ def main() -> None:
     p.add_argument("--max-model-len", type=int, required=True)
     p.add_argument("--text-only", action="store_true", help="multimodal model: no image/video")
     p.add_argument("--limit", type=int, help="trial: only the first N PRs")
+    p.add_argument("--shard", help="I/N: only every N-th PR starting at I (0-based), e.g. 0/4")
     args = p.parse_args()
 
     raw = args.pack.read_bytes()
     rows = [json.loads(line) for line in raw.decode("utf-8").split("\n") if line.strip()]
+    if args.shard:
+        index, count = map(int, args.shard.split("/"))
+        rows = rows[index::count]
     if args.limit:
         rows = rows[: args.limit]
 
@@ -94,6 +99,7 @@ def main() -> None:
         "pack_sha256": "sha256:" + hashlib.sha256(raw).hexdigest(),
         "prs": len(rows),
         "trial_limit": args.limit,
+        "shard": args.shard,
         "settings": {
             "thinking": args.thinking,
             "max_tokens": args.max_tokens,
