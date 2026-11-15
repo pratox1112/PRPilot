@@ -1,0 +1,72 @@
+{
+  "stage": "Fine-tuning examples: agreement-filtered teacher replies, maintainer truth",
+  "meta": {
+    "timestamp_utc": "2026-11-15T06:54:17+00:00",
+    "git": {
+      "commit": "d9cc417d9de1322154a6573adc3d25eaa5c28beb",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {}
+  },
+  "sft_version": "sft-v1",
+  "pack": {
+    "file": "prompts_val.jsonl",
+    "sha256": "sha256:2306c061ee4ad3a4887c47e13d02135fb7710fd97ca7426e8af63bbbecc992fe",
+    "prs": 3355
+  },
+  "teacher_replies": [
+    {
+      "file": "teacher_val_11852471.jsonl",
+      "sha256": "sha256:e58e8f85c752c8d929f06e9610f733814f402f5f39f33a4b6e0a98112e0f2149",
+      "shard": null,
+      "slurm_job_id": "11852471",
+      "code_commit": "bd0cef258285b98518e2cd01778744e2cfdcc311",
+      "model": {
+        "repo": "Qwen/Qwen3.5-122B-A10B-GPTQ-Int4",
+        "revision": "30cd92cba9707a9aba09d1e490ed4b66b78e9606"
+      }
+    }
+  ],
+  "prs_without_reply": 0,
+  "outcome": {
+    "disagree": 872,
+    "invalid": 34,
+    "kept": 1529,
+    "no_type": 920
+  },
+  "agreement_on_valid_typed": {
+    "kept": 1529,
+    "n": 2401,
+    "rate": 0.6368
+  },
+  "kept_of_typed": {
+    "kept": 1529,
+    "n": 2435,
+    "rate": 0.6279
+  },
+  "per_type": {
+    "bug": 352,
+    "ci/build": 165,
+    "dependency": 10,
+    "docs": 227,
+    "feature": 305,
+    "other": 1,
+    "refactor": 347,
+    "test": 122
+  },
+  "per_repo": {
+    "cilium/cilium": 550,
+    "kubernetes/kubernetes": 732,
+    "pandas-dev/pandas": 247
+  },
+  "rationale_mentions_replaced": {
+    "count": 105,
+    "of": 1529
+  },
+  "file": {
+    "path": "data/processed/sft_val.jsonl",
+    "sha256": "sha256:3cad66cfb4ebe4e265f22872fb8dd67399cd95ebef5834f29f76b5c1cbf9f686"
+  }
+}
