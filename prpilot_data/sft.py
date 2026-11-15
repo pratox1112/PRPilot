@@ -7,6 +7,9 @@ truth, limited to what the prompt offered:
 - labels: the human labels before merge that are in the PR's label list (the targets file);
 - reviewers: true reviewers among the eligible candidates, in candidate order, at most 3;
 - related_issues: true linked issues among the open-issue candidates, in candidate order.
+With `fill=True` (sft-v2-fill) the truth still comes first, but the lists are then topped up
+with the teacher's own valid picks (reviewers up to 3), so the student does not learn to
+answer with empty lists whenever the truth was not among the candidates.
 The result must pass both validation layers, so the student never learns an answer the agent
 would reject. The prompt is the pack's messages, unchanged, so training and inference inputs
 are identical.
@@ -22,6 +25,7 @@ from prpilot_core.deps import RepoRules, TriageDeps
 from prpilot_core.schemas import MAX_REVIEWERS
 
 SFT_VERSION = "sft-v1"
+SFT_VERSION_FILL = "sft-v2-fill"
 DROP_REASONS = ("no_type", "no_reply", "invalid", "disagree")
 
 
@@ -36,17 +40,26 @@ def deps_for(rules: dict) -> TriageDeps:
     )
 
 
-def completion(teacher, target: dict, rules: dict) -> dict:
+def _then(first: list, extra: list, allowed) -> list:
+    """`first`, then the items of `extra` that are allowed and not already listed."""
+    seen = set(first)
+    return first + [x for x in extra if x in allowed and x not in seen and not seen.add(x)]
+
+
+def completion(teacher, target: dict, rules: dict, fill: bool = False) -> dict:
     """The training answer: the teacher's prose fields plus the maintainer's choices."""
     true_reviewers = set(target["reviewers"])
     true_issues = set(target["issues"])
+    reviewers = [r for r in rules["eligible_reviewers"] if r in true_reviewers]
+    issues = [n for n in rules["open_issues"] if n in true_issues]
+    if fill:
+        reviewers = _then(reviewers, teacher.reviewers, set(rules["eligible_reviewers"]))
+        issues = _then(issues, teacher.related_issues, set(rules["open_issues"]))
     return {
         **teacher.model_dump(mode="json"),
         "labels": list(target["labels"]),
-        "reviewers": [r for r in rules["eligible_reviewers"] if r in true_reviewers][
-            :MAX_REVIEWERS
-        ],
-        "related_issues": [n for n in rules["open_issues"] if n in true_issues],
+        "reviewers": reviewers[:MAX_REVIEWERS],
+        "related_issues": issues,
     }
 
 
@@ -59,7 +72,9 @@ def mentions_replaced(teacher, final: dict) -> bool:
     return any(re.search(rf"(?<![\w/-]){re.escape(x)}(?![\w/-])", text) for x in dropped)
 
 
-def example(pack_row: dict, target: dict, teacher_text: str | None) -> tuple[dict | None, str]:
+def example(
+    pack_row: dict, target: dict, teacher_text: str | None, fill: bool = False
+) -> tuple[dict | None, str]:
     """Returns (example, reason): reason is "kept" or one of DROP_REASONS."""
     if target["primary_type"] is None:
         return None, "no_type"
@@ -72,7 +87,7 @@ def example(pack_row: dict, target: dict, teacher_text: str | None) -> tuple[dic
     if teacher.type.value != target["primary_type"]:
         return None, "disagree"
     rules = pack_row["rules"]
-    final = completion(teacher, target, rules)
+    final = completion(teacher, target, rules, fill)
     checked = parse_static(json.dumps(final))
     errors = repo_rule_errors(checked, deps_for(rules))
     if errors:  # cannot happen: every overwritten field is drawn from the prompt's lists

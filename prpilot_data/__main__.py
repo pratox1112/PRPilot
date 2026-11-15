@@ -61,10 +61,12 @@ uv run --group data python -m prpilot_data rules-baseline [--split val]
     Baseline 1: keyword, path and history rules, written as replies
     (data/processed/replies/rules_<split>.jsonl) for the eval harness. No network.
 
-uv run python -m prpilot_data sft-data --split train --teacher teacher_train
+uv run python -m prpilot_data sft-data --split train --teacher teacher_train [--fill]
     Fine-tuning examples (data/processed/sft_<split>.jsonl): teacher replies that agree with the
     maintainer type, with labels, reviewers and issues overwritten by the maintainer truth
     (prpilot_data/sft.py). Reads every data/processed/replies/<teacher>_*.jsonl (shards).
+    --fill: the sft-v2-fill variant (truth first, topped up with the teacher's picks), written
+    to sft_<split>_fill.jsonl and results/data_sft_<split>_fill.json.
 
 uv run python -m prpilot_data prompt-sample [--split val] [--n 500] [--seed 0]
     Seeded sample of a prompt pack (data/processed/prompts_<split>_s<n>.jsonl), lines copied
@@ -665,7 +667,7 @@ def cmd_prompts() -> None:
     print(f"wrote {path} and {out_dir}")
 
 
-def cmd_sft_data(split: str, teacher: str) -> None:
+def cmd_sft_data(split: str, teacher: str, fill: bool) -> None:
     from collections import Counter
 
     from prpilot_data import dataset, sft
@@ -707,27 +709,31 @@ def cmd_sft_data(split: str, teacher: str) -> None:
         )
     missing = len(pack) - sum((r["repo"], r["number"]) in replies for r in pack)
 
-    out = processed / f"sft_{split}.jsonl"
-    reasons, types, repos, replaced = Counter(), Counter(), Counter(), 0
+    tag = "_fill" if fill else ""
+    out = processed / f"sft_{split}{tag}.jsonl"
+    reasons, types, repos, replaced, empty = Counter(), Counter(), Counter(), 0, Counter()
     with out.open("w", encoding="utf-8", newline="") as f:
         for row in pack:
             key = (row["repo"], row["number"])
-            ex, reason = sft.example(row, targets[key], replies.get(key))
+            ex, reason = sft.example(row, targets[key], replies.get(key), fill)
             reasons[reason] += 1
             if ex is None:
                 continue
             types[ex["type"]] += 1
             repos[ex["repo"]] += 1
             replaced += ex["rationale_mentions_replaced"]
+            answer = json.loads(ex["messages"][-1]["content"])
+            empty["reviewers"] += not answer["reviewers"]
+            empty["related_issues"] += not answer["related_issues"]
             f.write(json.dumps({k: ex[k] for k in ("repo", "number", "messages")}) + "\n")
     typed = len(pack) - reasons["no_type"]
     kept = reasons["kept"]
     path = write_result(
-        f"data_sft_{split}",
+        f"data_sft_{split}{tag}",
         {
             "stage": "Fine-tuning examples: agreement-filtered teacher replies, maintainer truth",
             "meta": meta,
-            "sft_version": sft.SFT_VERSION,
+            "sft_version": sft.SFT_VERSION_FILL if fill else sft.SFT_VERSION,
             "pack": {"file": pack_path.name, "sha256": pack_sha, "prs": len(pack)},
             "teacher_replies": sources,
             "prs_without_reply": missing,
@@ -741,6 +747,11 @@ def cmd_sft_data(split: str, teacher: str) -> None:
             "per_type": dict(sorted(types.items())),
             "per_repo": dict(sorted(repos.items())),
             "rationale_mentions_replaced": {"count": replaced, "of": kept},
+            "empty_answers": {
+                "reviewers": empty["reviewers"],
+                "related_issues": empty["related_issues"],
+                "of": kept,
+            },
             "file": {
                 "path": str(out.relative_to(REPO_ROOT)).replace("\\", "/"),
                 "sha256": dataset.file_sha256(out),
@@ -1024,6 +1035,7 @@ def main() -> None:
     # No test: training data never comes from the test split.
     sd.add_argument("--split", choices=["train", "val"], default="train")
     sd.add_argument("--teacher", required=True, help="reply file prefix, e.g. teacher_train")
+    sd.add_argument("--fill", action="store_true", help="sft-v2-fill: top up with teacher picks")
     ps = sub.add_parser("prompt-sample")
     # No test: the test split is run once, at the end, for every system together.
     ps.add_argument("--split", choices=["train", "val"], default="val")
@@ -1067,7 +1079,7 @@ def main() -> None:
     elif args.cmd == "rules-baseline":
         cmd_rules_baseline(args.split)
     elif args.cmd == "sft-data":
-        cmd_sft_data(args.split, args.teacher)
+        cmd_sft_data(args.split, args.teacher, args.fill)
     elif args.cmd == "prompt-sample":
         cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":

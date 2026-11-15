@@ -63,3 +63,25 @@ def test_drop_reasons():
     assert example(PACK, target(), None) == (None, "no_reply")
     assert example(PACK, target(), "not json") == (None, "invalid")
     assert example(PACK, target(), teacher(type="docs")) == (None, "disagree")
+
+
+def test_fill_puts_truth_first_then_teacher_picks():
+    ex, _ = example(
+        PACK,
+        target(reviewers=["bob", "zed"], issues=[12]),
+        teacher(reviewers=["bob", "mallory", "erin"], related_issues=[30, 12, 99]),
+        fill=True,
+    )
+    answer = json.loads(ex["messages"][2]["content"])
+    # truth (bob), then the teacher's eligible picks without repeats; mallory not eligible
+    assert answer["reviewers"] == ["bob", "erin"]
+    # truth (12), then teacher's open issues; 99 not offered
+    assert answer["related_issues"] == [12, 30]
+
+
+def test_fill_with_no_truth_keeps_teacher_picks_and_default_leaves_them_empty():
+    tgt = target(reviewers=["zed"], issues=[99])
+    filled, _ = example(PACK, tgt, teacher(), fill=True)
+    plain, _ = example(PACK, tgt, teacher())
+    assert json.loads(filled["messages"][2]["content"])["reviewers"] == ["erin"]
+    assert json.loads(plain["messages"][2]["content"])["reviewers"] == []

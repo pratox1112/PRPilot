@@ -3,6 +3,7 @@
 # Submit from the code copy on scratch, with sft_train.jsonl / sft_val.jsonl in
 # $PRPILOT_SCRATCH/data and the training env built (training/slurm/setup_train_env.sh):
 #   sbatch --time=08:00:00 training/slurm/train_lora.sbatch <run name> <config> [extra args]
+# Data variant: SFT_TAG=_fill sbatch ... uses sft_train_fill.jsonl / sft_val_fill.jsonl.
 # Resubmitting the same run name continues from its last checkpoint. Checkpoints and the
 # MLflow store are copied to ~/prpilot-keep when the job ends.
 #SBATCH --job-name=prpilot-train
@@ -26,17 +27,18 @@ export TOKENIZERS_PARALLELISM=false
 NAME="$1"; CONFIG="$2"; shift 2
 DATA="${PRPILOT_SCRATCH}/data"
 OUT="${PRPILOT_SCRATCH}/checkpoints/${NAME}"
-for f in sft_train.jsonl sft_val.jsonl; do
+TRAIN="sft_train${SFT_TAG:-}.jsonl"; VAL="sft_val${SFT_TAG:-}.jsonl"
+for f in "${TRAIN}" "${VAL}"; do
   test -f "${DATA}/${f}" || { echo "missing ${DATA}/${f}; scp it from the laptop first"; exit 1; }
 done
 
 echo "code commit: $(cat COMMIT 2>/dev/null || echo unknown)"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 # Training prompts must equal inference prompts token for token; stop before any GPU time.
-python training/sft/format.py --check "${DATA}/sft_train.jsonl" --model "${BASE_REPO}" --revision "${BASE_REVISION}"
+python training/sft/format.py --check "${DATA}/${TRAIN}" --model "${BASE_REPO}" --revision "${BASE_REVISION}"
 
-python training/sft/train.py --config "${CONFIG}" --train "${DATA}/sft_train.jsonl" \
-  --val "${DATA}/sft_val.jsonl" --out "${OUT}" --resume-if-exists "$@"
+python training/sft/train.py --config "${CONFIG}" --train "${DATA}/${TRAIN}" \
+  --val "${DATA}/${VAL}" --out "${OUT}" --resume-if-exists "$@"
 
 mkdir -p "${PRPILOT_KEEP}/checkpoints"
 rsync -a --exclude "optimizer.pt" "${OUT}" "${PRPILOT_KEEP}/checkpoints/"
