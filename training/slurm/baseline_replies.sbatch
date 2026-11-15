@@ -30,5 +30,5 @@ nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 python training/baselines/vllm_replies.py --name "${NAME}" --pack "${PACK}" --out "${OUT}" \
   --model "${MODEL}" --revision "${REVISION}" --thinking "${THINKING}" \
   --max-tokens "${MAX_TOKENS}" --max-model-len "${MAX_LEN}" "$@"
-cp "${OUT}" "${OUT%.jsonl}.meta.json" "${PRPILOT_KEEP}/"
+cp "${OUT%.jsonl}"*.jsonl "${OUT%.jsonl}"*.meta.json "${PRPILOT_KEEP}/"  # with --lora-dir: one file per checkpoint
 echo "copied to ${PRPILOT_KEEP}"
