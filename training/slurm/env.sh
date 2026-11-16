@@ -55,6 +55,11 @@ export TEACHER_REVISION="30cd92cba9707a9aba09d1e490ed4b66b78e9606"
 
 mkdir -p "${HF_HUB_CACHE}" "${XDG_CACHE_HOME}" "${PRPILOT_SCRATCH}/envs" "${CONDA_PKGS_DIRS}" "${PRPILOT_SCRATCH}/outputs" "${PRPILOT_SCRATCH}/logs" "${PRPILOT_KEEP}"
 
+# GGUF export and re-test of the student; build with training/slurm/setup_llamacpp.sh.
+# v0.8.0 = commit 8642541b255bfb5dc39cd351a178be09013a55d6 (released 2026-10-28).
+export LLAMACPP_VERSION="v0.8.0"
+export LLAMACPP_DIR="${PRPILOT_SCRATCH}/llama.cpp"
+
 # Phase 2 baseline 2 / Phase 3 student base (same tokenizer pin as prpilot_data/tokens.py).
 export BASE_REPO="Qwen/Qwen3-1.7B"
 export BASE_REVISION="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
