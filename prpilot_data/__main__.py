@@ -68,7 +68,7 @@ uv run python -m prpilot_data sft-data --split train --teacher teacher_train [--
     --fill: the sft-v2-fill variant (truth first, topped up with the teacher's picks), written
     to sft_<split>_fill.jsonl and results/data_sft_<split>_fill.json.
 
-uv run python -m prpilot_data prompt-sample [--split val] [--n 500] [--seed 0]
+uv run python -m prpilot_data prompt-sample [--split val|test] [--n 500] [--seed 0]
     Seeded sample of a prompt pack (data/processed/prompts_<split>_s<n>.jsonl), lines copied
     byte for byte, for the paid Gemini baseline. Other runs are scored on it with
     `prpilot_eval score --only`.
@@ -1037,8 +1037,9 @@ def main() -> None:
     sd.add_argument("--teacher", required=True, help="reply file prefix, e.g. teacher_train")
     sd.add_argument("--fill", action="store_true", help="sft-v2-fill: top up with teacher picks")
     ps = sub.add_parser("prompt-sample")
-    # No test: the test split is run once, at the end, for every system together.
-    ps.add_argument("--split", choices=["train", "val"], default="val")
+    # test is allowed for the one final run (Gemini on a sample): the sample is drawn from the
+    # prompt pack alone, by seed, with no targets or results read.
+    ps.add_argument("--split", choices=["train", "val", "test"], default="val")
     ps.add_argument("--n", type=int, default=500)
     ps.add_argument("--seed", type=int, default=0)
     sc = sub.add_parser("spot-check")
