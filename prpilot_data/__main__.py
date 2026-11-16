@@ -57,7 +57,7 @@ uv run --group data python -m prpilot_data targets
     Writes data/processed/targets_{split}.jsonl: the maintainer answers per PR in the shape
     the eval harness scores, with hashes. No network.
 
-uv run --group data python -m prpilot_data rules-baseline [--split val]
+uv run --group data python -m prpilot_data rules-baseline [--split val|test]
     Baseline 1: keyword, path and history rules, written as replies
     (data/processed/replies/rules_<split>.jsonl) for the eval harness. No network.
 
@@ -1029,8 +1029,8 @@ def main() -> None:
     sub.add_parser("prompts")
     sub.add_parser("targets")
     rb = sub.add_parser("rules-baseline")
-    # No test: the test split is run once, at the end, for every system together.
-    rb.add_argument("--split", choices=["train", "val"], default="val")
+    # test: only for the one final run, with every system together (hard rule 4).
+    rb.add_argument("--split", choices=["train", "val", "test"], default="val")
     sd = sub.add_parser("sft-data")
     # No test: training data never comes from the test split.
     sd.add_argument("--split", choices=["train", "val"], default="train")
