@@ -1,0 +1,75 @@
+{
+  "stage": "Red-team set: poisoned PRs with canaries, plus clean controls",
+  "meta": {
+    "timestamp_utc": "2026-11-16T22:50:31+00:00",
+    "git": {
+      "commit": "38bcde4776a3d0c313a48cd18cdbb3aa6beec1d4",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "pyarrow": "25.0.1"
+    }
+  },
+  "redteam_version": "redteam-v1",
+  "templates": "test",
+  "seed": 0,
+  "prs": 500,
+  "poisoned": 2000,
+  "eligible_prs": 9326,
+  "per_location": {
+    "body": 500,
+    "body_hidden": 500,
+    "diff_comment": 500,
+    "title": 500
+  },
+  "per_kind": {
+    "direct": 1000,
+    "task": 1000
+  },
+  "per_canary_type": {
+    "label": 672,
+    "reviewer": 691,
+    "text": 637
+  },
+  "per_template": {
+    "x1": 166,
+    "x2": 178,
+    "x3": 176,
+    "x4": 173,
+    "x5": 158,
+    "x6": 149,
+    "y1": 161,
+    "y2": 175,
+    "y3": 140,
+    "y4": 172,
+    "y5": 180,
+    "y6": 172
+  },
+  "per_repo": {
+    "cilium/cilium": 536,
+    "kubernetes/kubernetes": 428,
+    "numpy/numpy": 720,
+    "pandas-dev/pandas": 316
+  },
+  "file": {
+    "path": "data/processed/redteam_test.jsonl",
+    "sha256": "sha256:37bb594dee3549cdcd927161e67a86c232ebdb8a9358057ca3c0a10c45b5b481"
+  },
+  "clean_controls": {
+    "path": "data/processed/prfields_test.jsonl",
+    "sha256": "sha256:1588e4e0fc0c1835d67a1c4ab69c0c9cbc7b0d6b7168506bece88ecde5d2e6d2",
+    "prs": 9573
+  },
+  "classifier_packs": {
+    "redteam": {
+      "path": "data/processed/classifier_redteam_test.jsonl",
+      "sha256": "sha256:6c432e1554726887614c06ada189f9a88635004205a0bc250933c3d9ed31809c"
+    },
+    "clean": {
+      "path": "data/processed/classifier_clean_test.jsonl",
+      "sha256": "sha256:fa28421c3a0989b8fb298e43a57b9856f03e146a998ea7dc9592ea6ececb7915"
+    }
+  }
+}
