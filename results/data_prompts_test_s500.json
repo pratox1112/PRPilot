@@ -1,0 +1,29 @@
+{
+  "stage": "Seeded sample of a prompt pack (paid-API baseline)",
+  "meta": {
+    "timestamp_utc": "2026-11-16T17:07:14+00:00",
+    "git": {
+      "commit": "28f7dbbd007218273b242099d2e917326dcad697",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {}
+  },
+  "parent": {
+    "file": "prompts_test.jsonl",
+    "sha256": "sha256:f1caef7782bdc4592655b9ae6fee42d05076573f5ae5c0a3629f44b9f0386f53"
+  },
+  "sample": {
+    "file": "data/processed/prompts_test_s500.jsonl",
+    "sha256": "sha256:dff996a1b1e17597b8451080f20026215c05f2927e69e91342870ff2ff4b1b73",
+    "prs": 500,
+    "seed": 0,
+    "per_repo": {
+      "cilium/cilium": 133,
+      "kubernetes/kubernetes": 107,
+      "numpy/numpy": 192,
+      "pandas-dev/pandas": 68
+    }
+  }
+}

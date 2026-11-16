@@ -5,6 +5,7 @@
 # env built (training/slurm/setup_agent_env.sh):
 #   sbatch --time=02:00:00 training/slurm/agent_replies.sbatch <name> <pack file> \
 #       <model repo> <revision> <max model len> [extra args]
+# Fine-tuned student: LORA=<checkpoint dir> sbatch ... serves base + that LoRA adapter as the model.
 # Replies and their .meta.json land in $PRPILOT_SCRATCH/outputs and are copied to ~/prpilot-keep.
 #SBATCH --job-name=prpilot-agent
 #SBATCH --account=eece7398.202710
@@ -33,7 +34,15 @@ SERVED="prpilot-model"
 
 echo "code commit: $(cat COMMIT 2>/dev/null || echo unknown)"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
-vllm serve "${MODEL}" --revision "${REVISION}" --served-model-name "${SERVED}" \
+SERVE_ARGS=(--served-model-name "${SERVED}"); AGENT_ARGS=()
+if [ -n "${LORA:-}" ]; then
+  test -f "${LORA}/adapter_model.safetensors" || { echo "no adapter in ${LORA}"; exit 1; }
+  # The base is served under another name; the agent asks for SERVED, which is the adapter.
+  SERVE_ARGS=(--served-model-name prpilot-base --enable-lora --max-lora-rank 16
+              --max-loras 1 --lora-modules "${SERVED}=${LORA}")
+  AGENT_ARGS=(--adapter "${LORA}")
+fi
+vllm serve "${MODEL}" --revision "${REVISION}" "${SERVE_ARGS[@]}" \
   --host 127.0.0.1 --port "${PORT}" --max-model-len "${MAX_LEN}" \
   --gpu-memory-utilization 0.92 --seed 0 &
 SERVER=$!
@@ -51,6 +60,6 @@ echo "server ready on port ${PORT}"
 "${PRPILOT_AGENT_ENV}/bin/python" training/baselines/agent_replies.py --name "${NAME}" \
   --pack "${PACK}" --out "${OUT}" --base-url "http://127.0.0.1:${PORT}/v1" \
   --served-model "${SERVED}" --model "${MODEL}" --revision "${REVISION}" \
-  --max-model-len "${MAX_LEN}" "$@"
+  --max-model-len "${MAX_LEN}" "${AGENT_ARGS[@]}" "$@"
 cp "${OUT}" "${OUT%.jsonl}.meta.json" "${PRPILOT_KEEP}/"
 echo "copied to ${PRPILOT_KEEP}"

@@ -10,7 +10,9 @@ requests it took. Runs in the agent venv (uv.lock), not in the vLLM env.
 Usage (inside the sbatch job, with `vllm serve` already up):
     python training/baselines/agent_replies.py --name qwen3-1.7b-system --pack <pack.jsonl> \
         --out <replies.jsonl> --base-url http://127.0.0.1:8000/v1 --served-model <name> \
-        --model <hf repo> --revision <sha>
+        --model <hf repo> --revision <sha> [--adapter <LoRA checkpoint dir>]
+With --adapter the served model is the fine-tuned student (base + LoRA); the adapter's path
+and weights hash are recorded in the meta.
 """
 
 import argparse
@@ -29,6 +31,7 @@ from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
+from vllm_replies import adapter_info  # same folder; imports vllm only inside its main()
 
 from prpilot_core.agents.triage import DEFAULT_OUTPUT_RETRIES, SYSTEM_PROMPT, build_triage_agent
 from prpilot_core.deps import RepoRules, TriageDeps
@@ -108,6 +111,7 @@ def main() -> None:
     p.add_argument("--max-model-len", type=int, required=True, help="recorded in the meta")
     p.add_argument("--concurrency", type=int, default=64)
     p.add_argument("--limit", type=int, help="trial: only the first N PRs")
+    p.add_argument("--adapter", type=Path, help="LoRA checkpoint served as --served-model")
     args = p.parse_args()
     os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 
@@ -151,6 +155,7 @@ def main() -> None:
         "pack_file": args.pack.name,
         "pack_sha256": "sha256:" + hashlib.sha256(raw).hexdigest(),
         "prs": n,
+        "adapter": adapter_info(args.adapter) if args.adapter else None,
         "trial_limit": args.limit,
         "settings": {
             "mode": "system (Pydantic AI agent, validator retries)",
