@@ -1,24 +1,12 @@
 {
   "stage": "Phase 2 baselines on the validation split",
-  "made_at_utc": "2026-11-16T07:05:22+00:00",
+  "made_at_utc": "2026-11-16T07:18:10+00:00",
   "git": {
-    "commit": "4dbbc7efedc9ecf9d5488d3f0b434957b1e015ca",
+    "commit": "19b7fecd017834cc243a2c3940637cb1c4017347",
     "dirty": false,
     "dirty_paths": [
-      "results/student-fill_val_checkpoint-1000.json",
-      "results/student-fill_val_checkpoint-1000.records.jsonl",
-      "results/student-fill_val_checkpoint-1016.json",
-      "results/student-fill_val_checkpoint-1016.records.jsonl",
-      "results/student-fill_val_checkpoint-200.json",
-      "results/student-fill_val_checkpoint-200.records.jsonl",
-      "results/student-fill_val_checkpoint-400.json",
-      "results/student-fill_val_checkpoint-400.records.jsonl",
-      "results/student-fill_val_checkpoint-600.json",
-      "results/student-fill_val_checkpoint-600.records.jsonl",
-      "results/student-fill_val_checkpoint-800.json",
-      "results/student-fill_val_checkpoint-800.records.jsonl",
-      "results/student-fill_val_final.json",
-      "results/student-fill_val_final.records.jsonl"
+      "results/student-fill-system_val.json",
+      "results/student-fill-system_val.records.jsonl"
     ]
   },
   "groups": {
@@ -251,6 +239,152 @@
           "latency_s": {
             "p50": null,
             "p95": null
+          }
+        },
+        {
+          "name": "qwen3-1.7b-system_val",
+          "report": {
+            "file": "baseline_qwen3-1.7b-system_val.json",
+            "sha256": "sha256:0d8bef7d2876938352203e26b1dc62a06a90997c6bf0c9b98b962459e9b3dd0f"
+          },
+          "scored_at_commit": "c3ecb66e0df83cbd70f317421179a09c88a81914",
+          "model": {
+            "repo": "Qwen/Qwen3-1.7B",
+            "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          },
+          "mode": "system",
+          "settings": {
+            "mode": "system (Pydantic AI agent, validator retries)",
+            "thinking": "off",
+            "max_tokens": 1024,
+            "max_model_len": 32768,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 2,
+            "concurrency": 64
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.363,
+              "n": 2435,
+              "ci95": [
+                0.3429,
+                0.3832
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.2703,
+              "n": 2435,
+              "ci95": [
+                0.2536,
+                0.2858
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.163,
+              "n": 3355,
+              "ci95": [
+                0.1543,
+                0.1717
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.249,
+              "n": 3113,
+              "ci95": [
+                0.2339,
+                0.2649
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.25,
+              "n": 3016,
+              "ci95": [
+                0.2339,
+                0.2661
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8424,
+              "n": 679,
+              "ci95": [
+                0.8138,
+                0.8696
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9214,
+              "n": 598,
+              "ci95": [
+                0.898,
+                0.9431
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.2593,
+              "n": 81,
+              "ci95": [
+                0.1728,
+                0.358
+              ]
+            },
+            "json_validity": {
+              "value": 0.9398,
+              "n": 3355,
+              "ci95": [
+                0.932,
+                0.9469
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.5399,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 198,
+            "json": 4
+          },
+          "system": {
+            "valid_after_retries": {
+              "value": 0.7073,
+              "n": 3355
+            },
+            "valid_first_attempt_both_layers": {
+              "value": 0.4113,
+              "n": 3355
+            },
+            "retry_rate": {
+              "value": 0.5887,
+              "n": 3355
+            },
+            "rescue_rate": {
+              "value": 0.5028,
+              "n": 1975
+            },
+            "requests_per_pr": {
+              "1": 1380,
+              "2": 611,
+              "3": 1364
+            },
+            "over_run_prs": 3355,
+            "exact": true
+          },
+          "cost": {
+            "wall_seconds_per_pr": 0.113,
+            "method": "agent run time on Explorer (1 GPU, concurrent requests) / PRs"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 6474.2,
+            "output_tokens": 335.5
+          },
+          "latency_s": {
+            "p50": 5.57,
+            "p95": 15.6
           }
         },
         {
@@ -616,6 +750,152 @@
           }
         },
         {
+          "name": "student-fill-system_val",
+          "report": {
+            "file": "student-fill-system_val.json",
+            "sha256": "sha256:d2b68f93ba2d9d441a1b2d75bb95543c14ec5aac4569eb5eab2ac7bd234b7b2f"
+          },
+          "scored_at_commit": "19b7fecd017834cc243a2c3940637cb1c4017347",
+          "model": {
+            "repo": "Qwen/Qwen3-1.7B",
+            "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          },
+          "mode": "system",
+          "settings": {
+            "mode": "system (Pydantic AI agent, validator retries)",
+            "thinking": "off",
+            "max_tokens": 1024,
+            "max_model_len": 16384,
+            "temperature": 0.0,
+            "seed": 0,
+            "constrained_decoding": false,
+            "retries": 2,
+            "concurrency": 64
+          },
+          "prs": 3355,
+          "metrics": {
+            "maintainer_match": {
+              "value": 0.6895,
+              "n": 2435,
+              "ci95": [
+                0.6706,
+                0.7058
+              ]
+            },
+            "type_macro_f1": {
+              "value": 0.5891,
+              "n": 2435,
+              "ci95": [
+                0.5498,
+                0.6199
+              ]
+            },
+            "label_micro_f1": {
+              "value": 0.4922,
+              "n": 3355,
+              "ci95": [
+                0.4819,
+                0.5019
+              ]
+            },
+            "reviewer_recall_at_3": {
+              "value": 0.5516,
+              "n": 3113,
+              "ci95": [
+                0.5346,
+                0.5693
+              ]
+            },
+            "reviewer_recall_at_3_reviewed_only": {
+              "value": 0.5378,
+              "n": 3016,
+              "ci95": [
+                0.5209,
+                0.5551
+              ]
+            },
+            "issue_recall_at_5": {
+              "value": 0.8895,
+              "n": 679,
+              "ci95": [
+                0.8671,
+                0.9123
+              ]
+            },
+            "issue_recall_at_5_named_at_open": {
+              "value": 0.9732,
+              "n": 598,
+              "ci95": [
+                0.9582,
+                0.9849
+              ]
+            },
+            "issue_recall_at_5_not_named": {
+              "value": 0.2716,
+              "n": 81,
+              "ci95": [
+                0.1852,
+                0.3827
+              ]
+            },
+            "json_validity": {
+              "value": 0.9964,
+              "n": 3355,
+              "ci95": [
+                0.9943,
+                0.9982
+              ]
+            }
+          },
+          "risk_auroc_reported_only": {
+            "value": 0.556,
+            "n": 3355,
+            "positives": 18,
+            "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+          },
+          "invalid_reasons": {
+            "schema": 9,
+            "json": 3
+          },
+          "system": {
+            "valid_after_retries": {
+              "value": 0.9717,
+              "n": 3355
+            },
+            "valid_first_attempt_both_layers": {
+              "value": 0.966,
+              "n": 3355
+            },
+            "retry_rate": {
+              "value": 0.034,
+              "n": 3355
+            },
+            "rescue_rate": {
+              "value": 0.1667,
+              "n": 114
+            },
+            "requests_per_pr": {
+              "1": 3241,
+              "2": 15,
+              "3": 99
+            },
+            "over_run_prs": 3355,
+            "exact": true
+          },
+          "cost": {
+            "wall_seconds_per_pr": 0.061,
+            "method": "agent run time on Explorer (1 GPU, concurrent requests) / PRs"
+          },
+          "tokens_per_pr": {
+            "prompt_tokens": 4074.3,
+            "output_tokens": 155.7
+          },
+          "latency_s": {
+            "p50": 3.73,
+            "p95": 5.15
+          }
+        },
+        {
           "name": "student-fill_val-checkpoint-1000",
           "report": {
             "file": "student-fill_val_checkpoint-1000.json",
@@ -870,6 +1150,15 @@
         },
         {
           "a": "rules",
+          "b": "qwen3-1.7b-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 634,
+          "b_only": 349,
+          "p_value": 0.0
+        },
+        {
+          "a": "rules",
           "b": "teacher_val",
           "metric": "maintainer_match",
           "n": 2435,
@@ -897,6 +1186,15 @@
         },
         {
           "a": "rules",
+          "b": "student-fill-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 129,
+          "b_only": 639,
+          "p_value": 0.0
+        },
+        {
+          "a": "rules",
           "b": "student-fill_val-checkpoint-1000",
           "metric": "maintainer_match",
           "n": 2435,
@@ -912,6 +1210,15 @@
           "a_only": 130,
           "b_only": 641,
           "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b_val",
+          "b": "qwen3-1.7b-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 24,
+          "b_only": 62,
+          "p_value": 5.1e-05
         },
         {
           "a": "qwen3-1.7b_val",
@@ -942,6 +1249,15 @@
         },
         {
           "a": "qwen3-1.7b_val",
+          "b": "student-fill-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 121,
+          "b_only": 954,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b_val",
           "b": "student-fill_val-checkpoint-1000",
           "metric": "maintainer_match",
           "n": 2435,
@@ -959,6 +1275,60 @@
           "p_value": 0.0
         },
         {
+          "a": "qwen3-1.7b-system_val",
+          "b": "teacher_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 147,
+          "b_only": 792,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b-system_val",
+          "b": "student-base_val-checkpoint-1016",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 126,
+          "b_only": 928,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b-system_val",
+          "b": "student-fill_val-checkpoint-1016",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 121,
+          "b_only": 918,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b-system_val",
+          "b": "student-fill-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 122,
+          "b_only": 917,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b-system_val",
+          "b": "student-fill_val-checkpoint-1000",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 121,
+          "b_only": 916,
+          "p_value": 0.0
+        },
+        {
+          "a": "qwen3-1.7b-system_val",
+          "b": "student-fill_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 120,
+          "b_only": 916,
+          "p_value": 0.0
+        },
+        {
           "a": "teacher_val",
           "b": "student-base_val-checkpoint-1016",
           "metric": "maintainer_match",
@@ -973,6 +1343,15 @@
           "metric": "maintainer_match",
           "n": 2435,
           "a_only": 82,
+          "b_only": 234,
+          "p_value": 0.0
+        },
+        {
+          "a": "teacher_val",
+          "b": "student-fill-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 84,
           "b_only": 234,
           "p_value": 0.0
         },
@@ -1005,6 +1384,15 @@
         },
         {
           "a": "student-base_val-checkpoint-1016",
+          "b": "student-fill-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 38,
+          "b_only": 31,
+          "p_value": 0.470369
+        },
+        {
+          "a": "student-base_val-checkpoint-1016",
           "b": "student-fill_val-checkpoint-1000",
           "metric": "maintainer_match",
           "n": 2435,
@@ -1023,6 +1411,15 @@
         },
         {
           "a": "student-fill_val-checkpoint-1016",
+          "b": "student-fill-system_val",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 15,
+          "b_only": 13,
+          "p_value": 0.850554
+        },
+        {
+          "a": "student-fill_val-checkpoint-1016",
           "b": "student-fill_val-checkpoint-1000",
           "metric": "maintainer_match",
           "n": 2435,
@@ -1037,6 +1434,24 @@
           "n": 2435,
           "a_only": 10,
           "b_only": 9,
+          "p_value": 1.0
+        },
+        {
+          "a": "student-fill-system_val",
+          "b": "student-fill_val-checkpoint-1000",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 11,
+          "b_only": 11,
+          "p_value": 1.0
+        },
+        {
+          "a": "student-fill-system_val",
+          "b": "student-fill_val-final",
+          "metric": "maintainer_match",
+          "n": 2435,
+          "a_only": 10,
+          "b_only": 11,
           "p_value": 1.0
         },
         {
