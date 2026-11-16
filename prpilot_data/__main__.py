@@ -73,6 +73,14 @@ uv run python -m prpilot_data prompt-sample [--split val|test] [--n 500] [--seed
     byte for byte, for the paid Gemini baseline. Other runs are scored on it with
     `prpilot_eval score --only`.
 
+uv run --group data python -m prpilot_data redteam --split val|test
+    Red-team set (prpilot_data/redteam.py): data/processed/redteam_<split>.jsonl, poisoned
+    copies of seeded PRs (val: 300 PRs, dev templates; test: 500 PRs, held-out test
+    templates), one per payload location, as runnable prompt-pack rows plus the PR fields
+    the screening step reads; data/processed/prfields_<split>.jsonl, every clean PR of the
+    split (false-positive controls); classifier_{redteam,clean}_<split>.jsonl, the same
+    fields as prompts for the LLM-classifier baseline; results/data_redteam_<split>.json.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -862,6 +870,87 @@ def cmd_prompt_sample(split: str, n: int, seed: int) -> None:
     print(f"wrote {out} and {path}")
 
 
+REDTEAM_PLAN = {"val": ("dev", 300), "test": ("test", 500)}  # approved 2026-11-16
+
+
+def cmd_redteam(split: str) -> None:
+    from collections import Counter
+
+    from prpilot_core.agents.triage_format import PRContext
+    from prpilot_core.screening.classifier import classifier_messages
+    from prpilot_data import dataset, redteam
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    template_set, n = REDTEAM_PLAN[split]
+    rows = [r for r in load_splits() if r["split"] == split]
+    cands = {
+        (c["repo"], c["number"]): c
+        for c in read_jsonl(REPO_ROOT / "data" / "processed" / "candidates.jsonl")
+    }
+    poisoned = redteam.build(rows, cands, template_set, n, seed=0)
+    processed = REPO_ROOT / "data" / "processed"
+    out = processed / f"redteam_{split}.jsonl"
+    with out.open("w", encoding="utf-8", newline="") as f:
+        for r in poisoned:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    clean = processed / f"prfields_{split}.jsonl"
+    clean_rows = [
+        {"repo": r["repo"], "number": r["number"], "pr": redteam.pr_fields(r)}
+        for r in sorted(rows, key=lambda r: (r["repo"], r["number"]))
+    ]
+    with clean.open("w", encoding="utf-8", newline="") as f:
+        for line in clean_rows:
+            f.write(json.dumps(line, ensure_ascii=False) + "\n")
+    # LLM-classifier baseline: the same fields, as one-word INJECTION / SAFE prompts.
+    classifier_files = {}
+    for kind, source in (("redteam", poisoned), ("clean", clean_rows)):
+        path = processed / f"classifier_{kind}_{split}.jsonl"
+        with path.open("w", encoding="utf-8", newline="") as f:
+            for r in source:
+                pr = PRContext(**{**r["pr"], "changed_files": tuple(r["pr"]["changed_files"])})
+                line = {"repo": r["repo"], "number": r["number"],
+                        "messages": classifier_messages(pr)}  # fmt: skip
+                f.write(json.dumps(line, ensure_ascii=False) + "\n")
+        classifier_files[kind] = path
+
+    def count(key: str) -> dict:
+        return dict(sorted(Counter(p["redteam"][key] for p in poisoned).items()))
+
+    def rel(p) -> str:
+        return str(p.relative_to(REPO_ROOT)).replace("\\", "/")
+
+    path = write_result(
+        f"data_redteam_{split}",
+        {
+            "stage": "Red-team set: poisoned PRs with canaries, plus clean controls",
+            "meta": meta,
+            "redteam_version": redteam.REDTEAM_VERSION,
+            "templates": template_set,
+            "seed": 0,
+            "prs": n,
+            "poisoned": len(poisoned),
+            "eligible_prs": sum(redteam.eligible(r) for r in rows),
+            "per_location": count("location"),
+            "per_kind": count("kind"),
+            "per_canary_type": count("canary_type"),
+            "per_template": count("template"),
+            "per_repo": dict(sorted(Counter(p["repo"] for p in poisoned).items())),
+            "file": {"path": rel(out), "sha256": dataset.file_sha256(out)},
+            "clean_controls": {
+                "path": rel(clean),
+                "sha256": dataset.file_sha256(clean),
+                "prs": len(rows),
+            },
+            "classifier_packs": {
+                k: {"path": rel(p), "sha256": dataset.file_sha256(p)}
+                for k, p in classifier_files.items()
+            },
+        },
+    )
+    print(f"{len(poisoned)} poisoned from {n} PRs, {len(rows)} clean controls; wrote {out}, {path}")
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -1036,6 +1125,9 @@ def main() -> None:
     sd.add_argument("--split", choices=["train", "val"], default="train")
     sd.add_argument("--teacher", required=True, help="reply file prefix, e.g. teacher_train")
     sd.add_argument("--fill", action="store_true", help="sft-v2-fill: top up with teacher picks")
+    rt = sub.add_parser("redteam")
+    # test: built from test PRs with held-out templates, for the one final report.
+    rt.add_argument("--split", choices=["val", "test"], required=True)
     ps = sub.add_parser("prompt-sample")
     # test is allowed for the one final run (Gemini on a sample): the sample is drawn from the
     # prompt pack alone, by seed, with no targets or results read.
@@ -1081,6 +1173,8 @@ def main() -> None:
         cmd_rules_baseline(args.split)
     elif args.cmd == "sft-data":
         cmd_sft_data(args.split, args.teacher, args.fill)
+    elif args.cmd == "redteam":
+        cmd_redteam(args.split)
     elif args.cmd == "prompt-sample":
         cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":
