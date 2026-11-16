@@ -14,7 +14,7 @@ of the heavy screening dependencies and tests can use fakes.
 from dataclasses import dataclass, replace
 from typing import Protocol
 
-from prpilot_core.agents.triage_format import PRContext, _cap_body
+from prpilot_core.agents.triage_format import PRContext, _cap_body, _file_list
 from prpilot_core.screening.prompt_guard import DEFAULT_THRESHOLD
 from prpilot_core.screening.secrets import Finding, redact_diff, scan_diff
 
@@ -28,11 +28,12 @@ class Redactor(Protocol):
 
 
 def guard_fields(pr: PRContext) -> dict[str, str]:
-    """The text the model will see, field by field (the body capped as in the prompt)."""
+    """The text the model will see, field by field: body and file list capped exactly as the
+    triage prompt caps them (the full list of a vendoring PR can exceed 150k characters)."""
     return {
         "title": pr.title,
         "body": _cap_body(pr.body),
-        "changed_files": "\n".join(pr.changed_files),
+        "changed_files": _file_list(pr.changed_files),
         "diff": pr.diff,
     }
 

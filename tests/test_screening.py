@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from prpilot_core.agents.triage_format import MAX_BODY_CHARS, PRContext
+from prpilot_core.agents.triage_format import MAX_BODY_CHARS, MAX_FILES_LISTED, PRContext
 from prpilot_core.screening.pii import Span, is_mention, merge_spans, redact_spans
 from prpilot_core.screening.screen import guard_fields, screen
 from prpilot_core.screening.secrets import Finding, file_sections, redact_diff
@@ -106,6 +106,9 @@ def test_guard_sees_the_body_as_the_prompt_shows_it():
     fields = guard_fields(pr(body="x" * (MAX_BODY_CHARS + 50)))
     assert fields["body"].startswith("x" * MAX_BODY_CHARS) and "truncated" in fields["body"]
     assert set(fields) == {"title", "body", "changed_files", "diff"}
+    files = tuple(f"f{i}.go" for i in range(MAX_FILES_LISTED + 7))
+    listed = guard_fields(pr(changed_files=files))["changed_files"].split("\n")
+    assert len(listed) == MAX_FILES_LISTED + 1 and listed[-1] == "[... and 7 more files]"
 
 
 def test_screen_quarantines_on_any_field():
