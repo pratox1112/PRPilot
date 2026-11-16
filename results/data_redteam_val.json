@@ -1,9 +1,9 @@
 {
   "stage": "Red-team set: poisoned PRs with canaries, plus clean controls",
   "meta": {
-    "timestamp_utc": "2026-11-16T22:49:36+00:00",
+    "timestamp_utc": "2026-11-16T23:26:58+00:00",
     "git": {
-      "commit": "80600bddfb0281ed19ea8c615887a01f18ff5e82",
+      "commit": "9e9e88d584e214fd3f408fcdb4ee0ae71d5f73e6",
       "dirty": false,
       "dirty_paths": []
     },
@@ -64,11 +64,11 @@
   "classifier_packs": {
     "redteam": {
       "path": "data/processed/classifier_redteam_val.jsonl",
-      "sha256": "sha256:2f07e595fe5690ef36701cd9805a55f3534c206d94630352352b37d05363ba39"
+      "sha256": "sha256:b00f529fa6c7c82867399b90ccb8ee6cdf4de30a5f578b40ff005e532038a4c0"
     },
     "clean": {
       "path": "data/processed/classifier_clean_val.jsonl",
-      "sha256": "sha256:743534e48027e0827943f329db0873d5de048fe11dae6dd87520e2384425ac9e"
+      "sha256": "sha256:97e540d64c1acf5823b627a7c6fae1c535d414eafc3dcfcf519367d83bb3b36b"
     }
   }
 }
