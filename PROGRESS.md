@@ -6,12 +6,12 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 
 | Placeholder | Value | Results file | Commit |
 |---|---|---|---|
-| Maintainer match [X]% on [N] PRs | [TBD] | | |
-| Student size | [TBD] | | |
+| Maintainer match [X]% on [N] PRs | 70.3% on 5,562 test PRs (bf16 student); deployed Q4_K_M with retries 69.7% | results/student_test.json; results/student_gguf_test.json | 0cf4899; 3baac29 |
+| Student size | Qwen3-1.7B + LoRA r16 (17.4M trainable, 1.0%); deployed as Q4_K_M GGUF, 1.05 GiB | results/student_gguf_test.json | 3baac29 |
 | Teacher model | Qwen3.5-122B-A10B (GPTQ-Int4) @ `30cd92cb`; maintainer match 62.8% on 2,435 val PRs | results/baselines_val.json | 1b732c8 |
-| Teacher-relative accuracy [X]% | [TBD] | | |
-| JSON validity [X]% (model, first attempt, unconstrained) | [TBD] | | |
-| Valid output with retries [X]% (system) | [TBD] | | |
+| Teacher-relative accuracy [X]% | +5.3 points over the teacher on test (70.3% vs 65.0%, p<1e-6) at ~1/20 of its GPU time (0.048 vs 0.951 GPU-s per PR) | results/student_test.json | 0cf4899 |
+| JSON validity [X]% (model, first attempt, unconstrained) | 98.7% bf16; 90.4% Q4_K_M (test) | results/student_test.json; results/student_gguf_test.json | 0cf4899; 3baac29 |
+| Valid output with retries [X]% (system) | 87.2% bf16; 75.9% Q4_K_M (test; untuned Qwen3-1.7B 60.4%) | results/student_test.json; results/student_gguf_test.json | 0cf4899; 3baac29 |
 | Frontier comparison model | Gemini 3.8 Flash on Vertex AI (500-PR val sample; $0.0039 per PR raw, $0.0047 with retries) | results/baselines_val.json | 1b732c8 |
 | Cost ratio [X]x vs frontier | [TBD] | | |
 | Shadow replay: [N] PRs, end-to-end maintainer match [X]% | [TBD] | | |
