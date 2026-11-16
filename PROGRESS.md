@@ -270,3 +270,58 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Dataset hash: n/a
 - Notes / decisions / problems: no test-split numbers in Phase 2 (hard rule 4); the test split is scored once, at the end.
 - Next: PR to `main`, then the Phase 2 review stop before Phase 3
+
+## Phase 3 — Fine-tuning on Explorer
+
+### 2026-11-15 — Task 3.1 — Teacher labels on the train split
+- Status: done
+- What changed: `vllm_replies.py --shard I/N`; the teacher (thinking on, 8,192 max tokens, text-only) over the train pack in 4 parallel H200 jobs (11878148–11878151), code 7bca2d3.
+- Results: 15,810/15,810 train PRs answered (3,953 / 3,953 / 3,952 / 3,952), 1.02–1.09 GPU-s per PR, ~1 h 15 min per shard. Replies in data/processed/replies/teacher_train_s*of4_* and ~/prpilot-keep.
+- Dataset hash: train pack `sha256:c56311b9a3311e238b6cd2b1d7ba7d4e97b83dc8beb187ccc553794b640cd387`
+- Notes / decisions / problems: none.
+- Next: 3.2
+
+### 2026-11-15 — Task 3.2 — Fine-tuning data (sft-v1)
+- Status: done
+- What changed: `prpilot_data/sft.py` + `sft-data`: keep a PR when the teacher's reply is valid and its type equals the maintainer type; keep the teacher's summary, risk and rationale; overwrite labels, reviewers (truth ∩ candidates, candidate order, max 3) and related_issues (truth ∩ open issues) with the maintainer truth; every example must pass both validation layers. `training/sft/format.py`: the training prompt is the chat-template call vLLM makes (thinking off), loss on the answer only; `--check` compares each example with the template's rendering of the whole conversation; `tests/test_sft_format.py` is the format-match test (roadmap §6.1).
+- Results: train kept 8,115 of 12,246 typed PRs (66.3%); agreement on valid typed replies 67.1% (8,115/12,096); dropped: 3,981 disagree, 150 invalid, 3,564 no maintainer type → results/data_sft_train.json @ 7bca2d3 (clean). Val kept 1,529 of 2,435 (62.8%) → results/data_sft_val.json @ d9cc417 (clean). Format check: 8,115/8,115 match the chat template; no example over 12,288 tokens.
+- Dataset hash: sft_train.jsonl `sha256:0d568886665a…`, sft_val.jsonl `sha256:3cad66cfb4eb…` (full hashes in the results files)
+- Notes / decisions / problems: 695 of 8,115 rationales (8.6%) name a label or reviewer the truth replaced. Thin types in train: dependency 34, other 64.
+- Next: 3.3
+
+### 2026-11-15 — Task 3.3 — LoRA training, base run
+- Status: done
+- What changed: `training/sft/train.py` (Hugging Face Trainer + PEFT, not TRL SFTTrainer; same answer-only loss), `configs/base.toml`, `train_lora.sbatch`, training env (torch 2.13.0+cu126, transformers 5.22.1, peft 0.21.2, accelerate 1.15.0, mlflow-skinny 3.17.2; lock in ~/prpilot-keep). bf16 LoRA r16 / α32 / dropout 0.05 on all attention and MLP projections, lr 2e-4 cosine, 3% warmup, 2 epochs, effective batch 16, max length 12,288. The MLflow run records data and config hashes, base revision, code commit and packages. `vllm_replies.py --lora-dir` scores every checkpoint of a run with the base loaded once.
+- Results: job 11884071, 1 h 31 min on one H200, 1,016 steps at ~5.2 s/step; eval loss (300 val examples) 0.738 (step 200) → 0.653 (step 1,016). Val, n=2,435 typed: checkpoint 1016 maintainer match 69.2% (CI 67.3–70.9), valid JSON 99.6%, label F1 0.492, reviewer@3 0.432, issue@5 0.828 → results/student-base_val_checkpoint-1016.json @ 73e2252 (clean); checkpoints 200–1016 in results/student-base_val_checkpoint-*.json.
+- Dataset hash: as in 3.2
+- Notes / decisions / problems: deviations approved before coding: bf16 LoRA instead of 4-bit QLoRA (1.7B fits easily on an H200) and 12,288 max length instead of 4,096 (prompts reach ~11.8k tokens). First trial failed: MLflow 3.17 refuses the file store without `MLFLOW_ALLOW_FILE_STORE=true`, and transformers 5.22 dropped `warmup_ratio` (a fraction is now passed as `warmup_steps`); fixed in 3bb0182. Run-to-run noise: `final` and checkpoint 1016 have the same weights but score 69.0% vs 69.2% (vLLM batching), so differences of ~0.2 points are noise. Reviewer@3 fell below the teacher (0.545) and rules (0.579): the overwrite left 16.8% of training answers with no reviewers (mean 1.26 of 3).
+- Next: 3.4
+
+### 2026-11-16 — Task 3.4 — Fill variant and checkpoint choice
+- Status: done
+- What changed: `sft-data --fill` (sft-v2-fill): truth first, then the teacher's own valid picks (reviewers up to 3, issues); same 8,115 / 1,529 examples, same types and labels. `train_lora.sbatch` takes `SFT_TAG=_fill`. Same config as 3.3.
+- Results: empty reviewer lists in training answers 16.8% → 0.9%, empty issue lists 79.0% → 49.7% → results/data_sft_train_fill.json @ 497e770 (clean), results/data_sft_val_fill.json @ 165582b (clean). Training job 11888117 (1 h 27 min), eval loss 0.705 → 0.624. Val fill checkpoint 1016: maintainer match 69.0% (CI 67.1–70.7), reviewer@3 0.549 (CI 0.532–0.568), issue@5 0.890, label F1 0.491, valid JSON 99.5% → results/student-fill_val_checkpoint-1016.json @ 4dbbc7e (clean). Base 1016 vs fill 1016 on maintainer match: 34 vs 29 discordant, p=0.61 → results/student_val.json @ 19b7fec (clean).
+- Dataset hash: sft_train_fill.jsonl `sha256:1457dcac75d5…`, sft_val_fill.jsonl `sha256:af78dea9c2ad…`
+- Notes / decisions / problems: **Chosen checkpoint: fill 1016 (owner decision, 2026-11-16).** By the strict rule (maintainer match first) base 1016 leads by 0.2 points, which is within run-to-run noise (p=0.61); the tie was broken on reviewer@3 (+0.117) and issue@5 (+0.062). Adapter `sha256:b127de9b…7f525a83`. Val metrics and `selected_checkpoint` logged to the fill MLflow run (job 11910718).
+- Next: 3.5
+
+### 2026-11-16 — Task 3.5 — Student system pass on validation
+- Status: done
+- What changed: `agent_replies.sbatch` with `LORA=<checkpoint>` serves the base + adapter under the name the agent calls; `--adapter` records the adapter hash.
+- Results (all val, job 11898279): valid after retries 97.2% (3,260/3,355), valid on the first request (both layers) 96.6%, retry rate 3.4%, rescue rate 16.7% (19/114), maintainer match 69.0%, 204 s for 3,355 PRs → results/student-fill-system_val.json @ 19b7fec (clean). Untuned Qwen3-1.7B (2.4): 70.7% valid after retries, 58.9% retry rate.
+- Dataset hash: val pack as in 2.2
+- Notes / decisions / problems: the 95 failures are almost all cilium labels outside that PR's label list (e.g. `area/hubble`); in 68 of them the model repeats its answer after the error message (it was never trained on a retry turn), hence the low rescue rate.
+- Next: 3.6
+
+### 2026-11-16 — Task 3.6 — Test split, run once for every system
+- Status: done
+- What changed: test pack copied once (hash checked); rules, untuned Qwen3-1.7B (raw + system), teacher (4 shards, joined with `scripts/join_shards.py`) and student fill 1016 (raw + system) on all 9,573 test PRs; Gemini 3.8 Flash (raw + system) on a seeded 500-PR test sample (`prompt-sample --split test`, drawn from the pack alone). Scored once, together.
+- Results (all test, n=5,562 typed PRs) → results/student_test.json @ 0cf4899 (clean):
+  - Student: maintainer match 70.3% (CI 69.1–71.5), type macro-F1 0.640, label F1 0.376, reviewer@3 0.572, issue@5 0.883, valid JSON 98.7% (unconstrained, first attempt), 0.048 GPU-s per PR.
+  - Student with retries: 70.4% (CI 69.3–71.7), valid after retries 87.2%, retry rate 14.2%.
+  - Teacher 65.0% (CI 63.8–66.3), 0.951 GPU-s per PR; untuned Qwen3-1.7B 36.1% (with retries 38.1%, valid after retries 60.4%); rules 53.0%.
+  - McNemar on maintainer match: student vs teacher 481 vs 191 (p<1e-6); vs untuned base 2,090 vs 191 (p<1e-6); vs rules 1,290 vs 329 (p<1e-6).
+  - 500-PR sample (n=279 typed): student with retries 68.1%, Gemini with retries 68.1% (19 vs 19, p=1.0), Gemini raw 63.4% (student with retries vs Gemini raw: 24 vs 11, p=0.04), teacher 65.6%; Gemini reviewer@3 0.660 vs student 0.534. Gemini cost $1.79 raw + $1.93 with retries ($0.0036 / $0.0039 per PR).
+- Dataset hash: test pack `sha256:f1caef7782bd…`, sample `sha256:dff996a1b1e1…` → results/data_prompts_test_s500.json @ 28f7dbb (clean)
+- Notes / decisions / problems: the student beats the teacher on type at ~1/20 of its GPU time, but stays below the rules baseline on reviewer@3 (0.617) and issue@5 (0.902). Held-out repo numpy (never in training): maintainer match 55.0% (teacher 53.1%, rules 53.5%), but label F1 0.112 (teacher 0.25): the student writes labels in other repos' styles (`Testing`, `component: Build`) instead of numpy's own (`05 - Testing`), so 1,089 of 3,603 numpy PRs fail the system pass; this is why valid after retries is 87.2% on test vs 97.2% on val. A deterministic label filter in the Phase 5 executor would turn these into "no label suggested"; these numbers stay as measured.
+- Next: 3.7
