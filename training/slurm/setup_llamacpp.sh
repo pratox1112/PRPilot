@@ -36,16 +36,21 @@ tar -xzf "${TARBALL}" -C "${SRC}" --strip-components=1
 
 module load cmake/3.30.2 cuda/12.8.0
 # GGML_NATIVE=OFF: portable x86-64 code, so a binary built on one node runs on any other.
+# LLAMA_OPENSSL=OFF: OpenSSL is only for HTTPS model downloads, which we never use, and nodes
+# differ in their system OpenSSL (a build linked on one failed to load on another).
 echo "$(date +%T) building llama-server (CUDA $(nvcc --version | grep -o 'release [0-9.]*'))"
 cmake -S "${SRC}" -B "${SRC}/build" -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=90 \
-  -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+  -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF -DLLAMA_OPENSSL=OFF -DCMAKE_BUILD_TYPE=Release
 cmake --build "${SRC}/build" -j "${SLURM_CPUS_PER_TASK:-8}" --target llama-server
 "${SRC}/build/bin/llama-server" --version 2>&1 | tail -2
 # Quantizing needs no GPU; a CPU-only build runs in the export job on a CPU node, where the
 # CUDA build cannot start (no CUDA runtime or driver libraries there).
 echo "$(date +%T) building llama-quantize (CPU only)"
-cmake -S "${SRC}" -B "${SRC}/build-cpu" -DGGML_CUDA=OFF -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF \
+cmake -S "${SRC}" -B "${SRC}/build-cpu" -DGGML_CUDA=OFF -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF -DLLAMA_OPENSSL=OFF \
   -DCMAKE_BUILD_TYPE=Release
 cmake --build "${SRC}/build-cpu" -j "${SLURM_CPUS_PER_TASK:-8}" --target llama-quantize
 "${SRC}/build-cpu/bin/llama-quantize" --help 2>&1 | head -1 || true
+if ldd "${SRC}/build-cpu/bin/llama-quantize" | grep -E "not found|ssl|crypto"; then
+  echo "llama-quantize links a missing or system-specific library"; exit 1
+fi
 echo "$(date +%T) build finished"
