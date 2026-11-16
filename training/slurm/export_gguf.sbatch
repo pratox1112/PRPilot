@@ -5,7 +5,7 @@
 #   sbatch training/slurm/export_gguf.sbatch <name> <LoRA checkpoint dir>
 # Writes $PRPILOT_SCRATCH/export/<name>/{merged/, <name>-bf16.gguf, <name>-Q4_K_M.gguf,
 # export_meta.json}. Only export_meta.json (with every file's SHA-256) goes to ~/prpilot-keep:
-# the GGUF is ~1 GB and is rebuilt from the kept adapter.
+# the GGUFs (3.4 GB bf16, ~1.1 GB Q4_K_M) are rebuilt from the kept adapter.
 #SBATCH --job-name=prpilot-export
 #SBATCH --account=eece7398.202710
 #SBATCH --partition=short
@@ -23,7 +23,7 @@ export HF_HUB_OFFLINE=1
 
 NAME="$1"; ADAPTER="$2"
 test -f "${ADAPTER}/adapter_model.safetensors" || { echo "no adapter in ${ADAPTER}"; exit 1; }
-test -x "${LLAMACPP_DIR}/build/bin/llama-quantize" || { echo "build llama.cpp first"; exit 1; }
+test -x "${LLAMACPP_DIR}/build-cpu/bin/llama-quantize" || { echo "build llama.cpp first"; exit 1; }
 OUT="${PRPILOT_SCRATCH}/export/${NAME}"
 BF16="${OUT}/${NAME}-bf16.gguf"; Q4="${OUT}/${NAME}-Q4_K_M.gguf"
 mkdir -p "${OUT}"
@@ -34,7 +34,7 @@ python training/sft/merge_lora.py --adapter "${ADAPTER}" --out "${OUT}/merged" \
 # The converter ships with llama.cpp; its gguf package is the one in the same release.
 PYTHONPATH="${LLAMACPP_DIR}/gguf-py" python "${LLAMACPP_DIR}/convert_hf_to_gguf.py" \
   "${OUT}/merged" --outtype bf16 --outfile "${BF16}"
-"${LLAMACPP_DIR}/build/bin/llama-quantize" "${BF16}" "${Q4}" Q4_K_M
+"${LLAMACPP_DIR}/build-cpu/bin/llama-quantize" "${BF16}" "${Q4}" Q4_K_M  # CPU-only build
 
 python - "${OUT}" "${NAME}" <<'EOF'
 import hashlib, json, os, sys

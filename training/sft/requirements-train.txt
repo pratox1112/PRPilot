@@ -6,3 +6,5 @@ transformers==5.22.1
 peft==0.21.2
 accelerate==1.15.0
 mlflow-skinny==3.17.2
+# llama.cpp's convert_hf_to_gguf.py (export_gguf.sbatch) imports it while reading the vocab.
+sentencepiece==0.2.2
