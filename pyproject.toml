@@ -28,6 +28,7 @@ dev = [
     "ruff==0.17.2",
 ]
 screening = [
+    "detect-secrets==1.5.0",
     "en-core-web-lg",
     "huggingface-hub==2.3.0",
     "presidio-analyzer==2.2.362",
