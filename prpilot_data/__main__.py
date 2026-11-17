@@ -92,6 +92,11 @@ uv run --group data --group screening python -m prpilot_data secrets-eval
     into seeded test diffs, plus the flag rate on every unmodified test diff
     → results/secrets_synthetic.json. ~20 min on the laptop.
 
+uv run python -m prpilot_data memory-ablation
+    Reviewer recall@3 for each memory rule (prpilot_core.memory.REVIEWER_RULES) on the
+    student's system-pass replies, rule chosen on val, then test once
+    → results/memory_ablation.json (work files in data/interim/memory_ablation/).
+
 uv run --group data --group screening python -m prpilot_data pii-eval
     Presidio (the app's PII settings, plus a reference with URL and LOCATION) on the Kaggle
     PII Data Detection essays in data/raw/kaggle_pii/train.json (owner-downloaded, never
@@ -1170,6 +1175,80 @@ def cmd_screening_latency(n: int) -> None:
     )
 
 
+ABLATION_REPLIES = {  # the student's system pass (fill 1016) on each split
+    "val": "student-fill-system_val_*.jsonl",
+    "test": "student-system_test_*.jsonl",
+}
+
+
+def cmd_memory_ablation() -> None:
+    import subprocess
+
+    from prpilot_core import memory
+    from prpilot_data import dataset, memory_ablation
+
+    require_clean_tree()
+    meta = run_metadata([])
+    processed = REPO_ROOT / "data" / "processed"
+    work = REPO_ROOT / "data" / "interim" / "memory_ablation"
+    work.mkdir(parents=True, exist_ok=True)
+
+    def score_split(split: str) -> tuple[dict, dict]:
+        [replies] = sorted((processed / "replies").glob(ABLATION_REPLIES[split]))
+        runner = json.loads(replies.with_name(replies.stem + ".meta.json").read_text("utf-8"))
+        pack_path = processed / f"prompts_{split}.jsonl"
+        rules = {(r["repo"], r["number"]): r["rules"] for r in read_jsonl(pack_path)}
+        rows = read_jsonl(replies)
+        out = {}
+        for rule in memory.REVIEWER_RULES:
+            path = work / f"{split}_{rule}.jsonl"
+            with path.open("w", encoding="utf-8", newline="") as f:
+                for r in rows:
+                    line = memory_ablation.apply_rule(r, rules[(r["repo"], r["number"])], rule)
+                    f.write(json.dumps(line, ensure_ascii=False) + "\n")
+            path.with_name(path.stem + ".meta.json").write_text(
+                json.dumps({**runner, "name": f"{runner['name']}+memory:{rule}"}), "utf-8"
+            )
+            report = work / f"{split}_{rule}_report.json"
+            subprocess.run(
+                ["uv", "run", "--project", "eval", "python", "-m", "prpilot_eval", "score",
+                 "--pack", str(pack_path), "--targets", str(processed / f"targets_{split}.jsonl"),
+                 "--replies", str(path), "--out", str(report)],
+                cwd=REPO_ROOT, check=True, stdout=subprocess.DEVNULL,
+            )  # fmt: skip
+            m = json.loads(report.read_text("utf-8"))["metrics"]
+            out[rule] = {k: m[k] for k in ("reviewer_recall_at_3",
+                                           "reviewer_recall_at_3_reviewed_only")}  # fmt: skip
+            print(f"{split} {rule}: reviewer@3 {m['reviewer_recall_at_3']['value']}")
+        source = {"file": replies.name, "sha256": dataset.file_sha256(replies)}
+        return out, source
+
+    val, val_src = score_split("val")
+    best = max(memory.REVIEWER_RULES, key=lambda r: val[r]["reviewer_recall_at_3"]["value"])
+    test, test_src = score_split("test")  # after the choice: the test split is looked at once
+    path = write_result(
+        "memory_ablation",
+        {
+            "stage": "Reviewer memory ablation: reviewer recall@3 with and without memory",
+            "meta": meta,
+            "method": "the student's system-pass replies (fill 1016) after the pipeline's "
+            "validation fallback; only `reviewers` changes per rule; scored by the eval harness",
+            "rules": {
+                "model": "the student's picks only (no memory)",
+                "model_then_memory": "the student's picks, then the memory ranking, top 3",
+                "memory_then_model": "the memory ranking first, then the student's picks",
+                "memory": "the memory ranking only (the rules baseline's reviewers)",
+            },
+            "chosen_on_val": best,
+            "tie_break": "REVIEWER_RULES order (model first)",
+            "val": {"replies": val_src, "by_rule": val},
+            "test": {"replies": test_src, "by_rule": test},
+        },
+    )
+    print(f"chosen on val: {best}; test reviewer@3 "
+          f"{test[best]['reviewer_recall_at_3']['value']}; wrote {path}")  # fmt: skip
+
+
 KAGGLE_PII = REPO_ROOT / "data" / "raw" / "kaggle_pii" / "train.json"
 
 
@@ -1489,6 +1568,7 @@ def main() -> None:
     rt.add_argument("--split", choices=["val", "test"], required=True)
     sub.add_parser("secrets-eval")
     sub.add_parser("pii-eval")
+    sub.add_parser("memory-ablation")
     sl = sub.add_parser("screening-latency")
     sl.add_argument("--n", type=int, default=100)
     rr_ = sub.add_parser("redteam-report")
@@ -1546,6 +1626,8 @@ def main() -> None:
         cmd_secrets_eval()
     elif args.cmd == "pii-eval":
         cmd_pii_eval()
+    elif args.cmd == "memory-ablation":
+        cmd_memory_ablation()
     elif args.cmd == "screening-latency":
         cmd_screening_latency(args.n)
     elif args.cmd == "prompt-sample":
