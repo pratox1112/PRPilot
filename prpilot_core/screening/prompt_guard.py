@@ -74,18 +74,27 @@ class PromptGuard:
         cache_dir: str | None = None,
         token: str | None = None,
         batch_size: int = 16,
+        local_dir: str | None = None,
+        device: str = "cpu",
     ):
+        """`local_dir`: a copy of the pinned snapshot's files (no Hub access needed, e.g. on
+        Explorer, where the gated model has no token); the caller vouches for the revision."""
         import torch
-        from huggingface_hub import snapshot_download
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-        path = snapshot_download(
-            model.repo, revision=model.revision, cache_dir=cache_dir, token=token
-        )
+        if local_dir:
+            path = local_dir
+        else:
+            from huggingface_hub import snapshot_download
+
+            path = snapshot_download(
+                model.repo, revision=model.revision, cache_dir=cache_dir, token=token
+            )
         self._torch = torch
+        self.device = device
         self.model_info = model
         self.tokenizer = AutoTokenizer.from_pretrained(path)
-        self.model = AutoModelForSequenceClassification.from_pretrained(path).eval()
+        self.model = AutoModelForSequenceClassification.from_pretrained(path).eval().to(device)
         self.threshold = threshold
         self.batch_size = batch_size
         probe = "hello world"
@@ -105,7 +114,7 @@ class PromptGuard:
         for i in range(0, len(windows), self.batch_size):
             batch = self.tokenizer.pad(
                 {"input_ids": windows[i : i + self.batch_size]}, return_tensors="pt"
-            )
+            ).to(self.device)
             with self._torch.no_grad():
                 logits = self.model(**batch).logits
             probs = self._torch.softmax(logits, dim=-1)[:, self.malicious_index]
@@ -115,7 +124,9 @@ class PromptGuard:
 
     def score_first_window_only(self, text: str) -> float:
         """What a scanner that truncates at 512 tokens would see (for comparison only)."""
-        batch = self.tokenizer(text, truncation=True, max_length=MAX_TOKENS, return_tensors="pt")
+        batch = self.tokenizer(
+            text, truncation=True, max_length=MAX_TOKENS, return_tensors="pt"
+        ).to(self.device)
         with self._torch.no_grad():
             logits = self.model(**batch).logits
         return self._torch.softmax(logits, dim=-1)[0, self.malicious_index].item()

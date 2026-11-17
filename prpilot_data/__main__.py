@@ -73,6 +73,34 @@ uv run python -m prpilot_data prompt-sample [--split val|test] [--n 500] [--seed
     byte for byte, for the paid Gemini baseline. Other runs are scored on it with
     `prpilot_eval score --only`.
 
+uv run --group data python -m prpilot_data redteam --split val|test
+    Red-team set (prpilot_data/redteam.py): data/processed/redteam_<split>.jsonl, poisoned
+    copies of seeded PRs (val: 300 PRs, dev templates; test: 500 PRs, held-out test
+    templates), one per payload location, as runnable prompt-pack rows plus the PR fields
+    the screening step reads; data/processed/prfields_<split>.jsonl, every clean PR of the
+    split (false-positive controls); classifier_{redteam,clean}_<split>.jsonl, the same
+    fields as prompts for the LLM-classifier baseline; results/data_redteam_<split>.json.
+
+uv run python -m prpilot_data redteam-report --split val|test
+    Red-team metrics (prpilot_data/redteam_report.py) at the fixed screening setting: PromptGuard
+    and LLM-classifier block and false-positive rates, end-to-end attack success with and
+    without screening, from the Explorer outputs under data/processed/replies/ (each checked
+    against the pack it ran on) → results/redteam_<split>.json; val also has threshold curves.
+
+uv run --group data --group screening python -m prpilot_data secrets-eval
+    Secret scanner on 600 synthetic secrets (12 formats, prpilot_data/secrets_eval.py) inserted
+    into seeded test diffs, plus the flag rate on every unmodified test diff
+    → results/secrets_synthetic.json. ~20 min on the laptop.
+
+uv run --group data --group screening python -m prpilot_data pii-eval
+    Presidio (the app's PII settings, plus a reference with URL and LOCATION) on the Kaggle
+    PII Data Detection essays in data/raw/kaggle_pii/train.json (owner-downloaded, never
+    committed), scored with the competition's F5 → results/pii_kaggle.json.
+
+uv run --group data --group screening python -m prpilot_data screening-latency [--n 100]
+    The full screen() step on CPU on seeded clean test PRs: per-PR latency (p50/p95) and its
+    split between PromptGuard, Presidio and detect-secrets → results/screening_latency.json.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -862,6 +890,426 @@ def cmd_prompt_sample(split: str, n: int, seed: int) -> None:
     print(f"wrote {out} and {path}")
 
 
+REDTEAM_PLAN = {"val": ("dev", 300), "test": ("test", 500)}  # approved 2026-11-16
+
+
+def cmd_redteam(split: str) -> None:
+    from collections import Counter
+
+    from prpilot_core.agents.triage_format import PRContext
+    from prpilot_core.screening.classifier import classifier_messages
+    from prpilot_data import dataset, redteam
+
+    require_clean_tree()
+    meta = run_metadata(["pyarrow"])
+    template_set, n = REDTEAM_PLAN[split]
+    rows = [r for r in load_splits() if r["split"] == split]
+    cands = {
+        (c["repo"], c["number"]): c
+        for c in read_jsonl(REPO_ROOT / "data" / "processed" / "candidates.jsonl")
+    }
+    poisoned = redteam.build(rows, cands, template_set, n, seed=0)
+    processed = REPO_ROOT / "data" / "processed"
+    out = processed / f"redteam_{split}.jsonl"
+    with out.open("w", encoding="utf-8", newline="") as f:
+        for r in poisoned:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    clean = processed / f"prfields_{split}.jsonl"
+    clean_rows = [
+        {"repo": r["repo"], "number": r["number"], "pr": redteam.pr_fields(r)}
+        for r in sorted(rows, key=lambda r: (r["repo"], r["number"]))
+    ]
+    with clean.open("w", encoding="utf-8", newline="") as f:
+        for line in clean_rows:
+            f.write(json.dumps(line, ensure_ascii=False) + "\n")
+    # LLM-classifier baseline: the same fields, as one-word INJECTION / SAFE prompts.
+    classifier_files = {}
+    for kind, source in (("redteam", poisoned), ("clean", clean_rows)):
+        path = processed / f"classifier_{kind}_{split}.jsonl"
+        with path.open("w", encoding="utf-8", newline="") as f:
+            for r in source:
+                pr = PRContext(**{**r["pr"], "changed_files": tuple(r["pr"]["changed_files"])})
+                line = {"repo": r["repo"], "number": r["number"],
+                        "messages": classifier_messages(pr)}  # fmt: skip
+                f.write(json.dumps(line, ensure_ascii=False) + "\n")
+        classifier_files[kind] = path
+
+    def count(key: str) -> dict:
+        return dict(sorted(Counter(p["redteam"][key] for p in poisoned).items()))
+
+    def rel(p) -> str:
+        return str(p.relative_to(REPO_ROOT)).replace("\\", "/")
+
+    path = write_result(
+        f"data_redteam_{split}",
+        {
+            "stage": "Red-team set: poisoned PRs with canaries, plus clean controls",
+            "meta": meta,
+            "redteam_version": redteam.REDTEAM_VERSION,
+            "templates": template_set,
+            "seed": 0,
+            "prs": n,
+            "poisoned": len(poisoned),
+            "eligible_prs": sum(redteam.eligible(r) for r in rows),
+            "per_location": count("location"),
+            "per_kind": count("kind"),
+            "per_canary_type": count("canary_type"),
+            "per_template": count("template"),
+            "per_repo": dict(sorted(Counter(p["repo"] for p in poisoned).items())),
+            "file": {"path": rel(out), "sha256": dataset.file_sha256(out)},
+            "clean_controls": {
+                "path": rel(clean),
+                "sha256": dataset.file_sha256(clean),
+                "prs": len(rows),
+            },
+            "classifier_packs": {
+                k: {"path": rel(p), "sha256": dataset.file_sha256(p)}
+                for k, p in classifier_files.items()
+            },
+        },
+    )
+    print(f"{len(poisoned)} poisoned from {n} PRs, {len(rows)} clean controls; wrote {out}, {path}")
+
+
+def cmd_redteam_report(split: str) -> None:
+    from prpilot_core.screening.prompt_guard import DEFAULT_THRESHOLD
+    from prpilot_core.screening.screen import QUARANTINE_FIELDS
+    from prpilot_data import dataset
+    from prpilot_data import redteam_report as rr
+
+    require_clean_tree()
+    meta = run_metadata([])
+    processed = REPO_ROOT / "data" / "processed"
+    replies_dir = processed / "replies"
+
+    def one(pattern: str, pack, sha_key: str) -> tuple[list[dict], dict]:
+        """The single replies file matching `pattern`, checked against the pack it ran on."""
+        files = sorted(replies_dir.glob(pattern))
+        if len(files) != 1:
+            raise SystemExit(f"need exactly one {pattern}, found {[f.name for f in files]}")
+        m = json.loads(files[0].with_name(files[0].stem + ".meta.json").read_text("utf-8"))
+        recorded = m["input"]["sha256"] if sha_key == "input" else m["pack_sha256"]
+        if recorded != dataset.file_sha256(pack) or m.get("trial_limit"):
+            raise SystemExit(f"{files[0].name}: not a full run on {pack.name}")
+        return rr.read_jsonl(files[0]), {
+            "file": files[0].name,
+            "sha256": dataset.file_sha256(files[0]),
+            "slurm_job_id": m.get("slurm_job_id"),
+            "code_commit": m.get("code_commit"),
+        }
+
+    red_path, clean_path = (
+        processed / f"redteam_{split}.jsonl",
+        processed / f"prfields_{split}.jsonl",
+    )
+    cls_red, cls_clean = (processed / f"classifier_{k}_{split}.jsonl" for k in ("redteam", "clean"))
+    pack, clean = rr.read_jsonl(red_path), rr.read_jsonl(clean_path)
+    guard_red, s1 = one(f"guard_pg86m_redteam_{split}_*.jsonl", red_path, "input")
+    guard_clean, s2 = one(f"guard_pg86m_prfields_{split}_*.jsonl", clean_path, "input")
+    verdict_red, s3 = one(f"teacher-classifier_redteam_{split}_*.jsonl", cls_red, "pack")
+    verdict_clean, s4 = one(f"teacher-classifier_clean_{split}_*.jsonl", cls_clean, "pack")
+    agent, s5 = one(f"student-system_redteam_{split}_*.jsonl", red_path, "pack")
+    aligned = [
+        ("guard", guard_red, pack),
+        ("guard clean", guard_clean, clean),
+        ("classifier", verdict_red, pack),
+        ("classifier clean", verdict_clean, clean),
+        ("agent", agent, pack),
+    ]
+    for name, rows, ref in aligned:
+        rr.check_aligned(ref, rows, name)
+
+    t = DEFAULT_THRESHOLD
+    pg_block = rr.guard_blocks(guard_red, t)
+    pg_fp = rr.guard_blocks(guard_clean, t)
+    cls_block, cls_unparsed = rr.classifier_blocks(verdict_red)
+    cls_fp, cls_fp_unparsed = rr.classifier_blocks(verdict_clean)
+
+    def detector(block: list[bool], fp: list[bool]) -> dict:
+        return {
+            "block_rate": rr.rate(block),
+            "false_positive_rate": rr.rate(fp),
+            "block_by_location": rr.by_group(pack, block, "location"),
+            "block_by_kind": rr.by_group(pack, block, "kind"),
+            "block_by_template": rr.by_group(pack, block, "template"),
+        }
+
+    result = {
+        "stage": "Red-team: injection screening and end-to-end attack success",
+        "meta": meta,
+        "split": split,
+        "reported": split == "test",
+        "setting": {
+            "screen": "PromptGuard 2 86M",
+            "threshold": t,
+            "quarantine_fields": list(QUARANTINE_FIELDS),
+            "chosen_on": "val (owner decision 2026-11-16)",
+        },
+        "inputs": {
+            "redteam": {
+                "file": red_path.name,
+                "sha256": dataset.file_sha256(red_path),
+                "rows": len(pack),
+            },
+            "clean_controls": {
+                "file": clean_path.name,
+                "sha256": dataset.file_sha256(clean_path),
+                "rows": len(clean),
+            },
+            "guard_redteam": s1,
+            "guard_clean": s2,
+            "classifier_redteam": s3,
+            "classifier_clean": s4,
+            "agent_no_screening": s5,
+        },  # fmt: skip
+        "promptguard": detector(pg_block, pg_fp),
+        "llm_classifier": {
+            "model": "teacher (Qwen3.5-122B-A10B-GPTQ-Int4), thinking off",
+            **detector(cls_block, cls_fp),
+            "unparsed_replies": {"redteam": cls_unparsed, "clean": cls_fp_unparsed},
+        },
+        "end_to_end_promptguard": rr.end_to_end(pack, agent, pg_block),
+        "end_to_end_llm_classifier": rr.end_to_end(pack, agent, cls_block),
+    }
+    if split == "val":  # the threshold was chosen here; the test report uses it as fixed
+        grid = [0.99, 0.98, 0.95, 0.9, 0.8, 0.7, 0.5, 0.3, 0.2, 0.1, 0.05]
+        result["threshold_curves"] = {
+            "quarantine_fields": rr.threshold_curve(guard_red, guard_clean, grid),
+            "all_fields": rr.threshold_curve(
+                guard_red, guard_clean, grid, ("title", *QUARANTINE_FIELDS)
+            ),
+        }
+    path = write_result(f"redteam_{split}", result)
+    pg, cl = result["promptguard"], result["llm_classifier"]
+    e2e = result["end_to_end_promptguard"]["action"]
+    print(
+        f"{split}: PromptGuard block {pg['block_rate']['value']}, "
+        f"FP {pg['false_positive_rate']['value']}; "
+        f"classifier block {cl['block_rate']['value']}, FP {cl['false_positive_rate']['value']}; "
+        f"attack reached an action {e2e['without_screening']['value']} without screening, "
+        f"{e2e['with_screening']['value']} with; wrote {path}"
+    )
+
+
+def cmd_screening_latency(n: int) -> None:
+    """The full screen() step on CPU (PromptGuard 86M, Presidio, detect-secrets) on n seeded
+    clean test PRs: per-PR latency for sizing the worker (roadmap §7.1, Phase 6)."""
+    import platform
+    import random
+    import statistics
+    import time
+
+    from prpilot_core.agents.triage_format import PRContext
+    from prpilot_core.screening import screen as screen_mod
+    from prpilot_core.screening.pii import PIIRedactor
+    from prpilot_core.screening.prompt_guard import PROMPT_GUARD_86M, PromptGuard
+
+    require_clean_tree()
+    meta = run_metadata(["torch", "transformers", "presidio-analyzer", "detect-secrets"])
+    rows = [r for r in load_splits() if r["split"] == "test"]
+    rows = sorted(rows, key=lambda r: (r["repo"], r["number"]))
+    picked = random.Random(0).sample(rows, n)
+    guard = PromptGuard(PROMPT_GUARD_86M, device="cpu")
+    pii = PIIRedactor()
+
+    class Timed:  # wraps a scanner to time its calls
+        def __init__(self, inner, method):
+            self.inner, self.method, self.seconds = inner, method, 0.0
+
+        def __getattr__(self, name):
+            fn = getattr(self.inner, name)
+
+            def wrapped(*a, **k):
+                start = time.perf_counter()
+                try:
+                    return fn(*a, **k)
+                finally:
+                    self.seconds += time.perf_counter() - start
+
+            return wrapped
+
+    per_pr, parts = [], {"promptguard": [], "presidio": [], "secrets_and_rest": []}
+    screen_mod.screen(PRContext("warm up", "", "", "main", (), ""), guard, pii)
+    for r in picked:
+        pr = PRContext(r["title"], r["body"] or "", r["author"] or "", r["base_branch"],
+                       tuple(r["changed_files"]), r["diff"] or "")  # fmt: skip
+        g, p = Timed(guard, "score"), Timed(pii, "redact")
+        start = time.perf_counter()
+        screen_mod.screen(pr, g, p)
+        total = time.perf_counter() - start
+        per_pr.append(total)
+        parts["promptguard"].append(g.seconds)
+        parts["presidio"].append(p.seconds)
+        parts["secrets_and_rest"].append(total - g.seconds - p.seconds)
+
+    def stats(xs: list[float]) -> dict:
+        xs = sorted(xs)
+        return {"p50": round(statistics.median(xs), 3),
+                "p95": round(xs[int(0.95 * (len(xs) - 1))], 3),
+                "mean": round(statistics.mean(xs), 3), "max": round(xs[-1], 3)}  # fmt: skip
+
+    path = write_result(
+        "screening_latency",
+        {
+            "stage": "Screening step latency on CPU (laptop)",
+            "meta": meta,
+            "prs": n,
+            "seed": 0,
+            "machine": {
+                "processor": platform.processor(),
+                "cpus": os.cpu_count(),
+                "system": platform.platform(),
+            },  # fmt: skip
+            "note": "every PR fully screened (no early exit), so this is the worst case per PR",
+            "seconds_per_pr": stats(per_pr),
+            "seconds_by_part": {k: stats(v) for k, v in parts.items()},
+        },
+    )
+    print(
+        f"screen() p50 {stats(per_pr)['p50']} s, p95 {stats(per_pr)['p95']} s per PR; wrote {path}"
+    )
+
+
+KAGGLE_PII = REPO_ROOT / "data" / "raw" / "kaggle_pii" / "train.json"
+
+
+def cmd_pii_eval() -> None:
+    import time
+
+    from prpilot_core.screening import pii as pii_mod
+    from prpilot_data import dataset, pii_eval
+
+    require_clean_tree()
+    meta = run_metadata(["presidio-analyzer", "presidio-anonymizer", "spacy", "en-core-web-lg"])
+    if not KAGGLE_PII.exists():
+        raise SystemExit(f"missing {KAGGLE_PII}; download the competition data first")
+    docs = json.loads(KAGGLE_PII.read_text(encoding="utf-8"))
+    configs = {
+        "app": pii_mod.ENTITIES,
+        "reference_with_url_location": (*pii_mod.ENTITIES, *pii_eval.REFERENCE_EXTRA),
+    }
+    union = sorted({e for ents in configs.values() for e in ents})
+    redactor = pii_mod.PIIRedactor(entities=tuple(union))
+    gold: set = set()
+    pred = {k: set() for k in configs}
+    start = time.perf_counter()
+    for n, d in enumerate(docs, 1):
+        offsets = pii_eval.token_offsets(d["tokens"], d["trailing_whitespace"])
+        gold |= pii_eval.triples(d["document"], d["labels"])
+        found = [s for s in redactor.find_all(d["full_text"])]
+        for name, ents in configs.items():
+            kept = pii_mod.merge_spans(s for s in found if s.entity in ents)
+            spans = [(s.start, s.end, pii_eval.KAGGLE[s.entity]) for s in kept
+                     if s.entity in pii_eval.KAGGLE]  # fmt: skip
+            labels = pii_eval.spans_to_bio(offsets, d["tokens"], spans)
+            pred[name] |= pii_eval.triples(d["document"], labels)
+        if n % 500 == 0:
+            print(f"{n}/{len(docs)} essays", flush=True)
+    seconds = time.perf_counter() - start
+
+    def strip(s: set) -> set:
+        return {(a, b, c[2:]) for a, b, c in s}
+
+    results = {
+        name: {
+            "entities": list(ents),
+            "strict_bio": pii_eval.f_beta(gold, p),
+            "entity_type": pii_eval.f_beta(strip(gold), strip(p)),
+            "recall_by_label": pii_eval.per_label_recall(gold, p),
+        }
+        for name, (ents, p) in ((k, (configs[k], pred[k])) for k in configs)
+    }
+    path = write_result(
+        "pii_kaggle",
+        {
+            "stage": "Presidio PII redaction on the Kaggle PII Data Detection essays (F5)",
+            "meta": meta,
+            "dataset": {
+                "name": "Kaggle: The Learning Agency Lab - PII Data Detection, train.json",
+                "sha256": dataset.file_sha256(KAGGLE_PII),
+                "documents": len(docs),
+                "note": "student essays, not code; the redactor runs on PR prose in the app",
+            },
+            "settings": {
+                "score_threshold": pii_mod.SCORE_THRESHOLD,
+                "spacy": pii_mod.SPACY_MODEL,
+                "metric": "micro F-beta, beta=5, (document, token, label)",
+            },  # fmt: skip
+            "configs": results,
+            "timing_s": {"total": round(seconds, 1), "per_essay": round(seconds / len(docs), 3)},
+        },
+    )
+    app = results["app"]["strict_bio"]
+    print(f"app config F5 {app['f5']} (P {app['precision']}, R {app['recall']}); wrote {path}")
+
+
+SECRETS_SAMPLE = 600  # 50 per format
+
+
+def cmd_secrets_eval() -> None:
+    import time
+    from collections import Counter, defaultdict
+
+    from prpilot_core.screening.secrets import scan_diff
+    from prpilot_data import secrets_eval
+    from prpilot_data.redteam_report import rate
+
+    require_clean_tree()
+    meta = run_metadata(["detect-secrets"])
+    rows = load_splits(["repo", "number", "split", "diff"])
+    diffs = [
+        {"key": f"{r['repo']}#{r['number']}", "diff": r["diff"] or ""}
+        for r in rows
+        if r["split"] == "test"
+    ]
+    samples = secrets_eval.build(diffs, SECRETS_SAMPLE, seed=0)
+    start = time.perf_counter()
+    scored = [(s, secrets_eval.score(s, scan_diff(s["diff"]))) for s in samples]
+    synthetic_s = time.perf_counter() - start
+    per_format: dict[str, list[bool]] = defaultdict(list)
+    for s, r in scored:
+        per_format[s["format"]].append(r["hit"])
+    true_f = sum(r["true_findings"] for _, r in scored)
+    false_f = sum(r["false_findings"] for _, r in scored)
+
+    start = time.perf_counter()
+    flagged, types = [], Counter()
+    for d in diffs:
+        found = scan_diff(d["diff"]) if d["diff"] else []
+        flagged.append(bool(found))
+        types.update({f.type for f in found})
+    clean_s = time.perf_counter() - start
+    path = write_result(
+        "secrets_synthetic",
+        {
+            "stage": "Secret scanner on synthetic secrets inserted into test diffs",
+            "meta": meta,
+            "scanner": "detect-secrets (default plugins and filters), per file in the diff",
+            "seed": 0,
+            "inserted": len(samples),
+            "recall": rate([r["hit"] for _, r in scored]),
+            "recall_by_format": {k: rate(v) for k, v in sorted(per_format.items())},
+            "precision_in_seeded_diffs": {
+                "value": round(true_f / max(true_f + false_f, 1), 4),
+                "true_findings": true_f,
+                "other_findings": false_f,
+            },
+            "unmodified_test_diffs": {
+                "flagged": rate(flagged),
+                "finding_types": dict(types.most_common()),
+                "note": "unlabelled: a flagged real diff may hold a real (often test) secret",
+            },
+            "timing_s": {
+                "per_seeded_diff": round(synthetic_s / len(samples), 3),
+                "per_clean_diff": round(clean_s / len(diffs), 3),
+            },
+        },
+    )
+    r = rate([x["hit"] for _, x in scored])
+    print(f"recall {r['value']} on {len(samples)}; clean diffs flagged "
+          f"{rate(flagged)['value']}; wrote {path}")  # fmt: skip
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -1036,6 +1484,15 @@ def main() -> None:
     sd.add_argument("--split", choices=["train", "val"], default="train")
     sd.add_argument("--teacher", required=True, help="reply file prefix, e.g. teacher_train")
     sd.add_argument("--fill", action="store_true", help="sft-v2-fill: top up with teacher picks")
+    rt = sub.add_parser("redteam")
+    # test: built from test PRs with held-out templates, for the one final report.
+    rt.add_argument("--split", choices=["val", "test"], required=True)
+    sub.add_parser("secrets-eval")
+    sub.add_parser("pii-eval")
+    sl = sub.add_parser("screening-latency")
+    sl.add_argument("--n", type=int, default=100)
+    rr_ = sub.add_parser("redteam-report")
+    rr_.add_argument("--split", choices=["val", "test"], required=True)
     ps = sub.add_parser("prompt-sample")
     # test is allowed for the one final run (Gemini on a sample): the sample is drawn from the
     # prompt pack alone, by seed, with no targets or results read.
@@ -1081,6 +1538,16 @@ def main() -> None:
         cmd_rules_baseline(args.split)
     elif args.cmd == "sft-data":
         cmd_sft_data(args.split, args.teacher, args.fill)
+    elif args.cmd == "redteam":
+        cmd_redteam(args.split)
+    elif args.cmd == "redteam-report":
+        cmd_redteam_report(args.split)
+    elif args.cmd == "secrets-eval":
+        cmd_secrets_eval()
+    elif args.cmd == "pii-eval":
+        cmd_pii_eval()
+    elif args.cmd == "screening-latency":
+        cmd_screening_latency(args.n)
     elif args.cmd == "prompt-sample":
         cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":
