@@ -87,6 +87,15 @@ uv run python -m prpilot_data redteam-report --split val|test
     without screening, from the Explorer outputs under data/processed/replies/ (each checked
     against the pack it ran on) → results/redteam_<split>.json; val also has threshold curves.
 
+uv run --group data --group screening python -m prpilot_data secrets-eval
+    Secret scanner on 600 synthetic secrets (12 formats, prpilot_data/secrets_eval.py) inserted
+    into seeded test diffs, plus the flag rate on every unmodified test diff
+    → results/secrets_synthetic.json. ~20 min on the laptop.
+
+uv run --group data --group screening python -m prpilot_data screening-latency [--n 100]
+    The full screen() step on CPU on seeded clean test PRs: per-PR latency (p50/p95) and its
+    split between PromptGuard, Presidio and detect-secrets → results/screening_latency.json.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -1077,6 +1086,152 @@ def cmd_redteam_report(split: str) -> None:
     )
 
 
+def cmd_screening_latency(n: int) -> None:
+    """The full screen() step on CPU (PromptGuard 86M, Presidio, detect-secrets) on n seeded
+    clean test PRs: per-PR latency for sizing the worker (roadmap §7.1, Phase 6)."""
+    import platform
+    import random
+    import statistics
+    import time
+
+    from prpilot_core.agents.triage_format import PRContext
+    from prpilot_core.screening import screen as screen_mod
+    from prpilot_core.screening.pii import PIIRedactor
+    from prpilot_core.screening.prompt_guard import PROMPT_GUARD_86M, PromptGuard
+
+    require_clean_tree()
+    meta = run_metadata(["torch", "transformers", "presidio-analyzer", "detect-secrets"])
+    rows = [r for r in load_splits() if r["split"] == "test"]
+    rows = sorted(rows, key=lambda r: (r["repo"], r["number"]))
+    picked = random.Random(0).sample(rows, n)
+    guard = PromptGuard(PROMPT_GUARD_86M, device="cpu")
+    pii = PIIRedactor()
+
+    class Timed:  # wraps a scanner to time its calls
+        def __init__(self, inner, method):
+            self.inner, self.method, self.seconds = inner, method, 0.0
+
+        def __getattr__(self, name):
+            fn = getattr(self.inner, name)
+
+            def wrapped(*a, **k):
+                start = time.perf_counter()
+                try:
+                    return fn(*a, **k)
+                finally:
+                    self.seconds += time.perf_counter() - start
+
+            return wrapped
+
+    per_pr, parts = [], {"promptguard": [], "presidio": [], "secrets_and_rest": []}
+    screen_mod.screen(PRContext("warm up", "", "", "main", (), ""), guard, pii)
+    for r in picked:
+        pr = PRContext(r["title"], r["body"] or "", r["author"] or "", r["base_branch"],
+                       tuple(r["changed_files"]), r["diff"] or "")  # fmt: skip
+        g, p = Timed(guard, "score"), Timed(pii, "redact")
+        start = time.perf_counter()
+        screen_mod.screen(pr, g, p)
+        total = time.perf_counter() - start
+        per_pr.append(total)
+        parts["promptguard"].append(g.seconds)
+        parts["presidio"].append(p.seconds)
+        parts["secrets_and_rest"].append(total - g.seconds - p.seconds)
+
+    def stats(xs: list[float]) -> dict:
+        xs = sorted(xs)
+        return {"p50": round(statistics.median(xs), 3),
+                "p95": round(xs[int(0.95 * (len(xs) - 1))], 3),
+                "mean": round(statistics.mean(xs), 3), "max": round(xs[-1], 3)}  # fmt: skip
+
+    path = write_result(
+        "screening_latency",
+        {
+            "stage": "Screening step latency on CPU (laptop)",
+            "meta": meta,
+            "prs": n,
+            "seed": 0,
+            "machine": {
+                "processor": platform.processor(),
+                "cpus": os.cpu_count(),
+                "system": platform.platform(),
+            },  # fmt: skip
+            "note": "every PR fully screened (no early exit), so this is the worst case per PR",
+            "seconds_per_pr": stats(per_pr),
+            "seconds_by_part": {k: stats(v) for k, v in parts.items()},
+        },
+    )
+    print(
+        f"screen() p50 {stats(per_pr)['p50']} s, p95 {stats(per_pr)['p95']} s per PR; wrote {path}"
+    )
+
+
+SECRETS_SAMPLE = 600  # 50 per format
+
+
+def cmd_secrets_eval() -> None:
+    import time
+    from collections import Counter, defaultdict
+
+    from prpilot_core.screening.secrets import scan_diff
+    from prpilot_data import secrets_eval
+    from prpilot_data.redteam_report import rate
+
+    require_clean_tree()
+    meta = run_metadata(["detect-secrets"])
+    rows = load_splits(["repo", "number", "split", "diff"])
+    diffs = [
+        {"key": f"{r['repo']}#{r['number']}", "diff": r["diff"] or ""}
+        for r in rows
+        if r["split"] == "test"
+    ]
+    samples = secrets_eval.build(diffs, SECRETS_SAMPLE, seed=0)
+    start = time.perf_counter()
+    scored = [(s, secrets_eval.score(s, scan_diff(s["diff"]))) for s in samples]
+    synthetic_s = time.perf_counter() - start
+    per_format: dict[str, list[bool]] = defaultdict(list)
+    for s, r in scored:
+        per_format[s["format"]].append(r["hit"])
+    true_f = sum(r["true_findings"] for _, r in scored)
+    false_f = sum(r["false_findings"] for _, r in scored)
+
+    start = time.perf_counter()
+    flagged, types = [], Counter()
+    for d in diffs:
+        found = scan_diff(d["diff"]) if d["diff"] else []
+        flagged.append(bool(found))
+        types.update({f.type for f in found})
+    clean_s = time.perf_counter() - start
+    path = write_result(
+        "secrets_synthetic",
+        {
+            "stage": "Secret scanner on synthetic secrets inserted into test diffs",
+            "meta": meta,
+            "scanner": "detect-secrets (default plugins and filters), per file in the diff",
+            "seed": 0,
+            "inserted": len(samples),
+            "recall": rate([r["hit"] for _, r in scored]),
+            "recall_by_format": {k: rate(v) for k, v in sorted(per_format.items())},
+            "precision_in_seeded_diffs": {
+                "value": round(true_f / max(true_f + false_f, 1), 4),
+                "true_findings": true_f,
+                "other_findings": false_f,
+            },
+            "unmodified_test_diffs": {
+                "flagged": rate(flagged),
+                "finding_types": dict(types.most_common()),
+                "note": "unlabelled: a flagged real diff may hold a real (often test) secret",
+            },
+            "timing_s": {
+                "per_seeded_diff": round(synthetic_s / len(samples), 3),
+                "per_clean_diff": round(clean_s / len(diffs), 3),
+            },
+        },
+    )
+    r = rate([x["hit"] for _, x in scored])
+    print(f"recall {r['value']} on {len(samples)}; clean diffs flagged "
+          f"{rate(flagged)['value']}; wrote {path}")  # fmt: skip
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -1254,6 +1409,9 @@ def main() -> None:
     rt = sub.add_parser("redteam")
     # test: built from test PRs with held-out templates, for the one final report.
     rt.add_argument("--split", choices=["val", "test"], required=True)
+    sub.add_parser("secrets-eval")
+    sl = sub.add_parser("screening-latency")
+    sl.add_argument("--n", type=int, default=100)
     rr_ = sub.add_parser("redteam-report")
     rr_.add_argument("--split", choices=["val", "test"], required=True)
     ps = sub.add_parser("prompt-sample")
@@ -1305,6 +1463,10 @@ def main() -> None:
         cmd_redteam(args.split)
     elif args.cmd == "redteam-report":
         cmd_redteam_report(args.split)
+    elif args.cmd == "secrets-eval":
+        cmd_secrets_eval()
+    elif args.cmd == "screening-latency":
+        cmd_screening_latency(args.n)
     elif args.cmd == "prompt-sample":
         cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":

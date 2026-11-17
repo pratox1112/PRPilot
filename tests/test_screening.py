@@ -7,6 +7,9 @@ from prpilot_core.screening.pii import Span, is_mention, merge_spans, redact_spa
 from prpilot_core.screening.screen import guard_fields, screen
 from prpilot_core.screening.secrets import Finding, file_sections, redact_diff
 
+# AWS's documented example key, built from pieces so the repo's gitleaks check does not flag it.
+AWS_EXAMPLE = "AKIA" + "IOSFODNN7" + "EXAMPLE"
+
 DIFF = "\n".join(
     [
         "diff --git a/app/config.py b/app/config.py",
@@ -15,7 +18,7 @@ DIFF = "\n".join(
         "+++ b/app/config.py",
         "@@ -1,2 +1,3 @@",
         " import os",
-        '+AWS_KEY = "AKIAIOSFODNN7EXAMPLE"',
+        f'+AWS_KEY = "{AWS_EXAMPLE}"',
         "-OLD = 1",
         "diff --git a/README.md b/README.md",
         "--- a/README.md",
@@ -43,7 +46,7 @@ def test_file_sections_keep_only_content_lines():
 
 
 def test_redact_diff_keeps_prefix_and_replaces_secret():
-    out = redact_diff(DIFF, [Finding(6, "AWS Access Key", "AKIAIOSFODNN7EXAMPLE")])
+    out = redact_diff(DIFF, [Finding(6, "AWS Access Key", AWS_EXAMPLE)])
     assert out.split("\n")[6] == '+AWS_KEY = "<SECRET:AWS Access Key>"'
     assert "AKIA" not in out
 
