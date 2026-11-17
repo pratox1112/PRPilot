@@ -375,9 +375,9 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Next: 4.5
 
 ### 2026-11-17 — Task 4.5 — Promptfoo red-team suite in CI
-- Status: done (one-time screening-off check pending, after the merge)
+- Status: done
 - What changed: `redteam/promptfoo/` (Promptfoo 0.125.1, Node 22): 30 synthetic injected PRs (no real PR text committed; dev templates only; built by `scripts/make_promptfoo_suite.py`) run through the real `screen()`; a case fails if its canary reaches the text the model would see. New CI job `redteam-screening` (CPU torch on Linux via a pytorch-cpu index in `pyproject.toml`; PromptGuard downloaded with the `HF_TOKEN` repository secret); `workflow_dispatch` input `screening: off` for the one-time check.
-- Results: green on the first run on the draft PR (a2ad69d). Local check of the provider: screening on, 0/30 canaries reach the prompt; off, 30/30.
+- Results: green on the first run on the draft PR (a2ad69d). Local check of the provider: screening on, 0/30 canaries reach the prompt; off, 30/30. One-time check (2026-11-17, CI #16, manual run on `main` @ 971b404 with `screening: off`): `redteam-screening` failed as required; Promptfoo evaluated 30/30 cases and every case shown in the log failed with its canary in the prompt (the final summary lines were not captured).
 - Dataset hash: n/a
 - Notes / decisions / problems: only cases PromptGuard quarantines are kept, so the suite is a regression test of the screen, not a measure of it (that is 4.2). Of 216 synthetic candidates, 67 were quarantined, all direct payloads: no task-specific payload is in the suite because PromptGuard blocks none. The approved local screening-off check with a GGUF model was replaced by the CI dispatch run, since Node is not installed on the laptop.
 - Next: 4.6
