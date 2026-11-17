@@ -32,6 +32,7 @@ from prpilot_core.proposals import build_content, content_hash
 from prpilot_core.schemas import TriageOutput
 from prpilot_core.screening.prompt_guard import DEFAULT_THRESHOLD
 from prpilot_core.screening.screen import Guard, Redactor, screen
+from prpilot_data.candidates import MAX_FILES
 
 DONE = ("quarantined", "proposed")  # a failed run is retried when the event comes again
 
@@ -116,7 +117,9 @@ class Pipeline:
             list(out.reviewers), list(ctx.rules.reviewer_order), cfg.reviewer_rule
         )
         final = out.model_copy(update={"reviewers": reviewers})
-        notes = {**ctx.notes, "reviewer_rule": cfg.reviewer_rule, **meta}
+        # file paths only (no PR text): live outcomes update reviewer memory under them
+        notes = {**ctx.notes, "reviewer_rule": cfg.reviewer_rule, **meta,
+                 "changed_files": list(ctx.pr.changed_files)[:MAX_FILES]}  # fmt: skip
         content = build_content(run.repo, run.pr_number, run.head_sha, final,
                                 draft_comment(final), notes)  # fmt: skip
         session.add(Proposal(run_id=run.id, repo=run.repo, pr_number=run.pr_number,

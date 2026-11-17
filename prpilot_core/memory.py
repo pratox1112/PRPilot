@@ -77,6 +77,16 @@ async def record_review(session, repo: str, files: list[str], logins: list[str],
             await session.execute(stmt)
 
 
+async def record_labels(session, repo: str, labels: list[str]) -> None:
+    """Count labels that were applied (a live outcome) toward the repo's label stats."""
+    for label in labels:
+        stmt = insert(LabelStat).values(repo=repo, label=label, count=1)
+        stmt = stmt.on_conflict_do_update(
+            constraint="uq_label_stat", set_={"count": LabelStat.count + 1}
+        )
+        await session.execute(stmt)
+
+
 async def offered_labels(session, repo: str, repo_labels: list[str]) -> tuple[list[str], str]:
     """(labels to offer, which rule applied)."""
     stats = dict(

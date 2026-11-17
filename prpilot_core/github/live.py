@@ -68,6 +68,43 @@ class AppAuth:
             return self._token
 
 
+async def installation_for(app_id: str, private_key: str, repo: str,
+                           http: httpx.AsyncClient) -> int:  # fmt: skip
+    """The GitHub App's installation id on a repo (the app must be installed there)."""
+    auth = AppAuth(app_id, private_key, 0)
+    r = await http.get(f"{API}/repos/{repo}/installation",
+                       headers={"Authorization": f"Bearer {auth.app_jwt()}",
+                                "Accept": "application/vnd.github+json"})  # fmt: skip
+    r.raise_for_status()
+    return int(r.json()["id"])
+
+
+class AppWriter:
+    """The executor's GitHubWriter: writes as the GitHub App, one installation per repo."""
+
+    def __init__(self, app_id: str, private_key: str, http: httpx.AsyncClient | None = None):
+        self.app_id, self.private_key = app_id, private_key
+        self.http = http or httpx.AsyncClient(timeout=30)
+        self._clients: dict[str, LiveGitHubClient] = {}
+
+    async def _client(self, repo: str) -> "LiveGitHubClient":
+        if repo not in self._clients:
+            inst = await installation_for(self.app_id, self.private_key, repo, self.http)
+            self._clients[repo] = LiveGitHubClient(
+                auth=AppAuth(self.app_id, self.private_key, inst), http=self.http
+            )
+        return self._clients[repo]
+
+    async def add_labels(self, repo: str, pr_number: int, labels: list[str]) -> dict:
+        return await (await self._client(repo)).add_labels(repo, pr_number, labels)
+
+    async def request_reviewers(self, repo: str, pr_number: int, logins: list[str]) -> dict:
+        return await (await self._client(repo)).request_reviewers(repo, pr_number, logins)
+
+    async def post_comment(self, repo: str, pr_number: int, body: str) -> dict:
+        return await (await self._client(repo)).post_comment(repo, pr_number, body)
+
+
 class LiveGitHubClient:
     def __init__(
         self,

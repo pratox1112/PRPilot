@@ -79,4 +79,5 @@ known-first-party = ["prpilot_core", "prpilot_data", "prpilot_eval"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # so tests can import services/ (deployable entry points, not packaged)
 addopts = "-ra"
