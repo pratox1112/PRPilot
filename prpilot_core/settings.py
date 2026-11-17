@@ -39,7 +39,7 @@ class Settings:
             # Writes are off unless explicitly turned on.
             dry_run=_flag("EXECUTOR_DRY_RUN", True),
             app_id=os.environ.get("GITHUB_APP_ID", ""),
-            app_private_key=Path(key_path).read_text() if key_path else "",
+            app_private_key=Path(key_path).expanduser().read_text() if key_path else "",
             model_base_url=os.environ.get("MODEL_BASE_URL", "http://127.0.0.1:8080/v1"),
             model_name=os.environ.get("MODEL_NAME", "prpilot-model"),
             hf_token=os.environ.get("HF_TOKEN") or None,
