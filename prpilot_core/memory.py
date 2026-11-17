@@ -42,7 +42,9 @@ def rank_reviewers(files: list[str], author: str, history: dict[str, Counter]) -
 
 
 REVIEWER_RULES = ("model", "model_then_memory", "memory_then_model", "memory")
-DEFAULT_REVIEWER_RULE = "model"  # until the memory ablation (chosen on validation) says otherwise
+# Chosen on validation by the memory ablation (results/memory_ablation.json): reviewer@3
+# 0.577 vs 0.552 for the student's picks alone (test, looked at once: 0.612 vs 0.572).
+DEFAULT_REVIEWER_RULE = "memory_then_model"
 
 
 def combine_reviewers(

@@ -1,0 +1,182 @@
+{
+  "stage": "Reviewer memory ablation: reviewer recall@3 with and without memory",
+  "meta": {
+    "timestamp_utc": "2026-11-17T20:02:49+00:00",
+    "git": {
+      "commit": "6c88ef16d9a791187516390058951c07ddfadf24",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {}
+  },
+  "method": "the student's system-pass replies (fill 1016) after the pipeline's validation fallback; only `reviewers` changes per rule; scored by the eval harness",
+  "rules": {
+    "model": "the student's picks only (no memory)",
+    "model_then_memory": "the student's picks, then the memory ranking, top 3",
+    "memory_then_model": "the memory ranking first, then the student's picks",
+    "memory": "the memory ranking only (the rules baseline's reviewers)"
+  },
+  "chosen_on_val": "memory_then_model",
+  "tie_break": "REVIEWER_RULES order (model first)",
+  "val": {
+    "replies": {
+      "file": "student-fill-system_val_11898279.jsonl",
+      "sha256": "sha256:41c70e71276500ef8822dfe90be87f82f35f7790bcb7bf02febd8b0984eeaefa"
+    },
+    "by_rule": {
+      "model": {
+        "reviewer_recall_at_3": {
+          "value": 0.5516,
+          "n": 3113,
+          "ci95": [
+            0.5346,
+            0.5693
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.5378,
+          "n": 3016,
+          "ci95": [
+            0.5209,
+            0.5551
+          ]
+        }
+      },
+      "model_then_memory": {
+        "reviewer_recall_at_3": {
+          "value": 0.5516,
+          "n": 3113,
+          "ci95": [
+            0.5346,
+            0.5693
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.5378,
+          "n": 3016,
+          "ci95": [
+            0.5209,
+            0.5551
+          ]
+        }
+      },
+      "memory_then_model": {
+        "reviewer_recall_at_3": {
+          "value": 0.5766,
+          "n": 3113,
+          "ci95": [
+            0.5601,
+            0.595
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.5656,
+          "n": 3016,
+          "ci95": [
+            0.5484,
+            0.5834
+          ]
+        }
+      },
+      "memory": {
+        "reviewer_recall_at_3": {
+          "value": 0.5766,
+          "n": 3113,
+          "ci95": [
+            0.5601,
+            0.595
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.5656,
+          "n": 3016,
+          "ci95": [
+            0.5484,
+            0.5834
+          ]
+        }
+      }
+    }
+  },
+  "test": {
+    "replies": {
+      "file": "student-system_test_11910981.jsonl",
+      "sha256": "sha256:184456dd2f30e217a26153177e70377f1a867331167de35b53b46c8015c2681f"
+    },
+    "by_rule": {
+      "model": {
+        "reviewer_recall_at_3": {
+          "value": 0.572,
+          "n": 7250,
+          "ci95": [
+            0.5614,
+            0.5827
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.5646,
+          "n": 7101,
+          "ci95": [
+            0.5538,
+            0.5758
+          ]
+        }
+      },
+      "model_then_memory": {
+        "reviewer_recall_at_3": {
+          "value": 0.572,
+          "n": 7250,
+          "ci95": [
+            0.5614,
+            0.5827
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.5646,
+          "n": 7101,
+          "ci95": [
+            0.5538,
+            0.5758
+          ]
+        }
+      },
+      "memory_then_model": {
+        "reviewer_recall_at_3": {
+          "value": 0.6119,
+          "n": 7250,
+          "ci95": [
+            0.6007,
+            0.622
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.6054,
+          "n": 7101,
+          "ci95": [
+            0.595,
+            0.6158
+          ]
+        }
+      },
+      "memory": {
+        "reviewer_recall_at_3": {
+          "value": 0.6119,
+          "n": 7250,
+          "ci95": [
+            0.6007,
+            0.622
+          ]
+        },
+        "reviewer_recall_at_3_reviewed_only": {
+          "value": 0.6054,
+          "n": 7101,
+          "ci95": [
+            0.595,
+            0.6158
+          ]
+        }
+      }
+    }
+  }
+}
