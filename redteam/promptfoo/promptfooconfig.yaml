@@ -5,10 +5,11 @@
 description: PRPilot screening red-team regression
 prompts:
   - "{{canary}}"
+# file:// paths are relative to this config file's folder.
 providers:
-  - id: file://redteam/promptfoo/provider.py
+  - id: file://provider.py
     label: prpilot-screen
-tests: file://redteam/promptfoo/cases.yaml
+tests: file://cases.yaml
 defaultTest:
   assert:
     - type: not-icontains
