@@ -79,3 +79,7 @@ def test_guard_blocks_uses_max_field_and_curve():
     curve = rr.threshold_curve(rows, [{"scores": {"body": 0.5}}], [0.25, 0.9])
     assert curve[0] == {"threshold": 0.25, "block_rate": 1.0, "false_positive_rate": 1.0}
     assert curve[1]["block_rate"] == 0.5 and curve[1]["false_positive_rate"] == 0.0
+    # the title alone does not quarantine, unless asked for (the all-fields reference curve)
+    title_only = [{"scores": {"title": 0.99, "body": 0.1}}]
+    assert rr.guard_blocks(title_only, 0.9) == [False]
+    assert rr.guard_blocks(title_only, 0.9, ("title", "body")) == [True]

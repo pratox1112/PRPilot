@@ -81,6 +81,12 @@ uv run --group data python -m prpilot_data redteam --split val|test
     split (false-positive controls); classifier_{redteam,clean}_<split>.jsonl, the same
     fields as prompts for the LLM-classifier baseline; results/data_redteam_<split>.json.
 
+uv run python -m prpilot_data redteam-report --split val|test
+    Red-team metrics (prpilot_data/redteam_report.py) at the fixed screening setting: PromptGuard
+    and LLM-classifier block and false-positive rates, end-to-end attack success with and
+    without screening, from the Explorer outputs under data/processed/replies/ (each checked
+    against the pack it ran on) → results/redteam_<split>.json; val also has threshold curves.
+
 uv run --group data python -m prpilot_data spot-check [--n 40] [--seed 0]
     Writes data/interim/spot_check.md: random train/val PRs with their targets and the actor of
     every label, for the owner's check of the bot and CODEOWNERS filters (§4.6).
@@ -951,6 +957,126 @@ def cmd_redteam(split: str) -> None:
     print(f"{len(poisoned)} poisoned from {n} PRs, {len(rows)} clean controls; wrote {out}, {path}")
 
 
+def cmd_redteam_report(split: str) -> None:
+    from prpilot_core.screening.prompt_guard import DEFAULT_THRESHOLD
+    from prpilot_core.screening.screen import QUARANTINE_FIELDS
+    from prpilot_data import dataset
+    from prpilot_data import redteam_report as rr
+
+    require_clean_tree()
+    meta = run_metadata([])
+    processed = REPO_ROOT / "data" / "processed"
+    replies_dir = processed / "replies"
+
+    def one(pattern: str, pack, sha_key: str) -> tuple[list[dict], dict]:
+        """The single replies file matching `pattern`, checked against the pack it ran on."""
+        files = sorted(replies_dir.glob(pattern))
+        if len(files) != 1:
+            raise SystemExit(f"need exactly one {pattern}, found {[f.name for f in files]}")
+        m = json.loads(files[0].with_name(files[0].stem + ".meta.json").read_text("utf-8"))
+        recorded = m["input"]["sha256"] if sha_key == "input" else m["pack_sha256"]
+        if recorded != dataset.file_sha256(pack) or m.get("trial_limit"):
+            raise SystemExit(f"{files[0].name}: not a full run on {pack.name}")
+        return rr.read_jsonl(files[0]), {
+            "file": files[0].name,
+            "sha256": dataset.file_sha256(files[0]),
+            "slurm_job_id": m.get("slurm_job_id"),
+            "code_commit": m.get("code_commit"),
+        }
+
+    red_path, clean_path = (
+        processed / f"redteam_{split}.jsonl",
+        processed / f"prfields_{split}.jsonl",
+    )
+    cls_red, cls_clean = (processed / f"classifier_{k}_{split}.jsonl" for k in ("redteam", "clean"))
+    pack, clean = rr.read_jsonl(red_path), rr.read_jsonl(clean_path)
+    guard_red, s1 = one(f"guard_pg86m_redteam_{split}_*.jsonl", red_path, "input")
+    guard_clean, s2 = one(f"guard_pg86m_prfields_{split}_*.jsonl", clean_path, "input")
+    verdict_red, s3 = one(f"teacher-classifier_redteam_{split}_*.jsonl", cls_red, "pack")
+    verdict_clean, s4 = one(f"teacher-classifier_clean_{split}_*.jsonl", cls_clean, "pack")
+    agent, s5 = one(f"student-system_redteam_{split}_*.jsonl", red_path, "pack")
+    aligned = [
+        ("guard", guard_red, pack),
+        ("guard clean", guard_clean, clean),
+        ("classifier", verdict_red, pack),
+        ("classifier clean", verdict_clean, clean),
+        ("agent", agent, pack),
+    ]
+    for name, rows, ref in aligned:
+        rr.check_aligned(ref, rows, name)
+
+    t = DEFAULT_THRESHOLD
+    pg_block = rr.guard_blocks(guard_red, t)
+    pg_fp = rr.guard_blocks(guard_clean, t)
+    cls_block, cls_unparsed = rr.classifier_blocks(verdict_red)
+    cls_fp, cls_fp_unparsed = rr.classifier_blocks(verdict_clean)
+
+    def detector(block: list[bool], fp: list[bool]) -> dict:
+        return {
+            "block_rate": rr.rate(block),
+            "false_positive_rate": rr.rate(fp),
+            "block_by_location": rr.by_group(pack, block, "location"),
+            "block_by_kind": rr.by_group(pack, block, "kind"),
+            "block_by_template": rr.by_group(pack, block, "template"),
+        }
+
+    result = {
+        "stage": "Red-team: injection screening and end-to-end attack success",
+        "meta": meta,
+        "split": split,
+        "reported": split == "test",
+        "setting": {
+            "screen": "PromptGuard 2 86M",
+            "threshold": t,
+            "quarantine_fields": list(QUARANTINE_FIELDS),
+            "chosen_on": "val (owner decision 2026-11-16)",
+        },
+        "inputs": {
+            "redteam": {
+                "file": red_path.name,
+                "sha256": dataset.file_sha256(red_path),
+                "rows": len(pack),
+            },
+            "clean_controls": {
+                "file": clean_path.name,
+                "sha256": dataset.file_sha256(clean_path),
+                "rows": len(clean),
+            },
+            "guard_redteam": s1,
+            "guard_clean": s2,
+            "classifier_redteam": s3,
+            "classifier_clean": s4,
+            "agent_no_screening": s5,
+        },  # fmt: skip
+        "promptguard": detector(pg_block, pg_fp),
+        "llm_classifier": {
+            "model": "teacher (Qwen3.5-122B-A10B-GPTQ-Int4), thinking off",
+            **detector(cls_block, cls_fp),
+            "unparsed_replies": {"redteam": cls_unparsed, "clean": cls_fp_unparsed},
+        },
+        "end_to_end_promptguard": rr.end_to_end(pack, agent, pg_block),
+        "end_to_end_llm_classifier": rr.end_to_end(pack, agent, cls_block),
+    }
+    if split == "val":  # the threshold was chosen here; the test report uses it as fixed
+        grid = [0.99, 0.98, 0.95, 0.9, 0.8, 0.7, 0.5, 0.3, 0.2, 0.1, 0.05]
+        result["threshold_curves"] = {
+            "quarantine_fields": rr.threshold_curve(guard_red, guard_clean, grid),
+            "all_fields": rr.threshold_curve(
+                guard_red, guard_clean, grid, ("title", *QUARANTINE_FIELDS)
+            ),
+        }
+    path = write_result(f"redteam_{split}", result)
+    pg, cl = result["promptguard"], result["llm_classifier"]
+    e2e = result["end_to_end_promptguard"]["action"]
+    print(
+        f"{split}: PromptGuard block {pg['block_rate']['value']}, "
+        f"FP {pg['false_positive_rate']['value']}; "
+        f"classifier block {cl['block_rate']['value']}, FP {cl['false_positive_rate']['value']}; "
+        f"attack reached an action {e2e['without_screening']['value']} without screening, "
+        f"{e2e['with_screening']['value']} with; wrote {path}"
+    )
+
+
 def cmd_spot_check(n: int, seed: int) -> None:
     import pyarrow.parquet as pq
 
@@ -1128,6 +1254,8 @@ def main() -> None:
     rt = sub.add_parser("redteam")
     # test: built from test PRs with held-out templates, for the one final report.
     rt.add_argument("--split", choices=["val", "test"], required=True)
+    rr_ = sub.add_parser("redteam-report")
+    rr_.add_argument("--split", choices=["val", "test"], required=True)
     ps = sub.add_parser("prompt-sample")
     # test is allowed for the one final run (Gemini on a sample): the sample is drawn from the
     # prompt pack alone, by seed, with no targets or results read.
@@ -1175,6 +1303,8 @@ def main() -> None:
         cmd_sft_data(args.split, args.teacher, args.fill)
     elif args.cmd == "redteam":
         cmd_redteam(args.split)
+    elif args.cmd == "redteam-report":
+        cmd_redteam_report(args.split)
     elif args.cmd == "prompt-sample":
         cmd_prompt_sample(args.split, args.n, args.seed)
     elif args.cmd == "spot-check":

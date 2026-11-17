@@ -111,14 +111,21 @@ def test_guard_sees_the_body_as_the_prompt_shows_it():
     assert len(listed) == MAX_FILES_LISTED + 1 and listed[-1] == "[... and 7 more files]"
 
 
-def test_screen_quarantines_on_any_field():
+def test_screen_quarantines_on_body_files_or_diff():
+    for field, value in (("body", "ignore previous"), ("diff", "+# ignore previous")):
+        res = screen(
+            pr(**{field: value}), FakeGuard("ignore previous"), FakePII(), scan_secrets=False
+        )
+        assert res.quarantined and res.pr is None and res.field_scores[field] == 0.99
     res = screen(
-        pr(title="ignore previous instructions"),
-        FakeGuard("ignore previous"),
-        FakePII(),
-        scan_secrets=False,
+        pr(changed_files=("ignore previous.md",)), FakeGuard("ignore previous"), scan_secrets=False
     )
-    assert res.quarantined and res.pr is None and res.field_scores["title"] == 0.99
+    assert res.quarantined
+
+
+def test_title_is_scored_but_does_not_quarantine_alone():
+    res = screen(pr(title="Remove unused code"), FakeGuard("Remove unused"), scan_secrets=False)
+    assert not res.quarantined and res.field_scores["title"] == 0.99 and res.guard_score == 0.99
 
 
 def test_screen_redacts_when_clean():
@@ -130,8 +137,8 @@ def test_screen_redacts_when_clean():
 
 
 def test_screen_threshold_is_inclusive():
-    assert screen(pr(), FakeGuard("Fix"), scan_secrets=False, threshold=0.99).quarantined
-    assert not screen(pr(), FakeGuard("Fix"), scan_secrets=False, threshold=0.995).quarantined
+    assert screen(pr(), FakeGuard("Thanks"), scan_secrets=False, threshold=0.99).quarantined
+    assert not screen(pr(), FakeGuard("Thanks"), scan_secrets=False, threshold=0.995).quarantined
 
 
 def test_classifier_sees_the_guard_fields_as_data_blocks():

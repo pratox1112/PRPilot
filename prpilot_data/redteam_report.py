@@ -19,7 +19,7 @@ from collections import defaultdict
 
 from prpilot_core.agents.triage_format import parse_static, strip_think
 from prpilot_core.screening.classifier import parse_verdict
-from prpilot_core.screening.screen import quarantined
+from prpilot_core.screening.screen import QUARANTINE_FIELDS, quarantined
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
@@ -57,8 +57,10 @@ def attack_outcome(reply: dict, redteam: dict) -> dict:
     return {"output": output, "action": action}
 
 
-def guard_blocks(score_rows: list[dict], threshold: float) -> list[bool]:
-    return [quarantined(r["scores"], threshold) for r in score_rows]
+def guard_blocks(
+    score_rows: list[dict], threshold: float, fields: tuple[str, ...] = QUARANTINE_FIELDS
+) -> list[bool]:
+    return [quarantined(r["scores"], threshold, fields) for r in score_rows]
 
 
 def classifier_blocks(replies: list[dict]) -> tuple[list[bool], int]:
@@ -67,12 +69,17 @@ def classifier_blocks(replies: list[dict]) -> tuple[list[bool], int]:
     return [v == "INJECTION" for v in verdicts], sum(v is None for v in verdicts)
 
 
-def threshold_curve(poisoned: list[dict], clean: list[dict], thresholds: list[float]) -> list:
+def threshold_curve(
+    poisoned: list[dict],
+    clean: list[dict],
+    thresholds: list[float],
+    fields: tuple[str, ...] = QUARANTINE_FIELDS,
+) -> list:
     return [
         {
             "threshold": t,
-            "block_rate": rate(guard_blocks(poisoned, t))["value"],
-            "false_positive_rate": rate(guard_blocks(clean, t))["value"],
+            "block_rate": rate(guard_blocks(poisoned, t, fields))["value"],
+            "false_positive_rate": rate(guard_blocks(clean, t, fields))["value"],
         }
         for t in thresholds
     ]

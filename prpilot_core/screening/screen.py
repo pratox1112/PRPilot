@@ -1,8 +1,11 @@
 """The `screen` step: runs on every PR before any model sees it (roadmap §7.1).
 
 1. PromptGuard 2 scores each model-visible field (title, body as the prompt shows it,
-   changed file names, diff) by its most suspicious window. If any field reaches the
-   threshold, the PR is quarantined: no model call, no proposals.
+   changed file names, diff) by its most suspicious window. If the body, file list or diff
+   reaches the threshold, the PR is quarantined: no model call, no proposals. The title is
+   scored and recorded but does not quarantine on its own: PromptGuard reads short
+   imperative titles ("Remove unused code") as instructions, which on validation was 74 of
+   its 77 false positives at 0.9 (owner decision 2026-11-16, chosen on validation only).
 2. Otherwise PII is redacted from the prose fields (Presidio) and secrets from the diff
    (detect-secrets), and the redacted PR goes on to the agent.
 
@@ -48,8 +51,15 @@ class ScreenResult:
     secrets: tuple[Finding, ...]
 
 
-def quarantined(field_scores: dict[str, float], threshold: float = DEFAULT_THRESHOLD) -> bool:
-    return max(field_scores.values(), default=0.0) >= threshold
+QUARANTINE_FIELDS = ("body", "changed_files", "diff")
+
+
+def quarantined(
+    field_scores: dict[str, float],
+    threshold: float = DEFAULT_THRESHOLD,
+    fields: tuple[str, ...] = QUARANTINE_FIELDS,
+) -> bool:
+    return max((field_scores.get(f, 0.0) for f in fields), default=0.0) >= threshold
 
 
 def screen(
