@@ -50,13 +50,18 @@ class PIIRedactor:
         self.threshold = threshold
 
     def find(self, text: str) -> list[Span]:
+        return merge_spans(self.find_all(text))
+
+    def find_all(self, text: str) -> list[Span]:
+        """Every span above the threshold, mentions excluded, before overlap merging (for
+        scoring several entity subsets from one analysis)."""
         if not text.strip():
             return []
         results = self.analyzer.analyze(
             text=text, language="en", entities=self.entities, score_threshold=self.threshold
         )
-        spans = (Span(r.start, r.end, r.entity_type, r.score) for r in results)
-        return merge_spans(s for s in spans if not is_mention(text, s))
+        spans = [Span(r.start, r.end, r.entity_type, r.score) for r in results]
+        return [s for s in spans if not is_mention(text, s)]
 
     def redact(self, text: str) -> tuple[str, list[Span]]:
         spans = self.find(text)

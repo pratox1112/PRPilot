@@ -51,6 +51,14 @@ module-root = ""
 
 [tool.uv.sources]
 en-core-web-lg = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" }
+# Linux (CI) gets the CPU-only build of the same torch version: screening never uses a GPU
+# there, and the default Linux wheel pulls ~3 GB of CUDA libraries. Windows wheels are CPU-only.
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.ruff]
 line-length = 100

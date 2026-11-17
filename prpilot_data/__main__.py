@@ -92,6 +92,11 @@ uv run --group data --group screening python -m prpilot_data secrets-eval
     into seeded test diffs, plus the flag rate on every unmodified test diff
     → results/secrets_synthetic.json. ~20 min on the laptop.
 
+uv run --group data --group screening python -m prpilot_data pii-eval
+    Presidio (the app's PII settings, plus a reference with URL and LOCATION) on the Kaggle
+    PII Data Detection essays in data/raw/kaggle_pii/train.json (owner-downloaded, never
+    committed), scored with the competition's F5 → results/pii_kaggle.json.
+
 uv run --group data --group screening python -m prpilot_data screening-latency [--n 100]
     The full screen() step on CPU on seeded clean test PRs: per-PR latency (p50/p95) and its
     split between PromptGuard, Presidio and detect-secrets → results/screening_latency.json.
@@ -1165,6 +1170,79 @@ def cmd_screening_latency(n: int) -> None:
     )
 
 
+KAGGLE_PII = REPO_ROOT / "data" / "raw" / "kaggle_pii" / "train.json"
+
+
+def cmd_pii_eval() -> None:
+    import time
+
+    from prpilot_core.screening import pii as pii_mod
+    from prpilot_data import dataset, pii_eval
+
+    require_clean_tree()
+    meta = run_metadata(["presidio-analyzer", "presidio-anonymizer", "spacy", "en-core-web-lg"])
+    if not KAGGLE_PII.exists():
+        raise SystemExit(f"missing {KAGGLE_PII}; download the competition data first")
+    docs = json.loads(KAGGLE_PII.read_text(encoding="utf-8"))
+    configs = {
+        "app": pii_mod.ENTITIES,
+        "reference_with_url_location": (*pii_mod.ENTITIES, *pii_eval.REFERENCE_EXTRA),
+    }
+    union = sorted({e for ents in configs.values() for e in ents})
+    redactor = pii_mod.PIIRedactor(entities=tuple(union))
+    gold: set = set()
+    pred = {k: set() for k in configs}
+    start = time.perf_counter()
+    for n, d in enumerate(docs, 1):
+        offsets = pii_eval.token_offsets(d["tokens"], d["trailing_whitespace"])
+        gold |= pii_eval.triples(d["document"], d["labels"])
+        found = [s for s in redactor.find_all(d["full_text"])]
+        for name, ents in configs.items():
+            kept = pii_mod.merge_spans(s for s in found if s.entity in ents)
+            spans = [(s.start, s.end, pii_eval.KAGGLE[s.entity]) for s in kept
+                     if s.entity in pii_eval.KAGGLE]  # fmt: skip
+            labels = pii_eval.spans_to_bio(offsets, d["tokens"], spans)
+            pred[name] |= pii_eval.triples(d["document"], labels)
+        if n % 500 == 0:
+            print(f"{n}/{len(docs)} essays", flush=True)
+    seconds = time.perf_counter() - start
+
+    def strip(s: set) -> set:
+        return {(a, b, c[2:]) for a, b, c in s}
+
+    results = {
+        name: {
+            "entities": list(ents),
+            "strict_bio": pii_eval.f_beta(gold, p),
+            "entity_type": pii_eval.f_beta(strip(gold), strip(p)),
+            "recall_by_label": pii_eval.per_label_recall(gold, p),
+        }
+        for name, (ents, p) in ((k, (configs[k], pred[k])) for k in configs)
+    }
+    path = write_result(
+        "pii_kaggle",
+        {
+            "stage": "Presidio PII redaction on the Kaggle PII Data Detection essays (F5)",
+            "meta": meta,
+            "dataset": {
+                "name": "Kaggle: The Learning Agency Lab - PII Data Detection, train.json",
+                "sha256": dataset.file_sha256(KAGGLE_PII),
+                "documents": len(docs),
+                "note": "student essays, not code; the redactor runs on PR prose in the app",
+            },
+            "settings": {
+                "score_threshold": pii_mod.SCORE_THRESHOLD,
+                "spacy": pii_mod.SPACY_MODEL,
+                "metric": "micro F-beta, beta=5, (document, token, label)",
+            },  # fmt: skip
+            "configs": results,
+            "timing_s": {"total": round(seconds, 1), "per_essay": round(seconds / len(docs), 3)},
+        },
+    )
+    app = results["app"]["strict_bio"]
+    print(f"app config F5 {app['f5']} (P {app['precision']}, R {app['recall']}); wrote {path}")
+
+
 SECRETS_SAMPLE = 600  # 50 per format
 
 
@@ -1410,6 +1488,7 @@ def main() -> None:
     # test: built from test PRs with held-out templates, for the one final report.
     rt.add_argument("--split", choices=["val", "test"], required=True)
     sub.add_parser("secrets-eval")
+    sub.add_parser("pii-eval")
     sl = sub.add_parser("screening-latency")
     sl.add_argument("--n", type=int, default=100)
     rr_ = sub.add_parser("redteam-report")
@@ -1465,6 +1544,8 @@ def main() -> None:
         cmd_redteam_report(args.split)
     elif args.cmd == "secrets-eval":
         cmd_secrets_eval()
+    elif args.cmd == "pii-eval":
+        cmd_pii_eval()
     elif args.cmd == "screening-latency":
         cmd_screening_latency(args.n)
     elif args.cmd == "prompt-sample":
