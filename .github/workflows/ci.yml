@@ -23,6 +23,21 @@ concurrency:
 jobs:
   lint-and-test:
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        # postgres:17.10-bookworm, the same digest as docker-compose.yml
+        image: postgres@sha256:9b18b78397054fce88a9552e9d5a3ad5bb7fd258c5b3cc1c5028e46373d6ea8f
+        env:
+          POSTGRES_USER: prpilot
+          POSTGRES_PASSWORD: prpilot
+          POSTGRES_DB: prpilot_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U prpilot" --health-interval 2s --health-retries 30
+    env:
+      # CI-only throwaway database in the service container above.
+      PRPILOT_TEST_DATABASE_URL: postgresql+asyncpg://prpilot:prpilot@localhost:5433/prpilot_test
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +54,14 @@ jobs:
 
       - name: Format check
         run: uv run ruff format --check .
+
+      - name: Migrations match the models
+        env:
+          DATABASE_URL: ${{ env.PRPILOT_TEST_DATABASE_URL }}
+        run: |
+          uv run alembic upgrade head
+          uv run alembic check
+          uv run alembic downgrade base
 
       - name: Unit tests
         run: uv run pytest
