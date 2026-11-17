@@ -1,0 +1,151 @@
+{
+  "stage": "Presidio PII redaction on the Kaggle PII Data Detection essays (F5)",
+  "meta": {
+    "timestamp_utc": "2026-11-17T17:43:09+00:00",
+    "git": {
+      "commit": "110ec4ee62fd07f49d2852795f18976766e4b124",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "presidio-analyzer": "2.2.362",
+      "presidio-anonymizer": "2.2.365",
+      "spacy": "3.8.16",
+      "en-core-web-lg": "3.8.0"
+    }
+  },
+  "dataset": {
+    "name": "Kaggle: The Learning Agency Lab - PII Data Detection, train.json",
+    "sha256": "sha256:8276cd44f3b2eb357dfb405b3c5d8e9f821388e984cbf66e92e7df03f1b13117",
+    "documents": 6807,
+    "note": "student essays, not code; the redactor runs on PR prose in the app"
+  },
+  "settings": {
+    "score_threshold": 0.5,
+    "spacy": "en_core_web_lg",
+    "metric": "micro F-beta, beta=5, (document, token, label)"
+  },
+  "configs": {
+    "app": {
+      "entities": [
+        "PERSON",
+        "EMAIL_ADDRESS",
+        "PHONE_NUMBER",
+        "IP_ADDRESS",
+        "CREDIT_CARD",
+        "IBAN_CODE",
+        "US_SSN"
+      ],
+      "strict_bio": {
+        "f5": 0.6851,
+        "precision": 0.2316,
+        "recall": 0.7433,
+        "tp": 2036,
+        "gold": 2739,
+        "predicted": 8792
+      },
+      "entity_type": {
+        "f5": 0.6912,
+        "precision": 0.2336,
+        "recall": 0.7499,
+        "tp": 2054,
+        "gold": 2739,
+        "predicted": 8792
+      },
+      "recall_by_label": {
+        "EMAIL": {
+          "recall": 1.0,
+          "gold": 39
+        },
+        "ID_NUM": {
+          "recall": 0.0,
+          "gold": 79
+        },
+        "NAME_STUDENT": {
+          "recall": 0.8066,
+          "gold": 2461
+        },
+        "PHONE_NUM": {
+          "recall": 0.5714,
+          "gold": 21
+        },
+        "STREET_ADDRESS": {
+          "recall": 0.0,
+          "gold": 22
+        },
+        "URL_PERSONAL": {
+          "recall": 0.0,
+          "gold": 111
+        },
+        "USERNAME": {
+          "recall": 0.0,
+          "gold": 6
+        }
+      }
+    },
+    "reference_with_url_location": {
+      "entities": [
+        "PERSON",
+        "EMAIL_ADDRESS",
+        "PHONE_NUMBER",
+        "IP_ADDRESS",
+        "CREDIT_CARD",
+        "IBAN_CODE",
+        "US_SSN",
+        "URL",
+        "LOCATION"
+      ],
+      "strict_bio": {
+        "f5": 0.6562,
+        "precision": 0.1301,
+        "recall": 0.7828,
+        "tp": 2144,
+        "gold": 2739,
+        "predicted": 16480
+      },
+      "entity_type": {
+        "f5": 0.6623,
+        "precision": 0.1313,
+        "recall": 0.7901,
+        "tp": 2164,
+        "gold": 2739,
+        "predicted": 16480
+      },
+      "recall_by_label": {
+        "EMAIL": {
+          "recall": 1.0,
+          "gold": 39
+        },
+        "ID_NUM": {
+          "recall": 0.0,
+          "gold": 79
+        },
+        "NAME_STUDENT": {
+          "recall": 0.8058,
+          "gold": 2461
+        },
+        "PHONE_NUM": {
+          "recall": 0.5714,
+          "gold": 21
+        },
+        "STREET_ADDRESS": {
+          "recall": 0.0,
+          "gold": 22
+        },
+        "URL_PERSONAL": {
+          "recall": 0.991,
+          "gold": 111
+        },
+        "USERNAME": {
+          "recall": 0.0,
+          "gold": 6
+        }
+      }
+    }
+  },
+  "timing_s": {
+    "total": 713.1,
+    "per_essay": 0.105
+  }
+}

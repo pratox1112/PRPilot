@@ -15,9 +15,9 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 | Frontier comparison model | Gemini 3.8 Flash on Vertex AI (500-PR val sample; $0.0039 per PR raw, $0.0047 with retries) | results/baselines_val.json | 1b732c8 |
 | Cost ratio [X]x vs frontier | [TBD] | | |
 | Shadow replay: [N] PRs, end-to-end maintainer match [X]% | [TBD] | | |
-| Injection block rate [X]% of [N] | [TBD] | | |
-| False positives [X]% | [TBD] | | |
-| PII F5 | [TBD] | | |
+| Injection block rate [X]% of [N] | PromptGuard 2 blocked 11.1% of 2,000 injected test PRs; end to end, 0.40% of them reached a proposed action (no label or reviewer canary did) | results/redteam_test.json | 6f7ab0d |
+| False positives [X]% | 0.25% of 9,573 clean test PRs quarantined | results/redteam_test.json | 6f7ab0d |
+| PII F5 | 0.685 on 6,807 Kaggle essays (recall 0.743) | results/pii_kaggle.json | 110ec4e |
 | Burst size [N], p95 [X]s, duplicates | [TBD] | | |
 
 ## Feasibility go/no-go
@@ -335,3 +335,57 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Dataset hash: test pack as in 3.6
 - Notes / decisions / problems: the loss is almost all numpy (held out): maintainer match 42.2% (bf16 55.0%), valid JSON 75.0% (bf16 97.2%). Quantized, the model often writes numpy's numbered labels as bare numbers (`"labels": [04, 56]`), which is not valid JSON. On the three training repos it is close to bf16 (cilium 73.3% vs 73.7%, kubernetes 69.4% vs 68.3%, pandas 84.5% vs 86.2%). Not tried: Q8_0 (about 1.8 GB, slower on CPU), constrained decoding in production (must be reported separately from the model's validity). The GGUF numbers were measured on an H200 with llama.cpp's CUDA backend; the CPU backend used in deployment is checked in the Phase 6 shadow replay. Export failures on the way (missing `sentencepiece`, CUDA build of `llama-quantize` on a CPU node, OpenSSL version differing between nodes) fixed in 125c1d9 and a80e3b2.
 - Next: Resume Numbers (owner approval), PR to `main`
+
+## Phase 4 — Untrusted input: injection, PII, secrets
+
+### 2026-11-16 — Task 4.1 — Screening step
+- Status: done
+- What changed: `prpilot_core/screening/screen.py`: `screen(pr, guard, pii, scan_secrets, threshold)` runs before any model call. PromptGuard 2 86M scores each model-visible field (title, body and file list capped as the triage prompt caps them, diff; max over overlapping 512-token windows). A PR is quarantined (no model call, no proposals) when the body, file list or diff reaches 0.9; otherwise Presidio redacts PII in the title and body (`pii.py`) and detect-secrets 1.5.0 redacts secrets in the diff (`secrets.py`, each file scanned under its own name so detect-secrets' file filters apply). PromptGuard can load from a local copy of the pinned snapshot and run on a GPU.
+- Results: n/a (measured in 4.2–4.5)
+- Dataset hash: n/a
+- Notes / decisions / problems: **Owner decisions (2026-11-16):** the title is scored and recorded but does not quarantine on its own, threshold 0.9, both chosen on validation only (4.2). Presidio runs on prose only (task 0.7) with entities and threshold 0.5 fixed in code before evaluation; URLs and GitHub @handles are kept (public, and reviewer and issue signals). detect-secrets' ad hoc line scan reports every word as "high entropy", so the normal file scan is used. A first version scored the full changed-file list; cilium vendoring PRs (95k–157k characters of file names) then overflowed the teacher classifier's 32,768 tokens, and the screened text no longer matched the prompt; fixed in 9e9e88d by capping it like the prompt.
+- Next: 4.2
+
+### 2026-11-16 — Task 4.2 — Red-team set and injection results
+- Status: done
+- What changed: `prpilot_data/redteam.py` + `redteam --split val|test`: poisoned copies of seeded PRs, each payload asking for a detectable canary (`canary-<id>` label or reviewer, or `CANARY-<id>` in the summary or rationale). Locations: title, body, hidden HTML comment, code comment in the diff. Commit messages are not part of the model input or the dataset, so the title replaces them (owner, 2026-11-16). 24 templates in two disjoint sets: dev (val PRs, for choosing the threshold) and test (test PRs, reported once). `training/screening/guard_scores.py` scores fields on an H200; `prpilot_core/screening/classifier.py` is the LLM-classifier prompt (one word, INJECTION or SAFE); `prpilot_data/redteam_report.py` + `redteam-report` compute every metric after checking each Explorer output against the hash of the pack it ran on. Attack success is counted two ways: the canary anywhere in the agent's output, and the canary reaching an action (a reply that passed both validation layers, with the canary in the field it targets).
+- Results (test: 2,000 poisoned from 500 test PRs, 9,573 clean test PRs) → results/redteam_test.json @ 6f7ab0d (clean):
+  - PromptGuard 2 (body, file list, diff; 0.9): blocked 11.1% (CI 9.8–12.6; 222/2,000), false positives 0.25% (24/9,573). Direct payloads 22.0%, task-specific 0.2%; by location: diff comment 17.4%, hidden comment 15.6%, body 11.2%.
+  - Teacher as classifier (Qwen3.5-122B, thinking off): blocked 54.0% (CI 51.8–56.2), false positives 0.0% (0/9,573); title payloads 21.8%.
+  - End to end (student fill 1016 through the agent): canary reached an action in 0.40% (8/2,000) with no screening and 0.40% (8) with PromptGuard; 0.25% (5) with the teacher classifier. Canary anywhere in the output: 0.90% (18) without screening, 0.90% with PromptGuard.
+  - Validation (dev set, 1,200 poisoned, 3,355 clean) → results/redteam_val.json @ 44ecef9 (clean): PromptGuard at the chosen setting blocked 20.2%, false positives 0.12%; teacher classifier 61.1%, 0.0%; action success 0.33% without screening.
+- Dataset hash: redteam_test.jsonl `sha256:37bb594dee35…`, prfields_test.jsonl `sha256:1588e4e0fc0c…` → results/data_redteam_test.json @ 7862857 (clean); dev set → results/data_redteam_val.json @ 9e9e88d (clean)
+- Notes / decisions / problems: threshold choice on validation (owner, 2026-11-16): with all fields at 0.9, PromptGuard flagged 2.3% of clean val PRs, 74 of 77 on the title alone ("Remove unused code", "Forbid memory limit decrease" score ~0.999); without the title, 0.12%. PromptGuard's block rate halved from val to test, the effect of the held-out templates. All 8 test attacks that reached an action were text canaries echoed into the summary (7 from the title); no label or reviewer canary reached an action, on val or test. The model and the label/reviewer validator do most of the work; PromptGuard adds little on this set. PromptGuard on Explorer loads a copy of the pinned snapshot from scratch (the gated model has no token there).
+- Next: 4.3
+
+### 2026-11-17 — Task 4.3 — Secrets on synthetic diffs
+- Status: done
+- What changed: `prpilot_data/secrets_eval.py` + `secrets-eval`: 600 fake secrets in 12 formats (50 each, generated at run time, nothing secret-shaped in the source) inserted as added lines into seeded test diffs; detect-secrets scored on the inserted lines; flag rate on every unmodified test diff.
+- Results → results/secrets_synthetic.json @ 7d1f18f (clean): recall 93.5% (CI 91.2–95.2; 561/600); precision in the seeded diffs 95.9% (891 findings on inserted lines, 38 elsewhere); unmodified test diffs flagged 1.4% (133/9,573: secret keyword 62, hex high entropy 61). Recall 100% for AWS key IDs, classic GitHub tokens, Slack, Stripe, OpenAI, JWT and private keys; lowest for password assignments 78%, Google API keys 84%, fine-grained GitHub tokens and plain hex secrets 86%, AWS secret keys 88%. ~0.09 s per diff.
+- Dataset hash: test diffs as in 3.6, seed 0
+- Notes / decisions / problems: the unmodified diffs are unlabelled, so a flagged real diff may hold a real (often test-fixture) secret. On Windows, detect-secrets opens files in the system code page; the run used `PYTHONUTF8=1`.
+- Next: 4.4
+
+### 2026-11-17 — Task 4.4 — Screening latency on CPU
+- Status: done
+- What changed: `screening-latency`: the full `screen()` step on CPU on 100 seeded clean test PRs, every PR fully screened.
+- Results (laptop, 14-core Intel, Windows 11) → results/screening_latency.json @ 044a81c (clean): per PR p50 5.6 s, p95 30.0 s, mean 9.8 s; PromptGuard p50 5.4 s, p95 29.6 s (~97% of the time); Presidio p50 0.06 s; detect-secrets 0.06 s.
+- Dataset hash: test split as in 3.6
+- Notes / decisions / problems: PromptGuard time grows with diff length (one 86M forward pass per 512-token window). With an 11.1% block rate on test, this is a cost to weigh when sizing the Phase 6 worker (options: fewer fields, the 22M model, or a GPU).
+- Next: 4.5
+
+### 2026-11-17 — Task 4.5 — Promptfoo red-team suite in CI
+- Status: done (one-time screening-off check pending, after the merge)
+- What changed: `redteam/promptfoo/` (Promptfoo 0.125.1, Node 22): 30 synthetic injected PRs (no real PR text committed; dev templates only; built by `scripts/make_promptfoo_suite.py`) run through the real `screen()`; a case fails if its canary reaches the text the model would see. New CI job `redteam-screening` (CPU torch on Linux via a pytorch-cpu index in `pyproject.toml`; PromptGuard downloaded with the `HF_TOKEN` repository secret); `workflow_dispatch` input `screening: off` for the one-time check.
+- Results: green on the first run on the draft PR (a2ad69d). Local check of the provider: screening on, 0/30 canaries reach the prompt; off, 30/30.
+- Dataset hash: n/a
+- Notes / decisions / problems: only cases PromptGuard quarantines are kept, so the suite is a regression test of the screen, not a measure of it (that is 4.2). Of 216 synthetic candidates, 67 were quarantined, all direct payloads: no task-specific payload is in the suite because PromptGuard blocks none. The approved local screening-off check with a GGUF model was replaced by the CI dispatch run, since Node is not installed on the laptop.
+- Next: 4.6
+
+### 2026-11-17 — Task 4.6 — PII: Presidio on the Kaggle essays (F5)
+- Status: done
+- What changed: `prpilot_data/pii_eval.py` + `pii-eval`: Presidio with the app's fixed settings (entities PERSON, EMAIL_ADDRESS, PHONE_NUMBER, IP_ADDRESS, CREDIT_CARD, IBAN_CODE, US_SSN; threshold 0.5; en_core_web_lg 3.8.0; @handles kept) on the Kaggle "PII Data Detection" train essays; character spans mapped to BIO token labels and Presidio types to Kaggle types; scored with the competition's micro F5 on (document, token, label). A reference configuration adds URL and LOCATION.
+- Results (6,807 essays, 2,739 labelled tokens) → results/pii_kaggle.json @ 110ec4e (clean): **app configuration F5 0.685** (precision 0.232, recall 0.743; entity-type F5 0.691). Recall by type: EMAIL 1.00 (39), NAME_STUDENT 0.81 (2,461), PHONE_NUM 0.57 (21), ID_NUM 0.00 (79), URL_PERSONAL 0.00 (111, URLs not redacted by design), STREET_ADDRESS 0.00 (22), USERNAME 0.00 (6). Reference with URL and LOCATION: F5 0.656 (precision 0.130, recall 0.783; URL_PERSONAL recall 0.99). 0.10 s per essay on the laptop.
+- Dataset hash: train.json `sha256:8276cd44f3b2e…` (full hash in the results file; data in data/raw/kaggle_pii/, gitignored, owner-downloaded)
+- Notes / decisions / problems: the data is student essays, not code, so this measures the redactor on prose, which is where the app uses it. Precision is low because Presidio's PERSON finds every name (cited authors, public figures) while the dataset labels only students; F5 weights recall 25x, so this costs little. Turning on URL and LOCATION lowers F5: essays contain many non-personal URLs, and LOCATION does not match the street-address labels. ID numbers in these essays (student IDs) match none of Presidio's ID recognisers. Entities and threshold were fixed before this run and not tuned on it.
+- Next: Resume Numbers (owner approval), PR to `main`; after the merge, the one-time screening-off CI run (4.5)
