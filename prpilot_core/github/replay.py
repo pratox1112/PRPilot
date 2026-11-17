@@ -29,11 +29,20 @@ class NotInReplay(KeyError):
 
 
 class ReplayGitHubClient:
+    # The candidate lists are already filtered and ranked with the history known at each PR's
+    # open time (Phase 2), so the context step uses them as they are instead of re-ranking
+    # from today's memory: the prompt then matches the one the student was evaluated on.
+    snapshot = True
+
     def __init__(self, rows: list[dict], candidates: list[dict]):
         self._prs = {
             (r["repo"], int(r["number"])): {k: r[k] for k in OPEN_TIME_FIELDS} for r in rows
         }
         self._labels = {(c["repo"], int(c["number"])): list(c["labels"]) for c in candidates}
+        self._reviewers = {
+            (c["repo"], int(c["number"])): [r["login"] for r in c.get("reviewers", [])]
+            for c in candidates
+        }
         self._issues = {
             (c["repo"], int(c["number"])): [Issue(i["number"], i.get("title") or "", "")
                                             for i in c["issues"]]
@@ -64,3 +73,8 @@ class ReplayGitHubClient:
     async def search_issues(self, repo: str, number: int) -> list[Issue]:
         self._pr(repo, number)
         return list(self._issues.get((repo, number), []))
+
+    async def reviewer_candidates(self, repo: str, number: int) -> list[str]:
+        """Eligible reviewers ranked by the path history known at the PR's open time."""
+        self._pr(repo, number)
+        return list(self._reviewers.get((repo, number), []))

@@ -8,6 +8,8 @@ dependencies = [
     "asyncpg==0.32.0",
     "fastapi==0.162.0",
     "httpx==0.28.1",
+    "huggingface-hub==2.3.0",
+    "numpy==2.5.4",
     "opentelemetry-exporter-otlp-proto-http==1.45.1",
     "opentelemetry-sdk==1.45.1",
     "pydantic==2.14.1",
@@ -15,6 +17,7 @@ dependencies = [
     "pyjwt[crypto]==2.15.1",
     "python-dotenv==1.2.4",
     "sqlalchemy[asyncio]==2.1.6",
+    "tokenizers==0.23.3",
     "uvicorn[standard]==0.54.0",
 ]
 
