@@ -81,12 +81,13 @@ class Pipeline:
             if run.state in DONE:  # redelivery or a concurrent duplicate: nothing to redo
                 await session.commit()
                 return run
+            run_id = run.id  # the rollback below expires `run`; reading it then would be IO
             try:
                 await self._process(session, run, ctx)
                 await session.commit()
             except Exception as e:
                 await session.rollback()  # drop the half-done step, then record the failure
-                run = await session.get(PRRun, run.id)
+                run = await session.get(PRRun, run_id)
                 run.state, run.error = "failed", f"{type(e).__name__}: {e}"[:2000]
                 await session.commit()
             return run

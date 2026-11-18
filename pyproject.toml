@@ -30,6 +30,7 @@ data = [
     "tokenizers==0.23.3",
 ]
 dev = [
+    "detect-secrets==1.5.0",  # the pipeline scans diffs by default, so its tests need it
     "jsonschema==4.26.0",
     "pytest==9.1.1",
     "ruff==0.17.2",

@@ -413,7 +413,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - What changed (94cf664): `prpilot_core/pipeline.py` runs context → screen → [quarantined: stop] → triage (the student via Pydantic AI; 2 output retries, temperature 0, seed 0, thinking off) → validation fallback → reviewers from memory → comment → proposal. There is one run per head SHA, locked while it is processed (ADR 0004). `context.py` gathers everything the training prompts contained, with the same code (ADR 0006). `agents/fallback.py`: when the retries run out, it keeps the valid parts, drops labels and reviewers not in the repo's lists, and flags the proposal `partly_filtered`. `comment.py`: a deterministic triage comment. `memory.py`: reviewer history (the Phase 2 ranking formula) and label usage stats.
 - Results: `tests/test_pipeline.py`, 9 tests (a hashed proposal; a quarantined PR never reaches the model; no second triage on redelivery; a new push is a new run; fallback; failed runs are retried; label stats; live reviewer ranking equals Phase 2's).
 - Dataset hash: n/a
-- Notes / decisions / problems: related issues stay deterministic. The optional LLM issue-search tool and its comparison were not built (owner, 2026-11-17; ADR 0006).
+- Notes / decisions / problems: related issues stay deterministic. The optional LLM issue-search tool and its comparison were not built (owner, 2026-11-17; ADR 0006). The PR's first CI run found a bug: when a step raised, recording the failure crashed (it read the run's id after the rollback had expired it). In CI the secrets scan raised, because detect-secrets was not installed in the test job. Fixed with a test where a step raises; detect-secrets is now in the `dev` group.
 - Next: 5.4
 
 ### 2026-11-17 — Task 5.4 — Webhook and approval API, queue and worker
@@ -455,7 +455,7 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 ### 2026-11-17 — Task 5.7 — Design records and tracing
 - Status: done
 - What changed: ADRs 0004 (async pipeline with its state in Postgres), 0005 (proposals and a separate executor) and 0006 (deterministic context, no LLM issue tool). `prpilot_core/tracing.py`: Pydantic AI's OpenTelemetry instrumentation, exported to Langfuse. It is off unless `TRACING=true`, and startup fails if it is on without the Langfuse keys. Spans only see screened text.
-- Results: `tests/test_tracing.py`, 4 tests (off by default, with no spans; when on, agent and model spans are exported; the keys are required; endpoint and auth). Full suite with Postgres: 332 passed.
+- Results: `tests/test_tracing.py`, 4 tests (off by default, with no spans; when on, agent and model spans are exported; the keys are required; endpoint and auth). Full suite with Postgres, installed as CI installs it: 332 passed, 1 skipped (transformers).
 - Dataset hash: n/a
 - Notes / decisions / problems: tracing was not turned on against Langfuse in the end-to-end run.
 - Next: Resume Numbers (owner approval), PR to `main`; then the Phase 6 guidelines

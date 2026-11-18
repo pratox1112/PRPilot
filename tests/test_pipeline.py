@@ -145,6 +145,20 @@ async def test_unparseable_reply_fails_and_is_retried_later(db):
     assert len(calls) == 6  # tried again on the next delivery
 
 
+class BrokenGuard:
+    def score(self, text):
+        raise RuntimeError("guard is down")
+
+
+@pytest.mark.anyio
+async def test_a_step_that_raises_marks_the_run_failed_and_is_retried(db):
+    model, calls = scripted(answer())
+    run = await pipeline(db, model, guard=BrokenGuard()).run("me/sandbox", 7)
+    assert run.state == "failed" and run.error == "RuntimeError: guard is down" and not calls
+    run = await pipeline(db, model).run("me/sandbox", 7)
+    assert run.state == "proposed" and len(calls) == 1
+
+
 @pytest.mark.anyio
 async def test_label_usage_stats_limit_the_offered_labels(db):
     async with db() as s:
