@@ -4,13 +4,20 @@ version = "0.1.0"
 description = "Event-driven pull request triage agent with approval-gated write actions."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "alembic==1.20.1",
+    "asyncpg==0.32.0",
     "fastapi==0.162.0",
     "httpx==0.28.1",
+    "huggingface-hub==2.3.0",
+    "numpy==2.5.4",
     "opentelemetry-exporter-otlp-proto-http==1.45.1",
     "opentelemetry-sdk==1.45.1",
     "pydantic==2.14.1",
     "pydantic-ai-slim[openai]==2.61.0",
+    "pyjwt[crypto]==2.15.1",
     "python-dotenv==1.2.4",
+    "sqlalchemy[asyncio]==2.1.6",
+    "tokenizers==0.23.3",
     "uvicorn[standard]==0.54.0",
 ]
 
@@ -23,6 +30,7 @@ data = [
     "tokenizers==0.23.3",
 ]
 dev = [
+    "detect-secrets==1.5.0",  # the pipeline scans diffs by default, so its tests need it
     "jsonschema==4.26.0",
     "pytest==9.1.1",
     "ruff==0.17.2",
@@ -72,4 +80,5 @@ known-first-party = ["prpilot_core", "prpilot_data", "prpilot_eval"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # so tests can import services/ (deployable entry points, not packaged)
 addopts = "-ra"

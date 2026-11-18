@@ -375,9 +375,9 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Next: 4.5
 
 ### 2026-11-17 — Task 4.5 — Promptfoo red-team suite in CI
-- Status: done (one-time screening-off check pending, after the merge)
+- Status: done
 - What changed: `redteam/promptfoo/` (Promptfoo 0.125.1, Node 22): 30 synthetic injected PRs (no real PR text committed; dev templates only; built by `scripts/make_promptfoo_suite.py`) run through the real `screen()`; a case fails if its canary reaches the text the model would see. New CI job `redteam-screening` (CPU torch on Linux via a pytorch-cpu index in `pyproject.toml`; PromptGuard downloaded with the `HF_TOKEN` repository secret); `workflow_dispatch` input `screening: off` for the one-time check.
-- Results: green on the first run on the draft PR (a2ad69d). Local check of the provider: screening on, 0/30 canaries reach the prompt; off, 30/30.
+- Results: green on the first run on the draft PR (a2ad69d). Local check of the provider: screening on, 0/30 canaries reach the prompt; off, 30/30. One-time check (2026-11-17, CI #16, manual run on `main` @ 971b404 with `screening: off`): `redteam-screening` failed as required; Promptfoo evaluated 30/30 cases and every case shown in the log failed with its canary in the prompt (the final summary lines were not captured).
 - Dataset hash: n/a
 - Notes / decisions / problems: only cases PromptGuard quarantines are kept, so the suite is a regression test of the screen, not a measure of it (that is 4.2). Of 216 synthetic candidates, 67 were quarantined, all direct payloads: no task-specific payload is in the suite because PromptGuard blocks none. The approved local screening-off check with a GGUF model was replaced by the CI dispatch run, since Node is not installed on the laptop.
 - Next: 4.6
@@ -389,3 +389,73 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Dataset hash: train.json `sha256:8276cd44f3b2e…` (full hash in the results file; data in data/raw/kaggle_pii/, gitignored, owner-downloaded)
 - Notes / decisions / problems: the data is student essays, not code, so this measures the redactor on prose, which is where the app uses it. Precision is low because Presidio's PERSON finds every name (cited authors, public figures) while the dataset labels only students; F5 weights recall 25x, so this costs little. Turning on URL and LOCATION lowers F5: essays contain many non-personal URLs, and LOCATION does not match the street-address labels. ID numbers in these essays (student IDs) match none of Presidio's ID recognisers. Entities and threshold were fixed before this run and not tuned on it.
 - Next: Resume Numbers (owner approval), PR to `main`; after the merge, the one-time screening-off CI run (4.5)
+
+## Phase 5 — Approval-gated writes and memory
+
+### 2026-11-17 — Task 5.1 — Postgres state and the approval lock
+- Status: done
+- What changed (cc30cbe): Postgres 17.10 (pinned by digest; docker compose locally, a service container in CI), SQLAlchemy 2.1.6 async with asyncpg 0.32.0, Alembic 1.20.1 (`migrations/`, initial schema; CI runs `alembic upgrade head`, `alembic check` and `downgrade base`). Tables: deliveries, runs (one per repo, PR and head SHA), proposals (content and the SHA-256 of its canonical JSON), approvals (one per action, bound to the hash), executions (one per approval, claimed before the write), refusals, reviewer history and label stats. `prpilot_core/executor.py`: `approve()` and `execute()`. Refusals are logged as `unknown_proposal`, `tampered`, `unknown_action`, `unapproved`, `rejected`, `hash_mismatch`, `not_allowlisted`, `replayed` or `error`. `EXECUTOR_DRY_RUN` defaults to true.
+- Results: `tests/test_lock.py`, 11 tests. They cover every refusal in roadmap §8.3 (unapproved, tampered, non-allowlisted, replayed), plus a rejected action, a tampered proposal with a recomputed hash, partial approval, a failed write that is not retried, and a dry run.
+- Dataset hash: n/a
+- Notes / decisions / problems: owner decisions (2026-11-17): SQLAlchemy, asyncpg and Alembic; tests on a real Postgres; a static admin token for approvals for now (ADR 0005). The unique execution row stops two simultaneous executes, but no test runs them at the same time.
+- Next: 5.2
+
+### 2026-11-17 — Task 5.2 — GitHub read interface: live and open-time replay clients
+- Status: done
+- What changed (584eb5c): `GitHubClient` protocol (`get_pr`, `get_diff`, `list_changed_files`, `get_repo_labels`, `search_issues`). `LiveGitHubClient`: GitHub App installation tokens (signed JWT, token cached), ETag caching, rate-limit waits (up to 120 s), retries on 5xx (3) and paging. `AppWriter` holds the write methods, for the executor only. `ReplayGitHubClient`: serves only the dataset's open-time fields and the open-time candidate lists; anything else raises `NotInReplay`.
+- Results: `tests/test_github_clients.py`, 8 tests (replay returns only open-time facts; live paging, ETag 304s, rate-limit waits and retries, giving up, write payloads, App auth).
+- Dataset hash: n/a
+- Notes / decisions / problems: the replay client marks itself `snapshot`, so the pipeline uses its stored diff and candidate lists as they are, and a replayed prompt is the same as the evaluated one.
+- Next: 5.3
+
+### 2026-11-17 — Task 5.3 — Triage pipeline
+- Status: done
+- What changed (94cf664): `prpilot_core/pipeline.py` runs context → screen → [quarantined: stop] → triage (the student via Pydantic AI; 2 output retries, temperature 0, seed 0, thinking off) → validation fallback → reviewers from memory → comment → proposal. There is one run per head SHA, locked while it is processed (ADR 0004). `context.py` gathers everything the training prompts contained, with the same code (ADR 0006). `agents/fallback.py`: when the retries run out, it keeps the valid parts, drops labels and reviewers not in the repo's lists, and flags the proposal `partly_filtered`. `comment.py`: a deterministic triage comment. `memory.py`: reviewer history (the Phase 2 ranking formula) and label usage stats.
+- Results: `tests/test_pipeline.py`, 9 tests (a hashed proposal; a quarantined PR never reaches the model; no second triage on redelivery; a new push is a new run; fallback; failed runs are retried; label stats; live reviewer ranking equals Phase 2's).
+- Dataset hash: n/a
+- Notes / decisions / problems: related issues stay deterministic. The optional LLM issue-search tool and its comparison were not built (owner, 2026-11-17; ADR 0006). The PR's first CI run found a bug: when a step raised, recording the failure crashed (it read the run's id after the rollback had expired it). In CI the secrets scan raised, because detect-secrets was not installed in the test job. Fixed with a test where a step raises; detect-secrets is now in the `dev` group.
+- Next: 5.4
+
+### 2026-11-17 — Task 5.4 — Webhook and approval API, queue and worker
+- Status: done
+- What changed (70164ec): `services/api/app.py` (FastAPI):
+  - `POST /webhook`: checks the signature and dedups deliveries. Handles PR opened, reopened, synchronize and ready-for-review events; drafts are ignored.
+  - `GET /runs`, `GET /proposals` and `GET /proposals/{id}`.
+  - `POST …/actions/{action}/decision`: takes the content hash the approver saw.
+  - `POST …/execute`: returns 409 on refusal; a real write updates memory.
+
+  `prpilot_core/queue.py`: `EventQueue`, with an in-process implementation (Pub/Sub in Phase 6). `services/worker/handler.py`: triages sandbox repos only. `services/local.py`: everything in one process, with the student GGUF on llama.cpp.
+- Results: `tests/test_api.py`, 8 tests (bad signatures rejected, one queue entry per delivery, other events and drafts ignored, token required, approve then execute writes once and updates memory, stale content refused, webhook to proposal through the queue, dry run by default).
+- Dataset hash: n/a
+- Notes / decisions / problems: none.
+- Next: 5.5
+
+### 2026-11-17 — Task 5.5 — Reviewer memory ablation
+- Status: done
+- What changed (6c88ef1): `prpilot_data/memory_ablation.py` + `memory-ablation`. It re-scores the student's existing system-pass replies (fill 1016), after the pipeline's fallback, under four reviewer rules: student only, student then memory, memory then student, memory only. Only `reviewers` changes. The rule is chosen on val; test is scored once.
+- Results → results/memory_ablation.json @ 6c88ef1 (clean): reviewer@3 on val (n=3,113): student only 0.552 (CI 0.535–0.569), memory then student 0.577 (CI 0.560–0.595), chosen. Test, looked at once (n=7,250): student only 0.572 (CI 0.561–0.583), memory then student 0.612 (CI 0.601–0.622). Applied as the pipeline default in e18d423.
+- Dataset hash: val replies `sha256:41c70e71…eaefa`, test replies `sha256:184456dd…2681f` (full hashes in the results file)
+- Notes / decisions / problems: "memory then student" scores exactly the same as "memory only" on both splits, and "student then memory" the same as "student only". This holds by construction. The student may only pick from the eligible list, which is the memory ranking, so once the ranking comes first the student's picks never change the top 3. The chosen rule won the tie through the fixed rule order. In effect, the deployed reviewers are the memory ranking's top 3. For reference, the rules baseline scored 0.617 on test (3.6).
+- Next: 5.6
+
+### 2026-11-17 — Task 5.6 — Sandbox end-to-end run
+- Status: done
+- What changed: `docs/runbooks/sandbox-e2e.md` (b5bd9ba). The owner ran it on the laptop at b5bd9ba (clean tree), with:
+  - llama.cpp b11960 (CPU) serving `student-fill-1016-Q4_K_M.gguf` (`sha256:b6e18672…53bb`);
+  - Postgres in Docker;
+  - the GitHub App `prpilot-dev-pratox1112` on `pratox1112/prpilot-sandbox`;
+  - a Cloudflare quick tunnel.
+- Results: sandbox PR #2 (a README change).
+  - Dry run: a signed webhook created run 1 (head `da5dea9`). It was not quarantined (PromptGuard 0.001). The proposal had the label `documentation` and a comment, valid on the first attempt. The labels action was approved with its hash and executed with `dry_run: true`, and the PR did not change.
+  - Real run (`EXECUTOR_DRY_RUN=false`): a second push created a new run and proposal. The labels and comment actions were approved and executed, and the label and comment appeared on the PR, posted by the App (issuecomment-6969023852). Executing the labels action again was refused with 409 `replayed`.
+- Dataset hash: n/a
+- Notes / decisions / problems: no reviewers were proposed, because the sandbox repo has no review history. Model latency was not measured in this run.
+- Next: 5.7
+
+### 2026-11-17 — Task 5.7 — Design records and tracing
+- Status: done
+- What changed: ADRs 0004 (async pipeline with its state in Postgres), 0005 (proposals and a separate executor) and 0006 (deterministic context, no LLM issue tool). `prpilot_core/tracing.py`: Pydantic AI's OpenTelemetry instrumentation, exported to Langfuse. It is off unless `TRACING=true`, and startup fails if it is on without the Langfuse keys. Spans only see screened text.
+- Results: `tests/test_tracing.py`, 4 tests (off by default, with no spans; when on, agent and model spans are exported; the keys are required; endpoint and auth). Full suite with Postgres, installed as CI installs it: 332 passed, 1 skipped (transformers).
+- Dataset hash: n/a
+- Notes / decisions / problems: tracing was not turned on against Langfuse in the end-to-end run.
+- Next: Resume Numbers (owner approval), PR to `main`; then the Phase 6 guidelines

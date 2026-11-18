@@ -1,0 +1,24 @@
+# Local development: Postgres for the app and the test suite (Cloud SQL Postgres 17 in prod).
+#   docker compose up -d db
+# Tests: set PRPILOT_TEST_DATABASE_URL=postgresql+asyncpg://prpilot:prpilot@localhost:5433/prpilot_test
+# The password is for this local container only; production credentials live in Secret Manager.
+services:
+  db:
+    # postgres:17.10-bookworm, pinned by digest (multi-arch index)
+    image: postgres@sha256:9b18b78397054fce88a9552e9d5a3ad5bb7fd258c5b3cc1c5028e46373d6ea8f
+    environment:
+      POSTGRES_USER: prpilot
+      POSTGRES_PASSWORD: prpilot
+      POSTGRES_DB: prpilot
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/db/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prpilot"]
+      interval: 2s
+      retries: 30
+
+volumes:
+  pgdata:
