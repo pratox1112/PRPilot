@@ -6,7 +6,8 @@ GitHub writer. Phase 6 runs the same pieces as separate Cloud Run services with 
 
 Settings come from the environment (.env): DATABASE_URL, GITHUB_WEBHOOK_SECRET, ADMIN_TOKEN,
 SANDBOX_REPOS, EXECUTOR_DRY_RUN (default true: nothing is written to GitHub), GITHUB_APP_ID,
-GITHUB_APP_PRIVATE_KEY_PATH, MODEL_BASE_URL, HF_TOKEN or PROMPT_GUARD_DIR.
+GITHUB_APP_PRIVATE_KEY_PATH, MODEL_BASE_URL, HF_TOKEN or PROMPT_GUARD_DIR, and TRACING (default
+false) with the LANGFUSE_* keys.
 """
 
 from contextlib import asynccontextmanager
@@ -18,11 +19,13 @@ from prpilot_core.db.session import make_engine, make_sessionmaker
 from prpilot_core.github.live import AppWriter
 from prpilot_core.queue import InProcessQueue
 from prpilot_core.settings import Settings
+from prpilot_core.tracing import setup_tracing
 from services.api.app import Services, create_app
 from services.worker.handler import make_handler
 
 load_dotenv()
 settings = Settings.from_env()
+tracer_provider = setup_tracing(settings)
 engine = make_engine(settings.database_url)
 sessions = make_sessionmaker(engine)
 queue = InProcessQueue(make_handler(settings, sessions))
@@ -46,6 +49,8 @@ async def lifespan(_: FastAPI):
     yield
     await queue.stop()
     await engine.dispose()
+    if tracer_provider is not None:
+        tracer_provider.shutdown()  # sends the spans still buffered
 
 
 api.router.lifespan_context = lifespan

@@ -25,6 +25,10 @@ class Settings:
     hf_token: str | None
     prompt_guard_dir: str | None
     pii: bool
+    tracing: bool
+    langfuse_public_key: str
+    langfuse_secret_key: str
+    langfuse_host: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -45,4 +49,9 @@ class Settings:
             hf_token=os.environ.get("HF_TOKEN") or None,
             prompt_guard_dir=os.environ.get("PROMPT_GUARD_DIR") or None,
             pii=_flag("SCREEN_PII", True),
+            # Off unless explicitly turned on (spans go to Langfuse, an outside service).
+            tracing=_flag("TRACING", False),
+            langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY", ""),
+            langfuse_secret_key=os.environ.get("LANGFUSE_SECRET_KEY", ""),
+            langfuse_host=os.environ.get("LANGFUSE_HOST", ""),
         )
