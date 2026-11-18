@@ -14,7 +14,7 @@ from prpilot_core.agents.fallback import filter_to_rules
 from prpilot_core.db.models import LabelStat, Proposal, PRRun
 from prpilot_core.deps import RepoRules, TriageDeps
 from prpilot_core.github.client import Issue, PRInfo
-from prpilot_core.pipeline import Pipeline
+from prpilot_core.pipeline import Pipeline, should_retry
 from prpilot_core.proposals import content_hash
 from prpilot_core.schemas import TriageOutput
 from prpilot_data import candidates
@@ -155,8 +155,16 @@ async def test_a_step_that_raises_marks_the_run_failed_and_is_retried(db):
     model, calls = scripted(answer())
     run = await pipeline(db, model, guard=BrokenGuard()).run("me/sandbox", 7)
     assert run.state == "failed" and run.error == "RuntimeError: guard is down" and not calls
+    assert should_retry(run)  # the queue delivers it again
     run = await pipeline(db, model).run("me/sandbox", 7)
-    assert run.state == "proposed" and len(calls) == 1
+    assert run.state == "proposed" and len(calls) == 1 and not should_retry(run)
+
+
+@pytest.mark.anyio
+async def test_unusable_model_output_is_not_redelivered(db):
+    model, _ = scripted("not json at all")
+    run = await pipeline(db, model).run("me/sandbox", 7)
+    assert run.state == "failed" and run.triage is not None and not should_retry(run)
 
 
 @pytest.mark.anyio

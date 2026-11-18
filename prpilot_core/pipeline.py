@@ -37,6 +37,14 @@ from prpilot_data.candidates import MAX_FILES
 DONE = ("quarantined", "proposed")  # a failed run is retried when the event comes again
 
 
+def should_retry(run: PRRun) -> bool:
+    """Whether the queue should deliver this event again. A step that raised (GitHub, the
+    database, the model server) is worth retrying: the rollback left `triage` empty. A run
+    whose model output stayed unusable after the agent's retries is not: the model runs at
+    temperature 0 and would answer the same way, so redelivering only burns model time."""
+    return run.state == "failed" and run.triage is None
+
+
 @dataclass
 class PipelineConfig:
     threshold: float = DEFAULT_THRESHOLD

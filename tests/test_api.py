@@ -200,6 +200,43 @@ async def test_webhook_to_proposal_through_the_queue(db):
     assert shown["repo"] == "me/sandbox" and shown["pr_number"] == 7 and len(calls) == 1
 
 
+class DownQueue:
+    def __init__(self):
+        self.up, self.events = False, []
+
+    async def publish(self, event):
+        if not self.up:
+            raise RuntimeError("pubsub unavailable")
+        self.events.append(event)
+
+
+async def test_failed_publish_answers_503_and_the_redelivery_is_queued(db):
+    queue = DownQueue()
+    c, _ = client(db, queue=queue)
+    async with c:
+        assert (await c.post("/webhook", **hook(PR_OPENED, "d-5"))).status_code == 503
+        queue.up = True  # GitHub redelivers with the same delivery id
+        r = await c.post("/webhook", **hook(PR_OPENED, "d-5"))
+    assert r.json() == {"status": "queued"} and len(queue.events) == 1
+
+
+async def test_each_service_serves_only_its_part(db):
+    def app_client(parts):
+        svc = client(db)[1]
+        app = create_app(svc, parts=parts)
+        return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
+
+    execute = "/proposals/00000000-0000-0000-0000-000000000000/actions/labels/execute"
+    async with app_client(("webhook", "review")) as api:
+        assert (await api.post(execute, headers=AUTH)).status_code == 404
+        assert (await api.get("/runs", headers=AUTH)).status_code == 200
+    async with app_client(("execute",)) as executor:
+        assert (await executor.post("/webhook", **hook(PR_OPENED))).status_code == 404
+        assert (await executor.get("/runs", headers=AUTH)).status_code == 404
+        r = await executor.post(execute, headers=AUTH)
+        assert r.status_code == 409 and r.json()["detail"]["refused"] == "unknown_proposal"
+
+
 def test_settings_default_to_dry_run(monkeypatch):
     from prpilot_core.settings import Settings
 

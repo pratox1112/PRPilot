@@ -11,6 +11,12 @@ def _flag(name: str, default: bool) -> bool:
     return default if v is None else v.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _read_key(name: str) -> str:
+    """A private key from the file the variable names (a Secret Manager mount on Cloud Run)."""
+    path = os.environ.get(name, "")
+    return Path(path).expanduser().read_text() if path else ""
+
+
 @dataclass(frozen=True)
 class Settings:
     database_url: str
@@ -20,6 +26,10 @@ class Settings:
     dry_run: bool
     app_id: str
     app_private_key: str
+    reader_app_id: str
+    reader_app_private_key: str
+    gcp_project: str
+    pubsub_topic: str
     model_base_url: str
     model_name: str
     hf_token: str | None
@@ -32,7 +42,6 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
-        key_path = os.environ.get("GITHUB_APP_PRIVATE_KEY_PATH", "")
         return cls(
             database_url=os.environ.get("DATABASE_URL", ""),
             webhook_secret=os.environ.get("GITHUB_WEBHOOK_SECRET", ""),
@@ -43,7 +52,13 @@ class Settings:
             # Writes are off unless explicitly turned on.
             dry_run=_flag("EXECUTOR_DRY_RUN", True),
             app_id=os.environ.get("GITHUB_APP_ID", ""),
-            app_private_key=Path(key_path).expanduser().read_text() if key_path else "",
+            app_private_key=_read_key("GITHUB_APP_PRIVATE_KEY_PATH"),
+            # The worker reads PRs as a second, read-only App, so the service that sees
+            # untrusted text holds no key that can write. Unset locally: the main App reads.
+            reader_app_id=os.environ.get("GITHUB_READER_APP_ID", ""),
+            reader_app_private_key=_read_key("GITHUB_READER_APP_PRIVATE_KEY_PATH"),
+            gcp_project=os.environ.get("GCP_PROJECT", ""),
+            pubsub_topic=os.environ.get("PUBSUB_TOPIC", ""),
             model_base_url=os.environ.get("MODEL_BASE_URL", "http://127.0.0.1:8080/v1"),
             model_name=os.environ.get("MODEL_NAME", "prpilot-model"),
             hf_token=os.environ.get("HF_TOKEN") or None,
