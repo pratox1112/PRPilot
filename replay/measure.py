@@ -2,10 +2,13 @@
 
     $env:GCP_ACCESS_TOKEN = gcloud auth print-access-token
     uv run python -m replay.measure prices                      # list the SKUs to pin (free)
-    uv run python -m replay.measure report --label pilot --api https://prpilot-api-....run.app
+    uv run python -m replay.measure report --label burst --server-times https://prpilot-api-....
 
-- Outcomes and latency: the final runs recorded by the sender and the api's delivery times
-  (server clocks): webhook received to triage stored, and worker start to triage stored.
+- Outcomes and latency: the final runs recorded by the sender. Latency from the sender's
+  clock (webhook sent to final run seen, so up to one poll interval late) always; from the
+  server's clocks (webhook received to triage stored, worker start to triage stored) with
+  `--server-times`, only for runs stored by images that stamp pr_runs.updated_at with the
+  commit time (models.PRRun; earlier images, such as the pilot's, stamped the claim time).
 - Usage: Cloud Monitoring over the send's window (first send to last final run, plus a
   margin for the metrics' delay): billable instance time and requests per Cloud Run service,
   Pub/Sub billed bytes, push answers by response class, dead-lettered messages. Run the
@@ -169,19 +172,22 @@ def database(g: Google) -> dict:
             "disk_gib": float(db["settings"]["dataDiskSizeGb"])}  # fmt: skip
 
 
-def outcomes(sends: list[dict], deliveries: dict[str, str]) -> dict:
+def outcomes(sends: list[dict], deliveries: dict[str, str] | None) -> dict:
+    """`deliveries`: delivery id -> received_at for the server-clock latencies, or None."""
     states: dict[str, int] = {}
-    e2e, worker, requests = [], [], []
+    seen, e2e, worker, requests = [], [], [], []
     valid = rescued = 0
     for s in sends:
         states[s["outcome"]] = states.get(s["outcome"], 0) + 1
         run = s.get("final")
         if not run:
             continue
-        done = ts(run["updated_at"])
-        if s["delivery_id"] in deliveries:
-            e2e.append((done - ts(deliveries[s["delivery_id"]])).total_seconds())
-        worker.append((done - ts(run["created_at"])).total_seconds())
+        seen.append((ts(s["seen_final_at"]) - ts(s["sent_at"])).total_seconds())
+        if deliveries is not None:
+            done = ts(run["updated_at"])
+            if s["delivery_id"] in deliveries:
+                e2e.append((done - ts(deliveries[s["delivery_id"]])).total_seconds())
+            worker.append((done - ts(run["created_at"])).total_seconds())
         t = run.get("triage") or {}
         if t:
             requests.append(t["requests"])
@@ -196,17 +202,21 @@ def outcomes(sends: list[dict], deliveries: dict[str, str]) -> dict:
         "prs_sent": len(sends), "outcomes": states,
         "triaged": len(requests), "valid_after_retries": valid, "rescued_by_fallback": rescued,
         "model_requests_mean": sum(requests) / len(requests) if requests else None,
-        "webhook_to_stored": summary(e2e), "worker_start_to_stored": summary(worker),
+        "sent_to_seen_final": summary(seen),
+        "webhook_to_stored": summary(e2e) if deliveries is not None else None,
+        "worker_start_to_stored": summary(worker) if deliveries is not None else None,
     }  # fmt: skip
 
 
-def cmd_report(g: Google, label: str, api: str) -> None:
+def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None:
     sends = read_jsonl(SENDS_DIR / f"{label}.sends.jsonl")
-    _, admin = secret_values()
-    r = httpx.get(f"{api}/deliveries", params={"limit": 20000},
-                  headers={"Authorization": f"Bearer {admin}"}, timeout=60)  # fmt: skip
-    r.raise_for_status()
-    deliveries = {d["delivery_id"]: d["received_at"] for d in r.json()}
+    deliveries = None
+    if api:
+        _, admin = secret_values()
+        r = httpx.get(f"{api}/deliveries", params={"limit": 20000},
+                      headers={"Authorization": f"Bearer {admin}"}, timeout=60)  # fmt: skip
+        r.raise_for_status()
+        deliveries = {d["delivery_id"]: d["received_at"] for d in r.json()}
     start = min(ts(s["sent_at"]) for s in sends)
     end = max(ts(s.get("seen_final_at") or s["sent_at"]) for s in sends)
     window = (start, end + MARGIN)
@@ -247,7 +257,7 @@ def cmd_report(g: Google, label: str, api: str) -> None:
     n = max(out["prs_sent"], 1)
     minutes = (end - start).total_seconds() / 60
     write_result(label, {
-        "label": label, "meta": run_metadata(["httpx"]),
+        "label": label, "meta": run_metadata(["httpx"]), "notes": notes,
         "window_utc": [rfc3339(w) for w in window], "send_minutes": minutes,
         "throughput_prs_per_min": out["prs_sent"] / minutes if minutes else None,
         **out,
@@ -260,7 +270,7 @@ def cmd_report(g: Google, label: str, api: str) -> None:
     })  # fmt: skip
     with (RESULTS_DIR / f"{label}.records.jsonl").open("w", encoding="utf-8") as f:
         f.writelines(json.dumps(s, default=str) + "\n" for s in sends)
-    print(json.dumps({k: out[k] for k in ("outcomes", "webhook_to_stored")}, indent=1))
+    print(json.dumps({k: out[k] for k in ("outcomes", "sent_to_seen_final")}, indent=1))
     print(f"serving ${serving_usd:.4f} (${serving_usd / n:.5f}/PR), database ${db_usd:.4f}")
     print(f"-> {RESULTS_DIR / (label + '.json')}")
 
@@ -271,7 +281,12 @@ def main() -> None:
     sub.add_parser("prices")
     rep = sub.add_parser("report")
     rep.add_argument("--label", required=True)
-    rep.add_argument("--api", required=True)
+    rep.add_argument(
+        "--server-times",
+        metavar="API_URL",
+        help="also the server-clock latencies (reads /deliveries from the api)",
+    )
+    rep.add_argument("--note", action="append", default=[], help="recorded with the result")
     a = ap.parse_args()
     token = os.environ.get("GCP_ACCESS_TOKEN", "").strip()
     if not token:
@@ -280,7 +295,7 @@ def main() -> None:
     if a.cmd == "prices":
         cmd_prices(g)
     else:
-        cmd_report(g, a.label, a.api.rstrip("/"))
+        cmd_report(g, a.label, a.server_times and a.server_times.rstrip("/"), a.note)
 
 
 if __name__ == "__main__":

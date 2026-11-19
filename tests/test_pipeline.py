@@ -264,3 +264,19 @@ async def test_one_trace_per_pr_with_a_span_per_step_and_model_calls_inside_tria
     assert path(chat)[1:] == ["invoke_agent triage", "triage", "pr_run"]
     ours = [s for s in spans if s.name in ("pr_run", "context", "screen", "triage", "proposal")]
     assert not any("nil check" in str(v).lower() for s in ours for v in dict(s.attributes).values())
+
+
+@pytest.mark.anyio
+async def test_a_runs_updated_at_is_when_its_triage_was_stored(db):
+    """Not the claim time: the steps commit in the transaction that claimed the run."""
+    import time
+
+    def slow(messages, info):
+        time.sleep(0.3)
+        return ModelResponse(parts=[TextPart(answer())])
+
+    await pipeline(db, FunctionModel(slow)).run("me/sandbox", 7)
+    async with db() as s:
+        run = await s.scalar(select(PRRun))
+    assert run.state == "proposed"
+    assert (run.updated_at - run.created_at).total_seconds() >= 0.3

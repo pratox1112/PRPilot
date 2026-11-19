@@ -134,7 +134,7 @@ service sizes and the public price catalog:
 ```powershell
 uv run python -m replay.send --bundle data/processed/replay/pilot_val50.jsonl --api $api.api --label pilot --in-flight 3
 $env:GCP_ACCESS_TOKEN = gcloud auth print-access-token
-uv run python -m replay.measure report --label pilot --api $api.api
+uv run python -m replay.measure report --label pilot --server-times $api.api
 ```
 
 Every later apply needs `-var replay_bundle=...` too while the replay is in use. Without it the

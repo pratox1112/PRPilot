@@ -122,14 +122,21 @@ def test_outcomes_latency_and_prices():
         "updated_at": "2026-11-18T10:00:35Z",
         "triage": {"requests": 2, "valid_after_retries": True, "partly_filtered": False},
     }
-    sends = [{"delivery_id": "a", "outcome": "proposed", "final": run},
-             {"delivery_id": "b", "outcome": "quarantined",
+    sent = {"sent_at": "2026-11-18T09:59:59Z", "seen_final_at": "2026-11-18T10:00:40Z"}
+    sends = [{"delivery_id": "a", "outcome": "proposed", "final": run, **sent},
+             {"delivery_id": "b", "outcome": "quarantined", **sent,
               "final": {**run, "triage": None, "updated_at": "2026-11-18T10:00:10Z"}},
              {"delivery_id": "c", "outcome": "unfinished", "final": None}]  # fmt: skip
     out = measure.outcomes(sends, {"a": "2026-11-18T10:00:00Z", "b": "2026-11-18T10:00:00Z"})
+    assert out["sent_to_seen_final"] == {"n": 2, "p50_s": 41.0, "p95_s": 41.0, "max_s": 41.0}
     assert out["outcomes"] == {"proposed": 1, "quarantined": 1, "unfinished": 1}
     assert out["triaged"] == 1 and out["valid_after_retries"] == 1
     assert out["webhook_to_stored"] == {"n": 2, "p50_s": 10.0, "p95_s": 35.0, "max_s": 35.0}
+    client_only = measure.outcomes(sends, None)
+    assert (
+        client_only["webhook_to_stored"] is None and client_only["worker_start_to_stored"] is None
+    )
+    assert client_only["sent_to_seen_final"] == out["sent_to_seen_final"]
     assert measure.percentile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 95) == 10
     assert measure.percentile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 50) == 5
     assert measure.gib("8Gi") == 8 and measure.gib("512Mi") == 0.5
