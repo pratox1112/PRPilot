@@ -1,11 +1,14 @@
 {
   "label": "pilot",
   "meta": {
-    "timestamp_utc": "2026-11-19T17:43:21+00:00",
+    "timestamp_utc": "2026-11-19T20:59:43+00:00",
     "git": {
-      "commit": "317402442e0ed1f3df363ef4605b55f512e44fde",
-      "dirty": false,
-      "dirty_paths": []
+      "commit": "bbcd83ae0c381d587e40aca083dff3feba850bd6",
+      "dirty": true,
+      "dirty_paths": [
+        "results/pilot.json",
+        "results/pilot.records.jsonl"
+      ]
     },
     "python": "3.12.10",
     "packages": {
