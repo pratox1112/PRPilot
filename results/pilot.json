@@ -1,0 +1,142 @@
+{
+  "label": "pilot",
+  "meta": {
+    "timestamp_utc": "2026-11-19T17:43:21+00:00",
+    "git": {
+      "commit": "317402442e0ed1f3df363ef4605b55f512e44fde",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "notes": [
+    "Server-clock latency omitted: the pilot's images (44441abedc78) stamped pr_runs.updated_at with the claim time; fixed in the next commit."
+  ],
+  "window_utc": [
+    "2026-11-19T05:40:40.251137Z",
+    "2026-11-19T06:40:50.502294Z"
+  ],
+  "send_minutes": 50.17085261666667,
+  "throughput_prs_per_min": 0.9965945841508399,
+  "prs_sent": 50,
+  "outcomes": {
+    "proposed": 50
+  },
+  "triaged": 50,
+  "valid_after_retries": 49,
+  "rescued_by_fallback": 1,
+  "model_requests_mean": 1.04,
+  "sent_to_seen_final": {
+    "n": 50,
+    "p50_s": 132.465845,
+    "p95_s": 432.47576,
+    "max_s": 442.673633
+  },
+  "webhook_to_stored": null,
+  "worker_start_to_stored": null,
+  "pubsub": {
+    "push_answers": {
+      "ack": 46.0
+    },
+    "dead_lettered": 0,
+    "billed_bytes": 100000.0
+  },
+  "usage": {
+    "prpilot-api": {
+      "billable_instance_s": 180.66834570975035,
+      "vcpu_s": 180.66834570975035,
+      "gib_s": 90.33417285487518,
+      "requests": 1786.0,
+      "usd": 0.005276275729171196,
+      "vcpu": 1.0,
+      "gib": 0.5,
+      "cpu_idle": true
+    },
+    "prpilot-worker": {
+      "billable_instance_s": 8674.39817935664,
+      "vcpu_s": 17348.79635871328,
+      "gib_s": 69395.18543485312,
+      "requests": 50.0,
+      "usd": 0.5898790761962516,
+      "vcpu": 2.0,
+      "gib": 8.0,
+      "cpu_idle": true
+    },
+    "prpilot-model": {
+      "billable_instance_s": 6846.600000000001,
+      "vcpu_s": 27386.400000000005,
+      "gib_s": 54772.80000000001,
+      "requests": 56.0,
+      "usd": 0.7942280000000002,
+      "vcpu": 4.0,
+      "gib": 8.0,
+      "cpu_idle": true
+    },
+    "prpilot-executor": {
+      "billable_instance_s": 0.20000000000000018,
+      "vcpu_s": 0.20000000000000018,
+      "gib_s": 0.10000000000000009,
+      "requests": 0.0,
+      "usd": 5.050000000000004e-06,
+      "vcpu": 1.0,
+      "gib": 0.5,
+      "cpu_idle": true
+    }
+  },
+  "database": {
+    "name": "prpilot-pg",
+    "tier": "db-f1-micro",
+    "disk_gib": 10.0,
+    "hours": 1.002847543611111,
+    "usd": 0.012865297597148021
+  },
+  "prices": {
+    "run_cpu": {
+      "sku": "4856-B847-F1EB",
+      "description": "Services CPU (Request-based billing)",
+      "usd": 2.4e-05,
+      "unit": "s"
+    },
+    "run_memory": {
+      "sku": "02A2-9231-36A6",
+      "description": "Services Memory (Request-based billing)",
+      "usd": 2.5e-06,
+      "unit": "GiBy.s"
+    },
+    "run_requests": {
+      "sku": "2DA5-55D3-E679",
+      "description": "Requests",
+      "usd": 4e-07,
+      "unit": "count"
+    },
+    "sql_instance": {
+      "sku": "C2D4-F7DF-B8D0",
+      "description": "Cloud SQL for PostgreSQL: Zonal - Micro instance in Americas",
+      "usd": 0.0105,
+      "unit": "h"
+    },
+    "sql_storage": {
+      "sku": "C18F-7FE0-0717",
+      "description": "Cloud SQL for PostgreSQL: Zonal - Standard storage in Americas",
+      "usd": 0.17,
+      "unit": "GiBy.mo"
+    },
+    "pubsub_throughput": {
+      "sku": "027D-B6C7-CCA2",
+      "description": "Message Delivery Basic",
+      "usd": 40.0,
+      "unit": "TiBy"
+    }
+  },
+  "free_tier_applied": false,
+  "cost_usd": {
+    "serving": 1.38939203990423,
+    "database": 0.012865297597148021,
+    "total": 1.402257337501378,
+    "serving_per_pr": 0.027787840798084603,
+    "total_per_pr": 0.02804514675002756
+  }
+}
