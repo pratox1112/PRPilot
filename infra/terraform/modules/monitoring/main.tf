@@ -85,13 +85,14 @@ resource "google_monitoring_dashboard" "main" {
   dashboard_json = jsonencode({
     displayName = "PRPilot"
     gridLayout = {
-      columns = 2
+      columns = "2" # Cloud Monitoring returns int64 fields as strings
       widgets = [
         for c in ["latency", "requests", "backlog", "dead_letters", "instances"] : {
           title = local.chart[c].title
           xyChart = {
             dataSets = [{
-              plotType = "LINE"
+              plotType   = "LINE"
+              targetAxis = "Y1" # the default Cloud Monitoring fills in
               timeSeriesQuery = {
                 timeSeriesFilter = {
                   filter      = local.chart[c].filter

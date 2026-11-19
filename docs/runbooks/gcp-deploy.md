@@ -18,7 +18,13 @@ function Add-Secret($name, $value) { $f = New-TemporaryFile; [IO.File]::WriteAll
 ```
 
 Build and deploy only from a clean, committed tree (`git status` empty), so the image tag is
-the code that runs.
+the code that runs. `$tag` must name images that exist in the registry: after a commit that
+changes only Terraform or docs, keep the tag of the last images built (for example
+`$tag = "32de816f0080"`) instead of the new commit.
+
+Cloud Run's front end reserves `/healthz` (it answers 404 without reaching the app). The startup
+probes call the container directly and are not affected; check a deployed service another way,
+for example `Invoke-RestMethod "$($api.api)/runs" -Headers $h`.
 
 ## 1. State bucket (once)
 

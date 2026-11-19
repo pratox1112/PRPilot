@@ -5,6 +5,9 @@
 #   worker    internal ingress; only the Pub/Sub push identity may call it
 #   model     only the worker's identity may call it
 #
+# Cloud Run returns a Cloud SQL volume (and its mount) after the others, so it is declared
+# last; otherwise every plan shows a reordering that changes nothing.
+#
 # Worker and model serve one PR at a time per instance (concurrency 1), so a PR never waits
 # behind another inside an instance and the model gets its whole context.
 
@@ -141,12 +144,6 @@ resource "google_cloud_run_v2_service" "worker" {
     }
 
     volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [var.db_connection]
-      }
-    }
-    volumes {
       name = "reader-key"
       secret {
         secret = var.secret_ids["github-reader-app-key"]
@@ -154,6 +151,12 @@ resource "google_cloud_run_v2_service" "worker" {
           version = "latest"
           path    = "key.pem"
         }
+      }
+    }
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.db_connection]
       }
     }
 
@@ -168,12 +171,12 @@ resource "google_cloud_run_v2_service" "worker" {
         startup_cpu_boost = true
       }
       volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
-      }
-      volume_mounts {
         name       = "reader-key"
         mount_path = "/secrets/reader"
+      }
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
       }
       env {
         name = "DATABASE_URL"
@@ -330,12 +333,6 @@ resource "google_cloud_run_v2_service" "executor" {
     }
 
     volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [var.db_connection]
-      }
-    }
-    volumes {
       name = "app-key"
       secret {
         secret = var.secret_ids["github-app-key"]
@@ -343,6 +340,12 @@ resource "google_cloud_run_v2_service" "executor" {
           version = "latest"
           path    = "key.pem"
         }
+      }
+    }
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.db_connection]
       }
     }
 
@@ -357,12 +360,12 @@ resource "google_cloud_run_v2_service" "executor" {
         cpu_idle = true
       }
       volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
-      }
-      volume_mounts {
         name       = "app-key"
         mount_path = "/secrets/app"
+      }
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
       }
       env {
         name = "DATABASE_URL"
