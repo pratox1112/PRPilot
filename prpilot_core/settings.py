@@ -45,8 +45,9 @@ class Settings:
     def from_env(cls) -> "Settings":
         return cls(
             database_url=os.environ.get("DATABASE_URL", ""),
-            webhook_secret=os.environ.get("GITHUB_WEBHOOK_SECRET", ""),
-            admin_token=os.environ.get("ADMIN_TOKEN", ""),
+            # Stripped: a secret stored with a trailing newline would fail every comparison.
+            webhook_secret=os.environ.get("GITHUB_WEBHOOK_SECRET", "").strip(),
+            admin_token=os.environ.get("ADMIN_TOKEN", "").strip(),
             sandbox_repos=frozenset(
                 r.strip() for r in os.environ.get("SANDBOX_REPOS", "").split(",") if r.strip()
             ),
