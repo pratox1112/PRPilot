@@ -37,12 +37,12 @@ CATALOG = "https://cloudbilling.googleapis.com/v1/services"
 CATALOG_SERVICES = {"run": "152E-C115-5142", "sql": "9662-B51E-5089", "pubsub": "A1E8-BE35-7EBC"}
 # SKU ids per priced quantity, pinned after reading `prices` (None: not chosen yet).
 SKUS: dict[str, str | None] = {
-    "run_cpu": None,  # vCPU-second, request-based billing, us-east1
-    "run_memory": None,  # GiB-second, request-based billing, us-east1
-    "run_requests": None,  # requests
-    "sql_instance": None,  # the database tier, per hour
-    "sql_storage": None,  # SSD storage, per GiB-month
-    "pubsub_throughput": None,  # message delivery, per TiB
+    "run_cpu": "4856-B847-F1EB",  # Services CPU (Request-based billing)
+    "run_memory": "02A2-9231-36A6",  # Services Memory (Request-based billing)
+    "run_requests": "2DA5-55D3-E679",  # Requests
+    "sql_instance": "C2D4-F7DF-B8D0",  # PostgreSQL: Zonal - Micro instance (db-f1-micro)
+    "sql_storage": "C18F-7FE0-0717",  # PostgreSQL: Zonal - Standard storage (SSD)
+    "pubsub_throughput": "027D-B6C7-CCA2",  # Message Delivery Basic
 }
 MARGIN = timedelta(minutes=10)
 
