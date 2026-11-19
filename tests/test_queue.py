@@ -83,3 +83,37 @@ async def test_push_rejects_a_body_that_is_not_a_push_message():
         assert (await c.post("/pubsub", json={"nope": 1})).status_code == 400
         bad = {"message": {"data": "!!not base64!!"}}
         assert (await c.post("/pubsub", json=bad)).status_code == 400
+
+
+async def test_model_calls_carry_a_cached_identity_token_for_the_model_service():
+    from prpilot_core.gcp import HEADER, ID_TOKEN_URL, CloudRunIdToken
+
+    seen, now = [], [0.0]
+
+    def metadata(request):
+        assert str(request.url).startswith(ID_TOKEN_URL)
+        assert request.url.params["audience"] == "https://model.run.app"
+        seen.append(request)
+        return httpx.Response(200, text=f"idtok{len(seen)}")
+
+    def model(request):
+        return httpx.Response(
+            200,
+            json={
+                "auth": request.headers.get(HEADER),
+                "api_key": request.headers.get("Authorization"),
+            },
+        )
+
+    auth = CloudRunIdToken("https://model.run.app",
+                           httpx.AsyncClient(transport=httpx.MockTransport(metadata)),
+                           clock=lambda: now[0])  # fmt: skip
+    c = httpx.AsyncClient(transport=httpx.MockTransport(model), auth=auth)
+    headers = {"Authorization": "Bearer local"}
+    first = (await c.get("https://model.run.app/v1/x", headers=headers)).json()
+    now[0] = 3000.0  # still fresh (an hour, refreshed five minutes early)
+    await c.get("https://model.run.app/v1/x", headers=headers)
+    now[0] = 3400.0
+    last = (await c.get("https://model.run.app/v1/x", headers=headers)).json()
+    assert first == {"auth": "Bearer idtok1", "api_key": "Bearer local"}
+    assert last["auth"] == "Bearer idtok2" and len(seen) == 2

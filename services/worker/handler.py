@@ -12,6 +12,7 @@ import httpx
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from prpilot_core.gcp import CloudRunIdToken
 from prpilot_core.github.live import AppAuth, LiveGitHubClient, installation_for
 from prpilot_core.pipeline import Pipeline, should_retry
 from prpilot_core.settings import Settings
@@ -28,9 +29,18 @@ def screening(prompt_guard_dir: str | None, hf_token: str | None, pii: bool):
 
 def make_handler(settings: Settings, sessions):
     http = httpx.AsyncClient(timeout=30)
+    # On Cloud Run the model service accepts only the worker's identity token; locally
+    # (MODEL_AUDIENCE unset) llama.cpp on localhost needs none.
+    model_http = (
+        httpx.AsyncClient(timeout=600, auth=CloudRunIdToken(settings.model_audience))
+        if settings.model_audience
+        else None
+    )
     model = OpenAIChatModel(
         settings.model_name,
-        provider=OpenAIProvider(base_url=settings.model_base_url, api_key="local"),
+        provider=OpenAIProvider(
+            base_url=settings.model_base_url, api_key="local", http_client=model_http
+        ),
     )
     reader_installations: dict[str, int] = {}
 

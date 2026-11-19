@@ -32,6 +32,7 @@ class Settings:
     pubsub_topic: str
     model_base_url: str
     model_name: str
+    model_audience: str
     hf_token: str | None
     prompt_guard_dir: str | None
     pii: bool
@@ -61,6 +62,8 @@ class Settings:
             pubsub_topic=os.environ.get("PUBSUB_TOPIC", ""),
             model_base_url=os.environ.get("MODEL_BASE_URL", "http://127.0.0.1:8080/v1"),
             model_name=os.environ.get("MODEL_NAME", "prpilot-model"),
+            # Cloud Run: the model service's URL, the audience of the worker's identity token.
+            model_audience=os.environ.get("MODEL_AUDIENCE", ""),
             hf_token=os.environ.get("HF_TOKEN") or None,
             prompt_guard_dir=os.environ.get("PROMPT_GUARD_DIR") or None,
             pii=_flag("SCREEN_PII", True),
