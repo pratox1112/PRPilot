@@ -41,6 +41,8 @@ module "secrets" {
     "github-reader-app-key" = [module.iam.emails["worker"]]
     "webhook-secret"        = [module.iam.emails["api"]]
     "admin-token"           = [module.iam.emails["api"], module.iam.emails["executor"]]
+    "langfuse-public-key"   = [module.iam.emails["worker"]]
+    "langfuse-secret-key"   = [module.iam.emails["worker"]]
   }
   depends_on = [google_project_service.apis]
 }
@@ -73,6 +75,8 @@ module "services" {
   owner_email         = var.owner_email
   max_instances       = var.max_instances
   model_min_instances = var.model_min_instances
+  tracing             = var.tracing
+  langfuse_host       = var.langfuse_host
   depends_on          = [module.secrets, module.database]
 }
 

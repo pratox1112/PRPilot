@@ -9,12 +9,13 @@ OpenAI-compatible server (MODEL_BASE_URL). The screening models load once per pr
 from functools import cache
 
 import httpx
+from opentelemetry import trace
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from prpilot_core.gcp import CloudRunIdToken
 from prpilot_core.github.live import AppAuth, LiveGitHubClient, installation_for
-from prpilot_core.pipeline import Pipeline, should_retry
+from prpilot_core.pipeline import TRACER_NAME, Pipeline, should_retry
 from prpilot_core.settings import Settings
 
 
@@ -27,8 +28,11 @@ def screening(prompt_guard_dir: str | None, hf_token: str | None, pii: bool):
     return guard, (PIIRedactor() if pii else None)
 
 
-def make_handler(settings: Settings, sessions):
+def make_handler(settings: Settings, sessions, tracer_provider=None):
+    """`tracer_provider`: the one tracing set up (prpilot_core.tracing), so the pipeline's step
+    spans and the model spans land in the same trace; None means no spans."""
     http = httpx.AsyncClient(timeout=30)
+    tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer(TRACER_NAME)
     # On Cloud Run the model service accepts only the worker's identity token; locally
     # (MODEL_AUDIENCE unset) llama.cpp on localhost needs none.
     model_http = (
@@ -62,7 +66,8 @@ def make_handler(settings: Settings, sessions):
             return False  # only sandbox repos are triaged
         guard, pii = screening(settings.prompt_guard_dir, settings.hf_token, settings.pii)
         gh = LiveGitHubClient(auth=await read_auth(event), http=http)
-        pipeline = Pipeline(sessions=sessions, github=gh, guard=guard, model=model, pii=pii)
+        pipeline = Pipeline(sessions=sessions, github=gh, guard=guard, model=model, pii=pii,
+                            tracer=tracer)  # fmt: skip
         return should_retry(await pipeline.run(event["repo"], event["number"]))
 
     return handle

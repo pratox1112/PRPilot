@@ -102,6 +102,19 @@ Invoke-RestMethod "$($api.executor)/proposals/<id>/actions/labels/execute" -Meth
 
 Writes stay off until `-var executor_dry_run=false` is applied.
 
+## Tracing to Langfuse (optional)
+
+One trace per PR (`pr_run`, with spans `context`, `screen`, `triage` and the model call inside
+it, `proposal`). Add the two key values once, then apply with tracing on:
+
+```powershell
+Add-Secret "langfuse-public-key" (EnvValue "LANGFUSE_PUBLIC_KEY")
+Add-Secret "langfuse-secret-key" (EnvValue "LANGFUSE_SECRET_KEY")
+terraform -chdir=infra/terraform apply @tf -var tracing=true
+```
+
+Every later apply needs `-var tracing=true` too, or tracing turns off again.
+
 ## Pause (between sessions, about $2 a month)
 
 ```powershell

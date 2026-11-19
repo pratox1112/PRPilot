@@ -65,3 +65,14 @@ variable "model_min_instances" {
   type        = number
   default     = 0
 }
+
+variable "tracing" {
+  description = "true: the worker sends a trace per PR to Langfuse (needs the two Langfuse key secrets)."
+  type        = bool
+  default     = false
+}
+
+variable "langfuse_host" {
+  type    = string
+  default = "https://us.cloud.langfuse.com"
+}

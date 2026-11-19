@@ -71,6 +71,14 @@ variable "model_min_instances" {
   type = number
 }
 
+variable "tracing" {
+  type = bool
+}
+
+variable "langfuse_host" {
+  type = string
+}
+
 locals {
   sandbox_repos = join(",", var.sandbox_repos)
 }
@@ -206,6 +214,30 @@ resource "google_cloud_run_v2_service" "worker" {
       env {
         name  = "MODEL_AUDIENCE"
         value = google_cloud_run_v2_service.model.uri
+      }
+      env {
+        name  = "TRACING"
+        value = tostring(var.tracing)
+      }
+      # The Langfuse keys are referenced only with tracing on, so a deploy without them works.
+      dynamic "env" {
+        for_each = var.tracing ? { LANGFUSE_PUBLIC_KEY = "langfuse-public-key", LANGFUSE_SECRET_KEY = "langfuse-secret-key" } : {}
+        content {
+          name = env.key
+          value_source {
+            secret_key_ref {
+              secret  = var.secret_ids[env.value]
+              version = "latest"
+            }
+          }
+        }
+      }
+      dynamic "env" {
+        for_each = var.tracing ? [var.langfuse_host] : []
+        content {
+          name  = "LANGFUSE_HOST"
+          value = env.value
+        }
       }
       # The screening models load before the port opens (~70 s on CPU).
       startup_probe {

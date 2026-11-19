@@ -22,7 +22,7 @@ from services.worker.push import create_worker_app
 settings = Settings.from_env()
 tracer_provider = setup_tracing(settings)
 engine = make_engine(settings.database_url)
-app = create_worker_app(make_handler(settings, make_sessionmaker(engine)))
+app = create_worker_app(make_handler(settings, make_sessionmaker(engine), tracer_provider))
 
 
 @asynccontextmanager
