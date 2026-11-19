@@ -7,7 +7,7 @@ forgotten again and the answer is 503, so GitHub's redelivery is not dropped as 
 
 Approval API (admin token, `Authorization: Bearer ...`):
 - `GET  /runs`, `GET /proposals`, `GET /proposals/{id}`: what the bot did and proposes,
-  including quarantined PRs;
+  including quarantined PRs; `GET /deliveries`: when each webhook arrived;
 - `POST /proposals/{id}/actions/{action}/decision` {decision, content_hash}: approve or reject
   one action, bound to the content hash the human was shown;
 - `POST /proposals/{id}/actions/{action}/execute`: run an approved action through the
@@ -20,7 +20,7 @@ import json
 import uuid
 from dataclasses import dataclass
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
@@ -37,6 +37,7 @@ from prpilot_core.github.webhooks import (
 from prpilot_core.queue import EventQueue
 
 PR_ACTIONS = ("opened", "reopened", "synchronize", "ready_for_review")
+MAX_LIST = 20_000  # the largest page the listings return (a full shadow replay)
 
 
 @dataclass
@@ -133,15 +134,33 @@ def create_app(services: Services, parts: tuple[str, ...] = PARTS) -> FastAPI:
     if "review" in parts:
 
         @app.get("/runs")
-        async def runs(state: str | None = None, who: str = Depends(admin)) -> list[dict]:
+        async def runs(state: str | None = None, repo: str | None = None,
+                       pr_number: int | None = None, limit: int = Query(200, ge=1, le=MAX_LIST),
+                       who: str = Depends(admin)) -> list[dict]:  # fmt: skip
             async with services.sessions() as s:
-                q = select(PRRun).order_by(PRRun.id.desc()).limit(200)
+                q = select(PRRun).order_by(PRRun.id.desc()).limit(limit)
                 if state:
                     q = q.where(PRRun.state == state)
+                if repo:
+                    q = q.where(PRRun.repo == repo)
+                if pr_number is not None:
+                    q = q.where(PRRun.pr_number == pr_number)
                 return [{"id": r.id, "repo": r.repo, "pr_number": r.pr_number,
                          "head_sha": r.head_sha, "state": r.state, "screen": r.screen,
-                         "error": r.error}
+                         "triage": {k: v for k, v in (r.triage or {}).items() if k != "output"},
+                         "error": r.error, "created_at": r.created_at,
+                         "updated_at": r.updated_at}
                         for r in await s.scalars(q)]  # fmt: skip
+
+        @app.get("/deliveries")
+        async def deliveries(limit: int = Query(200, ge=1, le=MAX_LIST),
+                             who: str = Depends(admin)) -> list[dict]:  # fmt: skip
+            """Webhook deliveries as received (for timing: received to triage stored)."""
+            async with services.sessions() as s:
+                q = select(Delivery).order_by(Delivery.received_at.desc()).limit(limit)
+                return [{"delivery_id": d.delivery_id, "event": d.event, "repo": d.repo,
+                         "pr_number": d.pr_number, "received_at": d.received_at}
+                        for d in await s.scalars(q)]  # fmt: skip
 
         async def describe(s, p: Proposal) -> dict:
             approvals = {a.action_id: a for a in await s.scalars(

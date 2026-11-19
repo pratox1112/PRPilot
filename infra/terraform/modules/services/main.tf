@@ -79,6 +79,14 @@ variable "langfuse_host" {
   type = string
 }
 
+variable "replay_bucket" {
+  type = string
+}
+
+variable "replay_bundle" {
+  type = string
+}
+
 locals {
   sandbox_repos = join(",", var.sandbox_repos)
 }
@@ -161,6 +169,16 @@ resource "google_cloud_run_v2_service" "worker" {
         }
       }
     }
+    dynamic "volumes" {
+      for_each = var.replay_bundle != "" ? [var.replay_bucket] : []
+      content {
+        name = "replay"
+        gcs {
+          bucket    = volumes.value
+          read_only = true
+        }
+      }
+    }
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -181,6 +199,13 @@ resource "google_cloud_run_v2_service" "worker" {
       volume_mounts {
         name       = "reader-key"
         mount_path = "/secrets/reader"
+      }
+      dynamic "volume_mounts" {
+        for_each = var.replay_bundle != "" ? ["/replay"] : []
+        content {
+          name       = "replay"
+          mount_path = volume_mounts.value
+        }
       }
       volume_mounts {
         name       = "cloudsql"
@@ -236,6 +261,14 @@ resource "google_cloud_run_v2_service" "worker" {
         for_each = var.tracing ? [var.langfuse_host] : []
         content {
           name  = "LANGFUSE_HOST"
+          value = env.value
+        }
+      }
+      # Pilot / shadow replay: the PRs in this bundle are served from it, not from GitHub.
+      dynamic "env" {
+        for_each = var.replay_bundle != "" ? ["/replay/${var.replay_bundle}"] : []
+        content {
+          name  = "REPLAY_BUNDLE"
           value = env.value
         }
       }

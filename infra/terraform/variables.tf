@@ -72,6 +72,12 @@ variable "tracing" {
   default     = false
 }
 
+variable "replay_bundle" {
+  description = "Object in the replay bucket the worker serves historical PRs from (\"\" = off)."
+  type        = string
+  default     = ""
+}
+
 variable "langfuse_host" {
   type    = string
   default = "https://us.cloud.langfuse.com"

@@ -115,6 +115,31 @@ terraform -chdir=infra/terraform apply @tf -var tracing=true
 
 Every later apply needs `-var tracing=true` too, or tracing turns off again.
 
+## Replaying historical PRs (pilot, burst test, shadow replay)
+
+The worker serves the PRs of a replay bundle (open-time data only) from the replay bucket
+instead of GitHub; every other PR is read live as before, and nothing is written anywhere.
+Build the bundle locally, upload it, and point the worker at it:
+
+```powershell
+uv run --group data python -m replay.bundle --split val --keys data/processed/prompts_val_s500.jsonl --every 10 --out data/processed/replay/pilot_val50.jsonl
+gcloud storage cp data/processed/replay/pilot_val50.jsonl "gs://$proj-replay/"
+terraform -chdir=infra/terraform apply @tf -var replay_bundle=pilot_val50.jsonl
+```
+
+Send it from a clean tree (signed webhooks, at most `--in-flight` PRs open at once), then,
+10 minutes after the last run finished, measure it. The token reads Cloud Monitoring, the
+service sizes and the public price catalog:
+
+```powershell
+uv run python -m replay.send --bundle data/processed/replay/pilot_val50.jsonl --api $api.api --label pilot --in-flight 3
+$env:GCP_ACCESS_TOKEN = gcloud auth print-access-token
+uv run python -m replay.measure report --label pilot --api $api.api
+```
+
+Every later apply needs `-var replay_bundle=...` too while the replay is in use. Without it the
+worker stops mounting the bucket (the bundles stay there until teardown).
+
 ## Pause (between sessions, about $2 a month)
 
 ```powershell

@@ -11,6 +11,10 @@ output "webhook_url" {
   value       = "${module.services.urls["api"]}/webhook"
 }
 
+output "replay_bucket" {
+  value = google_storage_bucket.replay.name
+}
+
 output "ci_workload_identity_provider" {
   description = "GitHub repository variable GCP_WIF_PROVIDER"
   value       = module.ci.workload_identity_provider

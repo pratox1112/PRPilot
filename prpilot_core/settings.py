@@ -40,6 +40,7 @@ class Settings:
     langfuse_public_key: str
     langfuse_secret_key: str
     langfuse_host: str
+    replay_bundle: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -73,4 +74,7 @@ class Settings:
             langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY", ""),
             langfuse_secret_key=os.environ.get("LANGFUSE_SECRET_KEY", ""),
             langfuse_host=os.environ.get("LANGFUSE_HOST", ""),
+            # Shadow replay / pilot: historical PRs the worker serves from this file instead
+            # of GitHub (prpilot_core.github.replay); unset in normal operation.
+            replay_bundle=os.environ.get("REPLAY_BUNDLE", ""),
         )

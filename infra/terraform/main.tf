@@ -4,6 +4,7 @@
 locals {
   apis = [
     "artifactregistry.googleapis.com",
+    "cloudbilling.googleapis.com", # the public price catalog (replay.measure), free
     "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
@@ -12,6 +13,7 @@ locals {
     "run.googleapis.com",
     "secretmanager.googleapis.com",
     "sqladmin.googleapis.com",
+    "storage.googleapis.com",
     "sts.googleapis.com",
   ]
 }
@@ -58,6 +60,23 @@ module "database" {
   depends_on = [google_project_service.apis]
 }
 
+# Replay bundles (historical PRs as of their open time, replay.bundle) for the pilot and the
+# shadow replay. The worker mounts the bucket read-only only while `replay_bundle` is set.
+resource "google_storage_bucket" "replay" {
+  name                        = "${var.project_id}-replay"
+  location                    = var.region
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+  force_destroy               = true # teardown to $0 removes the bundles with the bucket
+  depends_on                  = [google_project_service.apis]
+}
+
+resource "google_storage_bucket_iam_member" "worker_reads_replay" {
+  bucket = google_storage_bucket.replay.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${module.iam.emails["worker"]}"
+}
+
 module "services" {
   source              = "./modules/services"
   project_id          = var.project_id
@@ -77,7 +96,9 @@ module "services" {
   model_min_instances = var.model_min_instances
   tracing             = var.tracing
   langfuse_host       = var.langfuse_host
-  depends_on          = [module.secrets, module.database]
+  replay_bucket       = google_storage_bucket.replay.name
+  replay_bundle       = var.replay_bundle
+  depends_on          = [module.secrets, module.database, google_storage_bucket_iam_member.worker_reads_replay]
 }
 
 module "pubsub" {

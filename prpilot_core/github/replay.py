@@ -6,7 +6,13 @@ reviewers, merge time, linked issues, reverts); this client copies only the open
 listed in OPEN_TIME_FIELDS, so later facts cannot leak through it. Labels and issues come from
 the candidate lists, which were built from labels created and issues open before the PR
 opened.
+
+A replay bundle (`bundle_record`, one JSON object per line) holds exactly what this client
+serves, so the file the deployed worker reads carries no later fact either.
 """
+
+import json
+from pathlib import Path
 
 from prpilot_core.github.client import Issue, PRInfo
 
@@ -26,6 +32,21 @@ OPEN_TIME_FIELDS = (
 
 class NotInReplay(KeyError):
     pass
+
+
+def bundle_record(row: dict, candidates: dict) -> dict:
+    """One bundle line: a dataset row's open-time fields and its open-time candidate lists."""
+    return {
+        "pr": {k: row[k] for k in OPEN_TIME_FIELDS},
+        "candidates": {
+            "repo": row["repo"],
+            "number": int(row["number"]),
+            "labels": list(candidates["labels"]),
+            "reviewers": [{"login": r["login"]} for r in candidates.get("reviewers", [])],
+            "issues": [{"number": i["number"], "title": i.get("title") or ""}
+                       for i in candidates["issues"]],
+        },
+    }  # fmt: skip
 
 
 class ReplayGitHubClient:
@@ -48,6 +69,16 @@ class ReplayGitHubClient:
                                             for i in c["issues"]]
             for c in candidates
         }  # fmt: skip
+
+    @classmethod
+    def from_bundle(cls, path: str | Path) -> "ReplayGitHubClient":
+        # Split on "\n" only (PR text can hold other line separators; see prpilot_data.records).
+        with open(path, encoding="utf-8", newline="") as f:
+            records = [json.loads(line) for line in f.read().split("\n") if line.strip()]
+        return cls([r["pr"] for r in records], [r["candidates"] for r in records])
+
+    def __contains__(self, key: tuple[str, int]) -> bool:
+        return key in self._prs
 
     def _pr(self, repo: str, number: int) -> dict:
         try:
