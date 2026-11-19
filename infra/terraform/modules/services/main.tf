@@ -89,6 +89,13 @@ variable "replay_bundle" {
 
 locals {
   sandbox_repos = join(",", var.sandbox_repos)
+  # Database connections per instance. All instances together (worker 10 x 2, api 2 x 4,
+  # executor 2, plus the migrate job) stay under the database's max_connections (50).
+  db_pool = {
+    worker   = { DB_POOL_SIZE = "1", DB_MAX_OVERFLOW = "1" } # one PR at a time
+    api      = { DB_POOL_SIZE = "4", DB_MAX_OVERFLOW = "0" }
+    executor = { DB_POOL_SIZE = "2", DB_MAX_OVERFLOW = "0" }
+  }
 }
 
 # ---------------------------------------------------------------------------------- model
@@ -224,6 +231,13 @@ resource "google_cloud_run_v2_service" "worker" {
         name  = "SANDBOX_REPOS"
         value = local.sandbox_repos
       }
+      dynamic "env" {
+        for_each = local.db_pool["worker"]
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
       env {
         name  = "GITHUB_READER_APP_ID"
         value = var.reader_app_id
@@ -303,9 +317,11 @@ resource "google_cloud_run_v2_service" "api" {
     service_account = var.service_accounts["api"]
     timeout         = "30s"
 
+    # Fixed, not max_instances: the api answers in milliseconds, and its connections count
+    # against the database's limit (see db_pool).
     scaling {
       min_instance_count = 0
-      max_instance_count = var.max_instances
+      max_instance_count = 2
     }
 
     volumes {
@@ -367,6 +383,13 @@ resource "google_cloud_run_v2_service" "api" {
       env {
         name  = "SANDBOX_REPOS"
         value = local.sandbox_repos
+      }
+      dynamic "env" {
+        for_each = local.db_pool["api"]
+        content {
+          name  = env.key
+          value = env.value
+        }
       }
     }
   }
@@ -453,6 +476,13 @@ resource "google_cloud_run_v2_service" "executor" {
       env {
         name  = "SANDBOX_REPOS"
         value = local.sandbox_repos
+      }
+      dynamic "env" {
+        for_each = local.db_pool["executor"]
+        content {
+          name  = env.key
+          value = env.value
+        }
       }
       env {
         name  = "EXECUTOR_DRY_RUN"

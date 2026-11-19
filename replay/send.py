@@ -61,8 +61,9 @@ def now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-async def send_one(http: httpx.AsyncClient, api: str, secret: str, admin: dict, label: str,
-                   pr: dict, timeout: float, poll: float) -> dict:  # fmt: skip
+async def post_webhook(http: httpx.AsyncClient, api: str, secret: str, label: str,
+                       pr: dict) -> dict:  # fmt: skip
+    """Send one signed delivery; the same label and PR always carry the same delivery id."""
     body = json.dumps(payload(pr)).encode()
     did = delivery_id(label, pr["repo"], pr["number"])
     headers = {SIGNATURE_HEADER: sign(secret, body), DELIVERY_HEADER: did,
@@ -70,8 +71,14 @@ async def send_one(http: httpx.AsyncClient, api: str, secret: str, admin: dict, 
     rec = {"repo": pr["repo"], "number": pr["number"], "head_sha": pr["head_sha"],
            "delivery_id": did, "sent_at": now()}  # fmt: skip
     r = await http.post(f"{api}/webhook", content=body, headers=headers)
-    rec.update(http_status=r.status_code, answer=r.json() if r.status_code < 500 else r.text)
-    if r.status_code != 202:
+    return {**rec, "http_status": r.status_code,
+            "answer": r.json() if r.status_code < 500 else r.text}  # fmt: skip
+
+
+async def send_one(http: httpx.AsyncClient, api: str, secret: str, admin: dict, label: str,
+                   pr: dict, timeout: float, poll: float) -> dict:  # fmt: skip
+    rec = await post_webhook(http, api, secret, label, pr)
+    if rec["http_status"] != 202:
         return {**rec, "final": None, "outcome": "not accepted"}
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:

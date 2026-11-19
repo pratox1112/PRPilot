@@ -47,6 +47,9 @@ def test_bundle_picks_keys_in_order_then_sorts_by_opening_time():
     assert [r["pr"]["number"] for r in bundle.build(rows, cands)] == [3, 2, 1]
     every = bundle.build(rows, cands, keys=[("o/r", 1), ("o/r", 2), ("o/r", 3)], every=2)
     assert [r["pr"]["number"] for r in every] == [3, 1]
+    rest = bundle.build(rows, cands, exclude=frozenset({("o/r", 2)}), sample=2, seed=1)
+    assert sorted(r["pr"]["number"] for r in rest) == [1, 3]
+    assert rest == bundle.build(rows, cands, exclude=frozenset({("o/r", 2)}), sample=2, seed=1)
     with pytest.raises(SystemExit):
         bundle.build(rows, cands[:2])
 
@@ -122,14 +125,20 @@ def test_outcomes_latency_and_prices():
         "updated_at": "2026-11-18T10:00:35Z",
         "triage": {"requests": 2, "valid_after_retries": True, "partly_filtered": False},
     }
-    sent = {"sent_at": "2026-11-18T09:59:59Z", "seen_final_at": "2026-11-18T10:00:40Z"}
+    sent = {
+        "sent_at": "2026-11-18T09:59:59Z",
+        "seen_final_at": "2026-11-18T10:00:40Z",
+        "http_status": 202,
+    }
     sends = [{"delivery_id": "a", "outcome": "proposed", "final": run, **sent},
              {"delivery_id": "b", "outcome": "quarantined", **sent,
               "final": {**run, "triage": None, "updated_at": "2026-11-18T10:00:10Z"}},
-             {"delivery_id": "c", "outcome": "unfinished", "final": None}]  # fmt: skip
+             {"delivery_id": "c", "outcome": "unfinished", "final": None,
+              "http_status": 202}]  # fmt: skip
     out = measure.outcomes(sends, {"a": "2026-11-18T10:00:00Z", "b": "2026-11-18T10:00:00Z"})
     assert out["sent_to_seen_final"] == {"n": 2, "p50_s": 41.0, "p95_s": 41.0, "max_s": 41.0}
     assert out["outcomes"] == {"proposed": 1, "quarantined": 1, "unfinished": 1}
+    assert (out["accepted"], out["final"]) == (3, 2)
     assert out["triaged"] == 1 and out["valid_after_retries"] == 1
     assert out["webhook_to_stored"] == {"n": 2, "p50_s": 10.0, "p95_s": 35.0, "max_s": 35.0}
     client_only = measure.outcomes(sends, None)
@@ -162,3 +171,57 @@ def test_metric_sums_page_and_group():
     t = datetime(2026, 11, 18, tzinfo=UTC)
     sums = g.metric_sum("m", t, t + timedelta(minutes=5), group_by="resource.labels.service_name")
     assert sums == {"prpilot-worker": 30.5, "prpilot-model": 22.0}
+
+
+@pytest.mark.anyio
+async def test_a_burst_with_redeliveries_creates_one_proposal_per_pr(db, tmp_path, monkeypatch):
+    from loadtest import burst
+
+    rows = [{**ROW, "number": n, "head_sha": f"{n}" * 40} for n in (5, 6, 7, 8)]
+    records = [bundle_record(r, {**CAND, "number": r["number"]}) for r in rows]
+    path = tmp_path / "b.jsonl"
+    bundle.write(records, path)
+    model, calls = scripted(answer(labels=["kind/bug"], related_issues=[12]))
+    monkeypatch.setattr(handler, "screening", lambda *a: (FakeGuard(), None))
+    monkeypatch.setattr(handler, "OpenAIChatModel", lambda *a, **k: model)
+    monkeypatch.setattr("prpilot_core.context._count_tokens", lambda: lambda t: len(t.split()))
+    handle = handler.make_handler(settings(path), db)
+
+    async def at_least_once(event):  # Pub/Sub may deliver an event more than once
+        await handle(event)
+        await handle(event)
+
+    queue = InProcessQueue(at_least_once)
+    queue.start()
+    c, _ = client(db, queue=queue)
+    admin = {"Authorization": f"Bearer {TOKEN}"}
+    try:
+        async with c:
+            sent = await burst.burst(records, c, "http://t", SECRET, admin, "b", redeliver=0.25,
+                                     seed=0, concurrency=4, timeout=5, poll=0.01,
+                                     out=tmp_path / "s.jsonl")  # fmt: skip
+            proposals = (await c.get("/proposals", headers=AUTH, params={"limit": 50})).json()
+    finally:
+        await queue.stop()
+    assert [s["outcome"] for s in sent] == ["proposed"] * 4 and len(calls) == 4
+    [again] = [s for s in sent if "redelivered_at" in s]
+    assert again["redelivery_answer"] == {"status": "duplicate"}
+    assert measure.duplicates(sent, proposals) == {
+        "proposals": 4, "prs_with_proposals": 4, "duplicate_proposals": 0}  # fmt: skip
+    out = measure.outcomes(read_sends(tmp_path / "s.jsonl"), None)
+    assert (out["accepted"], out["final"]) == (4, 4)
+    assert out["redelivery_answers"] == {'{"status": "duplicate"}': 1}
+
+
+def read_sends(path):
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+def test_duplicates_and_own_outputs_do_not_count_as_dirty():
+    sends = [{"repo": "o/r", "number": 5, "head_sha": "a"}]
+    proposals = [{"repo": "o/r", "pr_number": 5, "head_sha": "a"}] * 2 + [
+        {"repo": "o/r", "pr_number": 9, "head_sha": "b"}]  # fmt: skip
+    assert measure.duplicates(sends, proposals)["duplicate_proposals"] == 1
+    git = {"commit": "c", "dirty": True, "dirty_paths": ["results/x.json", "replay/send.py"]}
+    assert measure.clean_except(git, ["results/x.json"])["dirty_paths"] == ["replay/send.py"]
+    assert not measure.clean_except(git, ["results/x.json", "replay/send.py"])["dirty"]

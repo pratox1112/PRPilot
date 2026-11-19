@@ -15,6 +15,9 @@
   report at least 10 minutes after the send ends, with no other traffic in the window.
 - Sizes: each service's CPU and memory as deployed (Cloud Run API), the database tier and disk
   (Cloud SQL Admin API).
+- Burst checks (loadtest.burst): redeliveries sent and how the api answered them; lost
+  events (accepted, never final, not dead-lettered); with `--server-times`, PRs with more than
+  one proposal (the duplicates the dedupe must prevent).
 - Prices: list prices from the Cloud Billing price catalog, by the SKU ids pinned in SKUS
   (chosen from `prices`, recorded with their descriptions). The monthly free tier is not
   applied, so the cost is what the same usage costs once the free tier is used up.
@@ -175,10 +178,14 @@ def database(g: Google) -> dict:
 def outcomes(sends: list[dict], deliveries: dict[str, str] | None) -> dict:
     """`deliveries`: delivery id -> received_at for the server-clock latencies, or None."""
     states: dict[str, int] = {}
+    redelivery: dict[str, int] = {}
     seen, e2e, worker, requests = [], [], [], []
     valid = rescued = 0
     for s in sends:
         states[s["outcome"]] = states.get(s["outcome"], 0) + 1
+        if "redelivery_answer" in s:
+            answer = json.dumps(s["redelivery_answer"])
+            redelivery[answer] = redelivery.get(answer, 0) + 1
         run = s.get("final")
         if not run:
             continue
@@ -199,7 +206,8 @@ def outcomes(sends: list[dict], deliveries: dict[str, str] | None) -> dict:
                 "max_s": max(xs) if xs else None}  # fmt: skip
 
     return {
-        "prs_sent": len(sends), "outcomes": states,
+        "prs_sent": len(sends), "accepted": sum(s["http_status"] == 202 for s in sends),
+        "final": len(seen), "outcomes": states, "redelivery_answers": redelivery,
         "triaged": len(requests), "valid_after_retries": valid, "rescued_by_fallback": rescued,
         "model_requests_mean": sum(requests) / len(requests) if requests else None,
         "sent_to_seen_final": summary(seen),
@@ -208,15 +216,36 @@ def outcomes(sends: list[dict], deliveries: dict[str, str] | None) -> dict:
     }  # fmt: skip
 
 
+def duplicates(sends: list[dict], proposals: list[dict]) -> dict:
+    """Proposals per sent PR (repo, number, head SHA): more than one is a duplicate."""
+    keys = {(s["repo"], s["number"], s["head_sha"]) for s in sends}
+    per: dict[tuple, int] = {}
+    for p in proposals:
+        key = (p["repo"], p["pr_number"], p["head_sha"])
+        if key in keys:
+            per[key] = per.get(key, 0) + 1
+    return {"proposals": sum(per.values()), "prs_with_proposals": len(per),
+            "duplicate_proposals": sum(n - 1 for n in per.values())}  # fmt: skip
+
+
+def clean_except(git: dict, outputs: list[str]) -> dict:
+    """The tree's state, not counting this report's own output files."""
+    rest = [p for p in git["dirty_paths"] if p not in outputs]
+    return {**git, "dirty": bool(rest), "dirty_paths": rest}
+
+
 def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None:
     sends = read_jsonl(SENDS_DIR / f"{label}.sends.jsonl")
-    deliveries = None
+    deliveries, dups = None, None
     if api:
         _, admin = secret_values()
-        r = httpx.get(f"{api}/deliveries", params={"limit": 20000},
-                      headers={"Authorization": f"Bearer {admin}"}, timeout=60)  # fmt: skip
+        auth = {"Authorization": f"Bearer {admin}"}
+        r = httpx.get(f"{api}/deliveries", params={"limit": 20000}, headers=auth, timeout=60)
         r.raise_for_status()
         deliveries = {d["delivery_id"]: d["received_at"] for d in r.json()}
+        r = httpx.get(f"{api}/proposals", params={"limit": 20000}, headers=auth, timeout=300)
+        r.raise_for_status()
+        dups = duplicates(sends, r.json())
     start = min(ts(s["sent_at"]) for s in sends)
     end = max(ts(s.get("seen_final_at") or s["sent_at"]) for s in sends)
     window = (start, end + MARGIN)
@@ -254,14 +283,18 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None
     pubsub_usd = pubsub_bytes / 2**40 * usd["pubsub_throughput"]
     serving_usd = sum(s["usd"] for s in per_service.values()) + pubsub_usd
     out = outcomes(sends, deliveries)
+    meta = run_metadata(["httpx"])
+    outputs = [f"results/{label}.json", f"results/{label}.records.jsonl"]
     n = max(out["prs_sent"], 1)
     minutes = (end - start).total_seconds() / 60
     write_result(label, {
-        "label": label, "meta": run_metadata(["httpx"]), "notes": notes,
+        "label": label, "notes": notes,
+        "meta": {**meta, "git": clean_except(meta["git"], outputs)},
         "window_utc": [rfc3339(w) for w in window], "send_minutes": minutes,
         "throughput_prs_per_min": out["prs_sent"] / minutes if minutes else None,
         **out,
         "pubsub": {"push_answers": push, "dead_lettered": dead, "billed_bytes": pubsub_bytes},
+        "lost": out["accepted"] - out["final"] - int(dead), "duplicates": dups,
         "usage": per_service, "database": {**db, "hours": hours, "usd": db_usd},
         "prices": prices, "free_tier_applied": False,
         "cost_usd": {"serving": serving_usd, "database": db_usd,
@@ -270,7 +303,11 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None
     })  # fmt: skip
     with (RESULTS_DIR / f"{label}.records.jsonl").open("w", encoding="utf-8") as f:
         f.writelines(json.dumps(s, default=str) + "\n" for s in sends)
-    print(json.dumps({k: out[k] for k in ("outcomes", "sent_to_seen_final")}, indent=1))
+    keys = ("accepted", "final", "outcomes", "redelivery_answers", "sent_to_seen_final",
+            "webhook_to_stored")  # fmt: skip
+    print(json.dumps({k: out[k] for k in keys}, indent=1))
+    print(f"lost {out['accepted'] - out['final'] - int(dead)}, dead-lettered {int(dead)}, "
+          f"duplicates {dups}")  # fmt: skip
     print(f"serving ${serving_usd:.4f} (${serving_usd / n:.5f}/PR), database ${db_usd:.4f}")
     print(f"-> {RESULTS_DIR / (label + '.json')}")
 

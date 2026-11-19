@@ -37,6 +37,13 @@ resource "google_sql_database_instance" "pg" {
     backup_configuration {
       enabled = false
     }
+
+    # db-f1-micro allows 25 by default, a few of them reserved; the services' pools add up to
+    # more under load (modules/services, db_pool).
+    database_flags {
+      name  = "max_connections"
+      value = "50"
+    }
   }
 }
 

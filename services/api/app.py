@@ -177,10 +177,11 @@ def create_app(services: Services, parts: tuple[str, ...] = PARTS) -> FastAPI:
                     "triage": p.content["triage"], "notes": p.content["notes"]}  # fmt: skip
 
         @app.get("/proposals")
-        async def proposals(who: str = Depends(admin)) -> list[dict]:
+        async def proposals(limit: int = Query(200, ge=1, le=MAX_LIST),
+                            who: str = Depends(admin)) -> list[dict]:  # fmt: skip
             async with services.sessions() as s:
                 ps = await s.scalars(
-                    select(Proposal).order_by(Proposal.created_at.desc()).limit(200)
+                    select(Proposal).order_by(Proposal.created_at.desc()).limit(limit)
                 )
                 return [await describe(s, p) for p in ps]
 

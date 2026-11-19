@@ -60,6 +60,12 @@ variable "max_instances" {
   default     = 3
 }
 
+variable "max_delivery_attempts" {
+  description = "Pub/Sub pushes per event before the dead-letter topic: 5 normally; 20 for load runs, so an event can wait about 2.5 hours (backoff 10 s to 600 s) for a free worker instead of being dead-lettered."
+  type        = number
+  default     = 5
+}
+
 variable "model_min_instances" {
   description = "0 in dev; 1 during load tests, so the model has no cold start."
   type        = number

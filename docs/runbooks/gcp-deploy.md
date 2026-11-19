@@ -137,6 +137,18 @@ $env:GCP_ACCESS_TOKEN = gcloud auth print-access-token
 uv run python -m replay.measure report --label pilot --server-times $api.api
 ```
 
+For a burst test (all events at once, 10% redelivered), raise capacity for the run with
+`-var max_instances=10 -var model_min_instances=1 -var max_delivery_attempts=20`, so events
+wait in Pub/Sub for a free worker instead of being dead-lettered, then:
+
+```powershell
+uv run python -m loadtest.burst --bundle data/processed/replay/burst_val500.jsonl --api $api.api --label burst
+uv run python -m replay.measure report --label burst --server-times $api.api
+```
+
+Apply again without those three variables after the run (back to 3 instances, model at zero,
+5 attempts).
+
 Every later apply needs `-var replay_bundle=...` too while the replay is in use. Without it the
 worker stops mounting the bucket (the bundles stay there until teardown).
 

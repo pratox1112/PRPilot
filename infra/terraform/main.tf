@@ -107,7 +107,7 @@ module "pubsub" {
   publisher      = module.iam.emails["api"]
   push_account   = module.iam.emails["pubsub-push"]
   push_endpoint  = module.services.worker_url
-  max_attempts   = 5
+  max_attempts   = var.max_delivery_attempts
   ack_deadline_s = 600
   depends_on     = [google_project_service.apis]
 }
