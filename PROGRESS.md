@@ -565,3 +565,17 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Dataset hash: n/a
 - Notes / decisions / problems: the deployment is paused (`db_activation_policy=NEVER`); services scale to zero. Measured cost of this session's runs at list prices: burst $4.84, shadow replay $2.56.
 - Next: Resume Numbers (owner approval), PR to `main`; then Phase 7 (owner's choice) or Phase 9
+
+## Phase 9 — Teardown (the demo video dropped by the owner)
+
+### 2026-11-20 — Task 9.1 — GCP teardown to zero cost
+- Status: done (owner-reported; the empty listings were not pasted into this log)
+- What changed: Phase 7 (the dashboard) and the demo video were dropped by the owner (2026-11-20). Before the teardown, screenshots of the deployed system went to `docs/images/` for the README: the monitoring dashboard, worker logs, the services, the dead-letter alert and queue, Langfuse traces and the API docs page. The owner then:
+  - ran `terraform destroy`. The paused database blocked the deletion of its database and user ("instance is not running"); both were removed from the state and the destroy was run again, and deleting the instance removes them;
+  - deleted the Terraform state bucket;
+  - ran the runbook's listings (Cloud Run services and jobs, Cloud SQL, Artifact Registry, Secret Manager, Pub/Sub topics and subscriptions, buckets);
+  - turned the writing App's webhook off and deleted the repo's GCP variables and secrets, so CI's plan step skips itself and fmt and validate still run.
+- Results: n/a. Measured run costs at list prices are in `results/pilot.json`, `burst.json` and `shadow.json` (6.4–6.6).
+- Dataset hash: n/a
+- Notes / decisions / problems: everything measured stays in `results/`; the Langfuse traces stay in Langfuse Cloud (US region). The runbook (`docs/runbooks/gcp-deploy.md`) rebuilds the deployment from an empty project. A paused Cloud SQL instance cannot have its databases or users deleted, so the runbook's teardown should start the instance first, or remove those two resources from the state. Billing: [owner to record: unlinked, project deleted, or kept].
+- Next: Phase 8 (README, design doc, data card, Resume Numbers with the owner's approval)
