@@ -28,7 +28,7 @@ settings = Settings.from_env()
 tracer_provider = setup_tracing(settings)
 engine = make_engine(settings.database_url)
 sessions = make_sessionmaker(engine)
-queue = InProcessQueue(make_handler(settings, sessions))
+queue = InProcessQueue(make_handler(settings, sessions, tracer_provider))
 writer = AppWriter(settings.app_id, settings.app_private_key) if settings.app_id else None
 api = create_app(
     Services(

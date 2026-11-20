@@ -14,7 +14,15 @@ def database_url() -> str:
 
 
 def make_engine(url: str | None = None) -> AsyncEngine:
-    return create_async_engine(url or database_url(), pool_pre_ping=True)
+    """Pool bounds from DB_POOL_SIZE and DB_MAX_OVERFLOW (SQLAlchemy's 5 and 10 if unset). On
+    Cloud Run each service sets them, so all instances together stay under the database's
+    connection limit."""
+    return create_async_engine(
+        url or database_url(),
+        pool_pre_ping=True,
+        pool_size=int(os.environ.get("DB_POOL_SIZE", "5")),
+        max_overflow=int(os.environ.get("DB_MAX_OVERFLOW", "10")),
+    )
 
 
 def make_sessionmaker(engine: AsyncEngine) -> async_sessionmaker:

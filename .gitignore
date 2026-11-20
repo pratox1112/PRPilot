@@ -40,6 +40,8 @@ node_modules/
 *.tfstate
 *.tfstate.*
 *.tfvars
+# non-secret settings of the dev deployment (no keys, tokens or emails); CI's plan reads it
+!infra/terraform/dev.tfvars
 
 # os / editor
 .DS_Store

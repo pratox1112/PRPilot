@@ -106,6 +106,48 @@ jobs:
           PROMPTFOO_PYTHON: ${{ github.workspace }}/.venv/bin/python
         run: npx --yes promptfoo@0.125.1 eval -c redteam/promptfoo/promptfooconfig.yaml --no-cache --max-concurrency 1
 
+  terraform:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write # to sign in to GCP through Workload Identity Federation (plan only)
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.6
+
+      - name: Format
+        run: terraform fmt -check -recursive
+
+      - name: Validate
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      # Runs once the CI identity exists (after the first `terraform apply`) and the repository
+      # variables GCP_WIF_PROVIDER and GCP_PLAN_SERVICE_ACCOUNT are set. The owner's email
+      # addresses are secrets so they are masked in this public repository's logs.
+      - uses: google-github-actions/auth@v2
+        if: vars.GCP_WIF_PROVIDER != ''
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAN_SERVICE_ACCOUNT }}
+
+      - name: Plan (read-only)
+        if: vars.GCP_WIF_PROVIDER != ''
+        env:
+          TF_VAR_owner_email: ${{ secrets.OWNER_EMAIL }}
+          TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
+          TF_VAR_image_tag: ${{ vars.IMAGE_TAG }}
+        run: |
+          terraform init -input=false -backend-config="bucket=prpilot-513002-tfstate"
+          terraform plan -input=false -lock=false -var-file=dev.tfvars
+
   secret-scan:
     runs-on: ubuntu-24.04
     steps:

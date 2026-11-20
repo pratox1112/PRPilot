@@ -1,0 +1,11 @@
+# Allowlist: the app and worker images get only what they run (never .env, keys, data).
+*
+!pyproject.toml
+!uv.lock
+!prpilot_core
+!prpilot_data
+!services
+!alembic.ini
+!migrations
+!scripts/fetch_worker_models.py
+**/__pycache__

@@ -12,6 +12,8 @@ hours, and the executor is triggered by the approval itself, not by this pipelin
 
 from dataclasses import dataclass, field
 
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode, Tracer
 from pydantic_ai import capture_run_messages
 from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models import Model
@@ -34,7 +36,16 @@ from prpilot_core.screening.prompt_guard import DEFAULT_THRESHOLD
 from prpilot_core.screening.screen import Guard, Redactor, screen
 from prpilot_data.candidates import MAX_FILES
 
+TRACER_NAME = "prpilot.pipeline"
 DONE = ("quarantined", "proposed")  # a failed run is retried when the event comes again
+
+
+def should_retry(run: PRRun) -> bool:
+    """Whether the queue should deliver this event again. A step that raised (GitHub, the
+    database, the model server) is worth retrying: the rollback left `triage` empty. A run
+    whose model output stayed unusable after the agent's retries is not: the model runs at
+    temperature 0 and would answer the same way, so redelivering only burns model time."""
+    return run.state == "failed" and run.triage is None
 
 
 @dataclass
@@ -62,10 +73,24 @@ class Pipeline:
     pii: Redactor | None = None
     config: PipelineConfig = field(default_factory=PipelineConfig)
     count_tokens: object = None  # injected in tests; the student's tokenizer otherwise
+    # A span per step (ids, scores and states only; PR text is in the model spans, screened).
+    # The global tracer is a no-op unless tracing is set up.
+    tracer: Tracer = field(default_factory=lambda: trace.get_tracer(TRACER_NAME))
 
     async def run(self, repo: str, number: int) -> PRRun:
+        attrs = {"prpilot.repo": repo, "prpilot.pr_number": number}
+        with self.tracer.start_as_current_span("pr_run", attributes=attrs) as span:
+            run = await self._run(repo, number)
+            span.set_attributes({"prpilot.run_id": run.id, "prpilot.head_sha": run.head_sha,
+                                 "prpilot.state": run.state})  # fmt: skip
+            if run.state == "failed":
+                span.set_status(Status(StatusCode.ERROR, (run.error or "")[:200]))
+            return run
+
+    async def _run(self, repo: str, number: int) -> PRRun:
         async with self.sessions() as session:
-            ctx = await build_context(self.github, session, repo, number, self.count_tokens)
+            with self.tracer.start_as_current_span("context"):
+                ctx = await build_context(self.github, session, repo, number, self.count_tokens)
             await session.execute(
                 insert(PRRun)
                 .values(repo=repo, pr_number=number, head_sha=ctx.info.head_sha)
@@ -94,7 +119,12 @@ class Pipeline:
 
     async def _process(self, session, run: PRRun, ctx) -> None:
         cfg = self.config
-        res = screen(ctx.pr, self.guard, self.pii, cfg.scan_secrets, cfg.threshold)
+        with self.tracer.start_as_current_span("screen") as span:
+            res = screen(ctx.pr, self.guard, self.pii, cfg.scan_secrets, cfg.threshold)
+            span.set_attributes({"prpilot.guard_score": res.guard_score,
+                                 "prpilot.quarantined": res.quarantined,
+                                 "prpilot.pii_redacted": len(res.pii),
+                                 "prpilot.secrets_redacted": len(res.secrets)})  # fmt: skip
         run.screen = {
             "quarantined": res.quarantined,
             "guard_score": round(res.guard_score, 6),
@@ -108,7 +138,11 @@ class Pipeline:
             return
         run.state = "screened"
         deps = TriageDeps(rules=ctx.rules, pr_author=ctx.info.author, run_id=str(run.id))
-        out, meta = await self._triage(build_user_prompt(res.pr, ctx.rules), deps)
+        with self.tracer.start_as_current_span("triage") as span:  # the model calls nest here
+            out, meta = await self._triage(build_user_prompt(res.pr, ctx.rules), deps)
+            span.set_attributes({"prpilot.requests": meta["requests"],
+                                 "prpilot.valid_after_retries": meta["valid_after_retries"],
+                                 "prpilot.partly_filtered": meta["partly_filtered"]})  # fmt: skip
         run.triage = {"output": out.model_dump(mode="json") if out else None, **meta}
         if out is None:
             run.state, run.error = "failed", meta["error"]
@@ -121,11 +155,15 @@ class Pipeline:
         # file paths only (no PR text): live outcomes update reviewer memory under them
         notes = {**ctx.notes, "reviewer_rule": cfg.reviewer_rule, **meta,
                  "changed_files": list(ctx.pr.changed_files)[:MAX_FILES]}  # fmt: skip
-        content = build_content(run.repo, run.pr_number, run.head_sha, final,
-                                draft_comment(final), notes)  # fmt: skip
-        session.add(Proposal(run_id=run.id, repo=run.repo, pr_number=run.pr_number,
-                             head_sha=run.head_sha, content=content,
-                             content_hash=content_hash(content)))  # fmt: skip
+        with self.tracer.start_as_current_span("proposal") as span:
+            content = build_content(run.repo, run.pr_number, run.head_sha, final,
+                                    draft_comment(final), notes)  # fmt: skip
+            digest = content_hash(content)
+            session.add(Proposal(run_id=run.id, repo=run.repo, pr_number=run.pr_number,
+                                 head_sha=run.head_sha, content=content,
+                                 content_hash=digest))  # fmt: skip
+            actions = [a["id"] for a in content["actions"]]
+            span.set_attributes({"prpilot.content_hash": digest, "prpilot.actions": actions})
         run.state = "proposed"
 
     async def _triage(self, prompt: str, deps: TriageDeps) -> tuple[TriageOutput | None, dict]:

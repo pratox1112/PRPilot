@@ -1,0 +1,324 @@
+{
+  "name": "shadow-proposal",
+  "runner": {
+    "name": "shadow-proposal",
+    "view": "proposal",
+    "pack_file": "prompts_test.jsonl",
+    "pack_sha256": "sha256:f1caef7782bdc4592655b9ae6fee42d05076573f5ae5c0a3629f44b9f0386f53",
+    "source": "deployed system, replay send 'shadow' via https://prpilot-api-yyfn3csp4a-ue.a.run.app",
+    "runs": {
+      "prs_sent": 103,
+      "runs": 103,
+      "states": {
+        "failed": 10,
+        "proposed": 93
+      },
+      "partly_filtered": 49,
+      "pii_redacted": 28,
+      "secrets_redacted": 5
+    },
+    "timestamp_utc": "2026-11-20T21:33:46+00:00",
+    "git": {
+      "commit": "23b8d5d8bdd57588aa0bb01467903b0df288a53f",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "scored_at_utc": "2026-11-20T21:34:13+00:00",
+  "git": {
+    "commit": "23b8d5d8bdd57588aa0bb01467903b0df288a53f",
+    "dirty": false,
+    "dirty_paths": [
+      "results/shadow_replay_model.json",
+      "results/shadow_replay_model.records.jsonl"
+    ]
+  },
+  "python": "3.12.10",
+  "packages": {
+    "jsonschema": "4.26.0"
+  },
+  "inputs": {
+    "pack": {
+      "file": "prompts_test.jsonl",
+      "sha256": "sha256:f1caef7782bdc4592655b9ae6fee42d05076573f5ae5c0a3629f44b9f0386f53"
+    },
+    "targets": {
+      "file": "targets_test.jsonl",
+      "sha256": "sha256:21572a352a4cbf1f95769a877ce023bcb9eadf001df890e6e40d917faea85236"
+    },
+    "replies": {
+      "file": "shadow-proposal.jsonl",
+      "sha256": "sha256:2d99d094cd5c12d1db3d2b559924e350b458e7f426d9a16b534ec026cdd65bf1"
+    },
+    "only": {
+      "file": "shadow_done.jsonl",
+      "sha256": "sha256:50d5b83dd1c36b1df8e03ad521e0ada1c1d02128b5351acba3ddc15311112643"
+    }
+  },
+  "prs": 103,
+  "metrics": {
+    "maintainer_match": {
+      "value": 0.5769,
+      "n": 26,
+      "ci95": [
+        0.3478,
+        0.7778
+      ]
+    },
+    "type_macro_f1": {
+      "value": 0.5071,
+      "n": 26,
+      "ci95": [
+        0.325,
+        0.7515
+      ]
+    },
+    "label_micro_f1": {
+      "value": 0.1,
+      "n": 103,
+      "ci95": [
+        0.0392,
+        0.1606
+      ]
+    },
+    "reviewer_recall_at_3": {
+      "value": 0.4717,
+      "n": 53,
+      "ci95": [
+        0.3333,
+        0.6038
+      ]
+    },
+    "reviewer_recall_at_3_reviewed_only": {
+      "value": 0.4717,
+      "n": 53,
+      "ci95": [
+        0.3333,
+        0.6038
+      ]
+    },
+    "issue_recall_at_5": {
+      "value": 0.5455,
+      "n": 22,
+      "ci95": [
+        0.3333,
+        0.75
+      ]
+    },
+    "issue_recall_at_5_named_at_open": {
+      "value": 0.75,
+      "n": 12,
+      "ci95": [
+        0.5,
+        1.0
+      ]
+    },
+    "issue_recall_at_5_not_named": {
+      "value": 0.3,
+      "n": 10,
+      "ci95": [
+        0.0,
+        0.6
+      ]
+    },
+    "json_validity": {
+      "value": 0.9029,
+      "n": 103,
+      "ci95": [
+        0.8447,
+        0.9612
+      ]
+    },
+    "risk_auroc": {
+      "value": null,
+      "n": 103,
+      "positives": 0,
+      "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+    }
+  },
+  "per_type": {
+    "bug": {
+      "n": 4,
+      "recall": 0.75,
+      "predicted": 7
+    },
+    "feature": {
+      "n": 5,
+      "recall": 0.8,
+      "predicted": 5
+    },
+    "docs": {
+      "n": 3,
+      "recall": 1.0,
+      "predicted": 6
+    },
+    "refactor": {
+      "n": 9,
+      "recall": 0.2222,
+      "predicted": 2
+    },
+    "ci/build": {
+      "n": 4,
+      "recall": 0.75,
+      "predicted": 5
+    },
+    "other": {
+      "n": 1,
+      "recall": 0.0,
+      "predicted": 0
+    }
+  },
+  "breakdowns": {
+    "repo:numpy/numpy": {
+      "maintainer_match": {
+        "value": 0.5769,
+        "n": 26
+      },
+      "type_macro_f1": {
+        "value": 0.5071,
+        "n": 26
+      },
+      "label_micro_f1": {
+        "value": 0.1,
+        "n": 103
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.4717,
+        "n": 53
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.4717,
+        "n": 53
+      },
+      "issue_recall_at_5": {
+        "value": 0.5455,
+        "n": 22
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 0.75,
+        "n": 12
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.3,
+        "n": 10
+      },
+      "json_validity": {
+        "value": 0.9029,
+        "n": 103
+      },
+      "risk_auroc": {
+        "value": null,
+        "n": 103,
+        "positives": 0,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    },
+    "clean": {
+      "maintainer_match": {
+        "value": 0.5909,
+        "n": 22
+      },
+      "type_macro_f1": {
+        "value": 0.5445,
+        "n": 22
+      },
+      "label_micro_f1": {
+        "value": 0.1077,
+        "n": 85
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.45,
+        "n": 40
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.45,
+        "n": 40
+      },
+      "issue_recall_at_5": {
+        "value": 0.5556,
+        "n": 18
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": 0.75,
+        "n": 12
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.1667,
+        "n": 6
+      },
+      "json_validity": {
+        "value": 0.8941,
+        "n": 85
+      },
+      "risk_auroc": {
+        "value": null,
+        "n": 85,
+        "positives": 0,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    },
+    "flagged": {
+      "maintainer_match": {
+        "value": 0.5,
+        "n": 4
+      },
+      "type_macro_f1": {
+        "value": 0.5,
+        "n": 4
+      },
+      "label_micro_f1": {
+        "value": 0.0667,
+        "n": 18
+      },
+      "reviewer_recall_at_3": {
+        "value": 0.5385,
+        "n": 13
+      },
+      "reviewer_recall_at_3_reviewed_only": {
+        "value": 0.5385,
+        "n": 13
+      },
+      "issue_recall_at_5": {
+        "value": 0.5,
+        "n": 4
+      },
+      "issue_recall_at_5_named_at_open": {
+        "value": null,
+        "n": 0
+      },
+      "issue_recall_at_5_not_named": {
+        "value": 0.5,
+        "n": 4
+      },
+      "json_validity": {
+        "value": 0.9444,
+        "n": 18
+      },
+      "risk_auroc": {
+        "value": null,
+        "n": 18,
+        "positives": 0,
+        "note": "reported only: too few reverted PRs for a metric (task 0.5)"
+      }
+    }
+  },
+  "invalid_reasons": {
+    "json": 10
+  },
+  "finish_reasons": {
+    "proposed": 93,
+    "failed": 10
+  },
+  "tokens_per_pr": {
+    "prompt_tokens": null,
+    "output_tokens": null
+  },
+  "latency_s": {
+    "p50": 248.58,
+    "p95": 874.563
+  }
+}

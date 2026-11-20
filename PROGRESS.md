@@ -459,3 +459,109 @@ Every value comes from a saved file under `results/` at the listed commit. `[TBD
 - Dataset hash: n/a
 - Notes / decisions / problems: tracing was not turned on against Langfuse in the end-to-end run.
 - Next: Resume Numbers (owner approval), PR to `main`; then the Phase 6 guidelines
+
+## Phase 6 — GCP deployment and system design
+
+### 2026-11-18 — Task 6.1 — Cloud Run services, images and the Pub/Sub queue
+- Status: done
+- What changed (87bd525, f6e1dec): the service is split into `api` (webhook and approval API), `worker` (Pub/Sub push endpoint, screening and triage) and `executor` (the only holder of the writing App's key). A `PubSubQueue` sits behind the `EventQueue` interface. The worker reads GitHub as a second, read-only App (`prpilot-reader-pratox1112`, sandbox only). There are images for app, worker (screening models baked in, loaded before the port opens) and model (llama.cpp CPU server with the Q4_K_M GGUF).
+- Results: n/a
+- Dataset hash: n/a
+- Notes / decisions / problems: the dashboard service is deferred to Phase 7 (owner, 2026-11-18).
+- Next: 6.2
+
+### 2026-11-18 — Task 6.2 — Terraform and the CI plan
+- Status: done
+- What changed (cf4585d, 32de816, f9af348, 39b541b): `infra/terraform/`, one module per concern:
+  - Artifact Registry, and the four Cloud Run services plus a migrations job;
+  - Pub/Sub topic, push subscription, dead-letter topic and a 7-day hold subscription;
+  - Cloud SQL Postgres 17 (db-f1-micro), Secret Manager, one service account per service;
+  - a monitoring dashboard and an email alert on dead letters.
+
+  State is in a GCS bucket. CI runs fmt, validate and plan through Workload Identity Federation, with a read-only identity. `docs/runbooks/gcp-deploy.md` covers deploy, pause and teardown.
+- Results: n/a
+- Dataset hash: n/a
+- Notes / decisions / problems: Cloud Run's front end reserves `/healthz`, and a revision that failed for a missing image is not retried (the runbook says how to force one). ADRs 0007 and 0008.
+- Next: 6.3
+
+### 2026-11-18 — Task 6.3 — Tracing on the deployed path
+- Status: done
+- What changed (7218004): one `pr_run` trace per PR, with spans `context`, `screen`, `triage` (the model calls inside) and `proposal`. The Langfuse keys are Secret Manager secrets for the worker only. `-var tracing=true` turns tracing on.
+- Results: the owner checked in Langfuse (2026-11-20) that the trace count matched the replayed runs.
+- Dataset hash: n/a
+- Notes / decisions / problems: ADR 0011.
+- Next: 6.4
+
+### 2026-11-19 — Task 6.4 — Replay tooling and the 50-PR pilot
+- Status: done
+- What changed (44441ab, 676f072, 3174024):
+  - `replay/bundle.py`: open-time bundles (hard rule 11), mounted read-only into the worker from a GCS bucket.
+  - `replay/send.py`: signed `pull_request.opened` webhooks, at most N PRs in flight.
+  - `replay/measure.py`: outcomes, latency, and cost from Cloud Monitoring usage at pinned price-catalog SKUs (list prices, free tier not applied).
+  - The worker triages a bundled PR from the bundle and refuses other repos.
+- Results → results/pilot.json @ bbcd83a (the tree was dirty only with the report's own two output files). 50 val PRs (every 10th of the val sample), 3 in flight:
+  - 50 proposed. 49 valid after retries, 1 rescued by the fallback, 1.04 model requests per PR.
+  - Sender-clock latency: p50 132 s, p95 432 s. Throughput 1.0 PR/min.
+  - Serving $1.39 ($0.0278 per PR); database $0.013.
+  - Usage: model 6,847 instance-s at 4 vCPU and 8 GiB; worker 8,674 instance-s at 2 vCPU and 8 GiB.
+- Dataset hash: n/a (bundle built from `prompts_val_s500.jsonl`)
+- Notes / decisions / problems:
+  - The cost was about 5 times the pre-pilot estimate: real diffs run up to about 6,000 tokens, and prefill on CPU dominates.
+  - Server-clock latency is left out of the pilot. `pr_runs.updated_at` was stamped with `now()`, the start of the transaction that claimed the run, so it carried the claim time. Fixed with `clock_timestamp()` (3174024, with a test that fails without it).
+  - Cloud Monitoring counted 46 push acks for 50 runs. Not explained (possibly metric delay).
+- Next: 6.5
+
+### 2026-11-20 — Task 6.5 — Burst test: 500 PRs at once, 10% redelivered
+- Status: done (overloaded; not rerun, owner's decision)
+- What changed (cc03f95, cd3ee08, 2b7ab61): `loadtest/burst.py` sends a whole bundle at once (20 parallel requests), then redelivers a seeded 10% with the same delivery ids. Database connections are bounded per service, and the database's `max_connections` raised to 50. Load runs raise capacity and attempts with `max_instances`, `model_min_instances` and `max_delivery_attempts`. The report reconciles unfinished PRs against the dead-letter subscription, read without consuming it.
+- Results → results/burst.json @ 2b7ab61 (clean). 500 val PRs (231 cilium, 212 kubernetes, 57 pandas, none in the pilot) plus 50 redeliveries, against 10 workers and 10 models (8 GiB), with 20 delivery attempts:
+  - Redeliveries: all 50 answered `duplicate`.
+  - Duplicate proposals: 0 (168 PRs, 168 proposals).
+  - Lost: 0. 168 PRs finished (167 proposed, 1 failed with its triage stored); all 332 unfinished are held in the dead-letter subscription. 23 PRs that finished are held there too.
+  - Webhook to stored triage: p50 3,187 s, p95 7,261 s (the queue wait). Worker start to stored: p50 96 s, p95 330 s.
+  - Throughput 1.26 finished PRs/min.
+  - Pub/Sub push answers: 148 ack, 8,273 unreachable (429, no free instance), 95 server 5xx, 31 deadline exceeded.
+  - Serving $4.79 ($0.0285 per finished PR); database $0.05.
+- Dataset hash: n/a (bundle: 500 seeded from val, excluding the pilot's)
+- Notes / decisions / problems:
+  - The burst was larger than capacity times retry window. Every 429 counts as a delivery attempt, so waiting events used up 20 attempts in about 1 h 45 min, while the backlog needed about 5 hours.
+  - The model ran out of memory at 8 GiB on long prompts (8.2–8.5 GiB used, 6 crashes between 23:43 and 00:15 UTC). It now has 12 GiB (af54c72, ac97661): 16 GiB fits only 7 instances in the region's 112 GiB per-service memory quota.
+  - Cloud Monitoring counts 357 dead-lettered messages, and 355 were read from the hold subscription.
+  - ADR 0007 covers the retry and ack-deadline behaviour.
+- Next: 6.6
+
+### 2026-11-20 — Task 6.6 — Shadow replay on the test sample (stopped at 103 PRs)
+- Status: partial (stopped by the owner at 103 of 500 to save time)
+- What changed (c004037, 23b8d5d):
+  - `replay/shadow.py prompts`: rebuilds each bundled PR's prompt the way the worker does and checks it is byte-identical to the offline pack. 500/500 on the burst's val bundle. The owner ran it on the test bundle before the send; its output was not saved.
+  - `replay/shadow.py replies`: writes the deployed runs as two reply files for the eval harness. "Model" is the agent's output; "proposal" is what a maintainer would see, with reviewers from the reviewer rule.
+  - `/runs?output=true` returns the triage output, admin only.
+- Results. The bundle is the 500-PR test sample in opening-time order; 9 workers and 9 models (12 GiB), 8 in flight. The 103 PRs sent are all numpy (held out of training).
+  - → results/shadow.json @ bd3590a (clean):
+    - 103 finished: 93 proposed, 10 failed with invalid output. 0 lost, 0 duplicates, nothing dead-lettered.
+    - 44 valid after retries, 49 rescued by the fallback filter, 2.17 model requests per PR.
+    - Screening redacted personal data in 28 prompts and secrets in 5.
+    - Webhook to stored: p50 247 s, p95 953 s. Worker start to stored: p50 86 s, p95 335 s.
+    - Push answers: 5 deadline exceeded, 17 unreachable.
+    - Serving $2.54 ($0.0246 per PR); database $0.02.
+  - → results/shadow_replay_model.json, shadow_replay_proposal.json and student-gguf-system_test_shadow103.json @ 23b8d5d (clean), scored by the eval harness on the same 103 PRs. Deployed model output, deployed proposal, then the offline GGUF on the H200:
+    - Maintainer match (n=26): 57.7% (CI 34.8–77.8), 57.7%, 61.5% (CI 40.0–81.8).
+    - Valid output: 90.3% in all three.
+    - Reviewer@3 (n=53): 41.5%, 47.2%, 45.3%.
+    - Issue@5 (n=22): 54.5%, 54.5%, 59.1%.
+    - Label F1: 0.100, 0.100, 0.089.
+    - Deployed model vs offline, exact McNemar: 1 vs 2 discordant, p = 1.0.
+- Dataset hash: test pack `sha256:f1caef7782bd…`, sample `sha256:dff996a1b1e1…` (results/data_prompts_test_s500.json)
+- Notes / decisions / problems:
+  - The CPU backend matches the H200 GGUF measurement on these PRs, with no significant difference. The checked set is 103 numpy PRs, the repo the student is weakest on, so this is not an end-to-end quality figure for all repos. The offline test numbers (3.7) stay the model's quality figure.
+  - The test split was looked at once, for these 103 PRs.
+  - The result files are named `shadow*.json` and `burst.json`, not roadmap §9.3–9.4's `burst_test.json` and `shadow_replay.json`.
+- Next: 6.7
+
+### 2026-11-20 — Task 6.7 — Design records
+- Status: done
+- What changed: ADRs 0007 (Pub/Sub push, not synchronous), 0008 (Cloud Run, not GKE), 0009 (CPU GGUF, not a GPU endpoint), 0010 (Pydantic AI, not LangGraph) and 0011 (Langfuse Cloud and Cloud Monitoring). Roadmap §9.2's other decisions are ADRs 0003–0006.
+- Results: full suite with Postgres: 356 passed (c004037).
+- Dataset hash: n/a
+- Notes / decisions / problems: the deployment is paused (`db_activation_policy=NEVER`); services scale to zero. Measured cost of this session's runs at list prices: burst $4.84, shadow replay $2.56.
+- Next: Resume Numbers (owner approval), PR to `main`; then Phase 7 (owner's choice) or Phase 9
