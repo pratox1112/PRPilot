@@ -185,9 +185,14 @@ Resume with `-var db_activation_policy=ALWAYS`. The services scale to zero on th
 
 ## Teardown to $0 (roadmap Phase 9)
 
+A paused database cannot have its database and user deleted ("instance is not running"). If
+the destroy stops there, drop those two from the state (deleting the instance removes them)
+and destroy again:
+`terraform -chdir=infra/terraform state rm module.database.google_sql_database.app module.database.google_sql_user.app`.
+
 ```powershell
 terraform -chdir=infra/terraform destroy @tf
-gcloud storage rm -r gs://$proj-tfstate
+gcloud storage rm -r --all-versions gs://$proj-tfstate
 gcloud run services list --project=$proj; gcloud run jobs list --project=$proj --region=$region
 gcloud sql instances list --project=$proj; gcloud artifacts repositories list --project=$proj
 gcloud secrets list --project=$proj; gcloud pubsub topics list --project=$proj; gcloud storage buckets list --project=$proj
