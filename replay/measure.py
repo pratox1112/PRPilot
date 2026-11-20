@@ -18,11 +18,13 @@
 - Sizes: each service's CPU and memory as deployed (Cloud Run API), the database tier and disk
   (Cloud SQL Admin API).
 - Burst checks (loadtest.burst): redeliveries sent and how the api answered them; lost
-  events (accepted, never final, not dead-lettered); with `--server-times`, PRs with more than
-  one proposal (the duplicates the dedupe must prevent).
+  events (accepted, never final, and their delivery id not among the messages held in the
+  dead-letter subscription, read without consuming them); with `--server-times`, PRs with more
+  than one proposal (the duplicates the dedupe must prevent).
 - Prices: list prices from the Cloud Billing price catalog, by the SKU ids pinned in SKUS
   (chosen from `prices`, recorded with their descriptions). The monthly free tier is not
-  applied, so the cost is what the same usage costs once the free tier is used up.
+  applied, so the cost is what the same usage costs once the free tier is used up. Per-PR
+  costs and throughput count the PRs whose run reached a final state.
 
 Writes results/<label>.json (with the commit and whether the tree was clean) and the per-PR
 records next to it, results/<label>.records.jsonl.
@@ -53,6 +55,7 @@ SKUS: dict[str, str | None] = {
     "pubsub_throughput": "027D-B6C7-CCA2",  # Message Delivery Basic
 }
 MARGIN = timedelta(minutes=10)
+DEAD_LETTERS = "prpilot-pr-events-dead-letter-hold"
 
 
 def percentile(values: list[float], q: float) -> float | None:
@@ -87,6 +90,11 @@ class Google:
 
     def get(self, url: str, **params) -> dict:
         r = self.http.get(url, params=params)
+        r.raise_for_status()
+        return r.json()
+
+    def post(self, url: str, body: dict) -> dict:
+        r = self.http.post(url, json=body)
         r.raise_for_status()
         return r.json()
 
@@ -230,6 +238,49 @@ def duplicates(sends: list[dict], proposals: list[dict]) -> dict:
             "duplicate_proposals": sum(n - 1 for n in per.values())}  # fmt: skip
 
 
+def dead_letter_ids(g: Google, subscription: str = DEAD_LETTERS, tries: int = 5) -> dict:
+    """Delivery id per message held in the dead-letter subscription, without consuming any:
+    each pulled batch is leased for 10 minutes so the next pull returns others, and every
+    lease is released at the end, so the messages stay until the retention ends. A pull may
+    come back empty while messages remain, so it stops after `tries` empty pulls in a row."""
+    base = f"https://pubsub.googleapis.com/v1/projects/{g.project}/subscriptions/{subscription}"
+    held: dict[str, str] = {}  # message id -> delivery id
+    leases: list[str] = []
+    try:
+        empty = 0
+        while empty < tries:
+            got = g.post(f"{base}:pull", {"maxMessages": 1000}).get("receivedMessages", [])
+            empty = 0 if got else empty + 1
+            if got:
+                batch = [m["ackId"] for m in got]
+                g.post(f"{base}:modifyAckDeadline", {"ackIds": batch, "ackDeadlineSeconds": 600})
+                leases += batch
+            for m in got:
+                msg = m["message"]
+                held[msg["messageId"]] = msg.get("attributes", {}).get("delivery_id", "")
+    finally:
+        for i in range(0, len(leases), 1000):
+            g.post(f"{base}:modifyAckDeadline",
+                   {"ackIds": leases[i : i + 1000], "ackDeadlineSeconds": 0})  # fmt: skip
+    return held
+
+
+def dead_letter_check(sends: list[dict], held: dict) -> dict:
+    """Which sent PRs were dead-lettered: lost are those accepted, never final and not held.
+    A PR can be final and held too, when a delivery outlived the ack deadline and its
+    redelivery then used up its attempts while the first finished the run."""
+    ids = set(held.values())
+    accepted = [s for s in sends if s["http_status"] == 202]
+    ours = [d for d in held.values() if d in {s["delivery_id"] for s in sends}]
+    return {
+        "messages_held": len(ours), "prs_held": len(set(ours)),
+        "unfinished_held": sum(1 for s in accepted if not s["final"] and s["delivery_id"] in ids),
+        "final_also_held": sum(1 for s in accepted if s["final"] and s["delivery_id"] in ids),
+        "lost": [f"{s['repo']}#{s['number']}" for s in accepted
+                 if not s["final"] and s["delivery_id"] not in ids],
+    }  # fmt: skip
+
+
 def clean_except(git: dict, outputs: list[str]) -> dict:
     """The tree's state, not counting this report's own output files."""
     rest = [p for p in git["dirty_paths"] if p not in outputs]
@@ -271,6 +322,9 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str],
                      *window).values()
     )  # fmt: skip
 
+    out = outcomes(sends, deliveries)
+    held = dead_letter_check(sends, dead_letter_ids(g)) if dead else None
+    lost = len(held["lost"]) if held else out["accepted"] - out["final"]
     sizes, db, prices = service_sizes(g), database(g), pinned_prices(g)
     usd = {k: v["usd"] for k, v in prices.items()}
     per_service = {}
@@ -285,10 +339,9 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str],
     db_usd = hours * usd["sql_instance"] + db["disk_gib"] * usd["sql_storage"] * hours / 730
     pubsub_usd = pubsub_bytes / 2**40 * usd["pubsub_throughput"]
     serving_usd = sum(s["usd"] for s in per_service.values()) + pubsub_usd
-    out = outcomes(sends, deliveries)
     meta = run_metadata(["httpx"])
     outputs = [f"results/{label}.json", f"results/{label}.records.jsonl"]
-    n = max(out["prs_sent"], 1)
+    n = max(out["final"], 1)
     minutes = (end - start).total_seconds() / 60
     write_result(label, {
         "label": label, "notes": notes,
@@ -297,7 +350,7 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str],
         "throughput_prs_per_min": out["final"] / minutes if minutes else None,
         **out,
         "pubsub": {"push_answers": push, "dead_lettered": dead, "billed_bytes": pubsub_bytes},
-        "lost": out["accepted"] - out["final"] - int(dead), "duplicates": dups,
+        "dead_letters": held, "lost": lost, "duplicates": dups,
         "usage": per_service, "database": {**db, "hours": hours, "usd": db_usd},
         "prices": prices, "free_tier_applied": False,
         "cost_usd": {"serving": serving_usd, "database": db_usd,
@@ -309,8 +362,7 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str],
     keys = ("accepted", "final", "outcomes", "redelivery_answers", "sent_to_seen_final",
             "webhook_to_stored")  # fmt: skip
     print(json.dumps({k: out[k] for k in keys}, indent=1))
-    print(f"lost {out['accepted'] - out['final'] - int(dead)}, dead-lettered {int(dead)}, "
-          f"duplicates {dups}")  # fmt: skip
+    print(f"lost {lost}, dead-lettered {int(dead)} (held: {held}), duplicates {dups}")
     print(f"serving ${serving_usd:.4f} (${serving_usd / n:.5f}/PR), database ${db_usd:.4f}")
     print(f"-> {RESULTS_DIR / (label + '.json')}")
 

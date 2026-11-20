@@ -225,3 +225,33 @@ def test_duplicates_and_own_outputs_do_not_count_as_dirty():
     git = {"commit": "c", "dirty": True, "dirty_paths": ["results/x.json", "replay/send.py"]}
     assert measure.clean_except(git, ["results/x.json"])["dirty_paths"] == ["replay/send.py"]
     assert not measure.clean_except(git, ["results/x.json", "replay/send.py"])["dirty"]
+
+
+def test_dead_letters_are_read_without_consuming_and_reconciled():
+    calls = []
+    pulls = iter([
+        {"receivedMessages": [
+            {"ackId": "k1", "message": {"messageId": "1", "attributes": {"delivery_id": "b"}}},
+            {"ackId": "k2", "message": {"messageId": "2", "attributes": {"delivery_id": "a"}}}]},
+        {"receivedMessages": [
+            {"ackId": "k3", "message": {"messageId": "1", "attributes": {"delivery_id": "b"}}}]},
+    ])  # fmt: skip
+
+    def reply(r):
+        calls.append((r.url.path.rsplit(":", 1)[1], json.loads(r.content)))
+        return httpx.Response(200, json=next(pulls, {}) if r.url.path.endswith(":pull") else {})
+
+    g = measure.Google("tok")
+    g.http = httpx.Client(transport=httpx.MockTransport(reply))
+    held = measure.dead_letter_ids(g, tries=2)
+    assert held == {"1": "b", "2": "a"}  # the same message pulled twice counts once
+    assert all(c[0] in ("pull", "modifyAckDeadline") for c in calls)  # nothing acknowledged
+    assert calls[-1] == ("modifyAckDeadline", {"ackIds": ["k1", "k2", "k3"],
+                                               "ackDeadlineSeconds": 0})  # fmt: skip
+    sends = [
+        {"repo": "o/r", "number": n, "delivery_id": d, "http_status": 202, "final": f}
+        for n, d, f in [(1, "a", {"state": "proposed"}), (2, "b", None), (3, "c", None)]
+    ]
+    check = measure.dead_letter_check(sends, {**held, "9": "other"})
+    assert check == {"messages_held": 2, "prs_held": 2, "unfinished_held": 1,
+                     "final_also_held": 1, "lost": ["o/r#3"]}  # fmt: skip
