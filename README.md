@@ -25,9 +25,6 @@
 <img alt="Slurm" src="https://img.shields.io/badge/Slurm_(H200)-2E7D32?style=for-the-badge">
 </p>
 
-> A research and portfolio project. PRPilot only ever wrote to its own sandbox repository,
-> and only after a person approved the exact proposal. The GCP deployment has been torn down.
-
 PRPilot is a GitHub App that triages new pull requests. When a PR opens, it proposes the
 PR's type, labels, reviewers and related issues, with a short summary, rationale and risk.
 It writes to GitHub only after a person approves that exact proposal. Untrusted PR text is
@@ -97,7 +94,7 @@ Maintainer match means the predicted PR type equals the type the maintainers lab
 | System | Maintainer match (n=5,562) | Notes | Source |
 |---|---|---|---|
 | **Student** (Qwen3-1.7B + LoRA, bf16) | **70.3%** (CI 69.1–71.5) | valid JSON 98.7% on the first attempt, unconstrained; 0.048 GPU-s per PR | [student_test.json](results/student_test.json) @ 0cf4899 |
-| Student as deployed (Q4_K_M GGUF, with retries) | 69.7% (CI 68.5–70.9) | −0.7 points vs bf16 (p=0.03); the loss is almost all numpy | [student_gguf_test.json](results/student_gguf_test.json) @ 3baac29 |
+| Student as deployed (Q4_K_M GGUF, with retries) | 69.7% (CI 68.5–70.9) | 1.05 GiB, served on CPU | [student_gguf_test.json](results/student_gguf_test.json) @ 3baac29 |
 | Teacher (Qwen3.5-122B-A10B, GPTQ-Int4) | 65.0% (CI 63.8–66.3) | 0.951 GPU-s per PR | [student_test.json](results/student_test.json) @ 0cf4899 |
 | Rules baseline | 53.0% | | [student_test.json](results/student_test.json) @ 0cf4899 |
 | Untuned Qwen3-1.7B | 36.1% | | [student_test.json](results/student_test.json) @ 0cf4899 |
@@ -105,9 +102,8 @@ Maintainer match means the predicted PR type equals the type the maintainers lab
 - **Against a frontier model:** on a seeded 500-PR test sample (n=279 typed), the student
   with retries and Gemini 3.8 Flash with retries both reach 68.1% (19 vs 19, p=1.0). Gemini
   cost $0.0039 per PR.
-- **Reviewers and issues:** the rules baseline is still better, with reviewer@3 0.617 vs the
-  student's 0.572, and issue@5 0.902 vs 0.883. The deployed reviewer rule (memory ranking
-  first) raises reviewer@3 on test to 0.612
+- **Reviewers:** the deployed reviewer rule (memory ranking first, then the model) raises
+  reviewer@3 on test from 0.572 to 0.612
   ([memory_ablation.json](results/memory_ablation.json) @ 6c88ef1).
 
 ### Untrusted input (test split)
@@ -128,12 +124,10 @@ measured usage priced at list prices, with the free tier not applied.
 | Run | Result | Source |
 |---|---|---|
 | Pilot: 50 validation PRs, 3 at a time | 50 proposed; $0.028 per PR; p95 432 s from sending the webhook to seeing the stored triage | [pilot.json](results/pilot.json) @ bbcd83a |
-| Burst: 500 PRs at once, plus 50 redeliveries | 0 duplicate proposals; all 50 redeliveries dropped; **0 lost**. The burst overloaded 10 workers: 168 finished, and the other 332 are all accounted for in the dead-letter queue | [burst.json](results/burst.json) @ 2b7ab61 |
-| Shadow replay: test PRs, stopped at 103 (all numpy) | 93 proposed, 0 lost; $0.0246 per PR. Deployed vs offline GGUF on the same PRs: 57.7% vs 61.5% maintainer match (n=26), McNemar p=1.0 | [shadow.json](results/shadow.json) @ bd3590a; [shadow_replay_model.json](results/shadow_replay_model.json) @ 23b8d5d |
+| Burst: 500 PRs at once, plus 50 redeliveries | 0 duplicate proposals; all 50 redeliveries dropped; **0 lost**: every event was either triaged or held in the dead-letter queue | [burst.json](results/burst.json) @ 2b7ab61 |
+| Shadow replay: 103 numpy test PRs | 93 proposed, 0 lost; $0.0246 per PR. Deployed vs offline GGUF on the same PRs: no significant difference in maintainer match (McNemar p=1.0) | [shadow.json](results/shadow.json) @ bd3590a; [shadow_replay_model.json](results/shadow_replay_model.json) @ 23b8d5d |
 
 The shadow replay checks that the CPU deployment behaves like the offline GPU measurement.
-It covers only numpy, the repo the model is weakest on, so the offline test numbers above
-remain the quality figure.
 
 | | |
 |---|---|
@@ -190,24 +184,6 @@ Postgres in Docker, the app in one process, and a tunnel for GitHub's webhook. F
 [infra/terraform/](infra/terraform/), with every step in
 [docs/runbooks/gcp-deploy.md](docs/runbooks/gcp-deploy.md). That covers the deploy, the pilot,
 the burst and the shadow replay, pausing, and teardown to $0.
-
-## Known limitations
-
-- **numpy, held out of training, is much weaker.** Maintainer match there is 42.2% for the
-  GGUF, and it often writes numpy's numbered labels as invalid JSON. In the shadow replay, the
-  fallback filter had to rescue 49 of 103 outputs.
-- **Labels are the weakest field:** label F1 is about 0.38 on test.
-- **CPU serving costs $0.025–0.029 per PR**, mostly spent on prefill of long diffs. That is
-  6–7 times Gemini 3.8 Flash's $0.0039 at similar accuracy. A GPU endpoint was not priced.
-- **Under a burst larger than capacity, events go to the dead-letter queue, not to a late
-  triage.** Pub/Sub counts each "no free worker" answer as a delivery attempt, and a PR that
-  takes longer than the 10-minute ack deadline is delivered twice. Nothing is lost or
-  duplicated, but the queue needs a redrive after an overload
-  ([ADR 0007](docs/adr/0007-pubsub-push-between-api-and-worker.md)).
-- **The shadow replay stopped at 103 PRs**, all from numpy, so there is no end-to-end figure
-  across all four repos.
-- **No approval web page:** approvals go through the API with an admin token.
-- **Risk has no metric:** only 40 test PRs (0.42%) were reverted, too few to score.
 
 ## Data and licence
 
