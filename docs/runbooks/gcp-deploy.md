@@ -163,8 +163,8 @@ uv run python -m replay.shadow prompts --bundle data/processed/replay/shadow_tes
 gcloud storage cp data/processed/replay/shadow_test500.jsonl "gs://$proj-replay/"
 terraform -chdir=infra/terraform apply @tf -var replay_bundle=shadow_test500.jsonl
 uv run python -m replay.send --bundle data/processed/replay/shadow_test500.jsonl --api $api.api --label shadow --in-flight 3 --timeout 3600
-uv run python -m replay.measure report --label shadow --server-times $api.api
 uv run python -m replay.shadow replies --label shadow --api $api.api --pack data/processed/prompts_test.jsonl
+uv run python -m replay.measure report --label shadow --server-times $api.api
 $score = "--project", "eval", "python", "-m", "prpilot_eval", "score", "--pack", "data/processed/prompts_test.jsonl", "--targets", "data/processed/targets_test.jsonl", "--only", "data/processed/prompts_test_s500.jsonl"
 uv run @score --replies data/processed/replay/shadow-model.jsonl --out results/shadow_replay_model.json
 uv run @score --replies data/processed/replay/shadow-proposal.jsonl --out results/shadow_replay_proposal.json
