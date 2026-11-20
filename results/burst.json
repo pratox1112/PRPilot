@@ -1,0 +1,176 @@
+{
+  "label": "burst",
+  "notes": [
+    "Overloaded burst: 500 PRs at once against 10 worker/model pairs. Events that found every worker busy were answered 429 and used up their 20 delivery attempts in about 1 h 45 min, so they went to the dead-letter queue. The model ran out of memory at 8 GiB on long prompts (6 times, 23:43 to 00:15 UTC). Not rerun."
+  ],
+  "meta": {
+    "timestamp_utc": "2026-11-20T06:23:59+00:00",
+    "git": {
+      "commit": "2b7ab619062a1163dbe29001713e955e204af7dc",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "window_utc": [
+    "2026-11-19T22:19:52.107741Z",
+    "2026-11-20T02:20:03Z"
+  ],
+  "send_minutes": 133.5919648,
+  "throughput_prs_per_min": 1.2575606643072592,
+  "prs_sent": 500,
+  "accepted": 500,
+  "final": 168,
+  "outcomes": {
+    "proposed": 167,
+    "unfinished": 332,
+    "failed": 1
+  },
+  "redelivery_answers": {
+    "{\"status\": \"duplicate\"}": 50
+  },
+  "triaged": 168,
+  "valid_after_retries": 161,
+  "rescued_by_fallback": 6,
+  "model_requests_mean": 1.0892857142857142,
+  "sent_to_seen_final": {
+    "n": 168,
+    "p50_s": 3188.153373,
+    "p95_s": 7267.497096,
+    "max_s": 8010.941881
+  },
+  "webhook_to_stored": {
+    "n": 168,
+    "p50_s": 3186.550012,
+    "p95_s": 7261.227664,
+    "max_s": 8004.304866
+  },
+  "worker_start_to_stored": {
+    "n": 168,
+    "p50_s": 95.998242,
+    "p95_s": 329.518925,
+    "max_s": 824.495268
+  },
+  "pubsub": {
+    "push_answers": {
+      "ack": 148.0,
+      "deadline_exceeded": 31.0,
+      "internal": 1.0,
+      "remote_server_5xx": 95.0,
+      "unreachable": 8273.0
+    },
+    "dead_lettered": 357.0,
+    "billed_bytes": 9759000.0
+  },
+  "dead_letters": {
+    "messages_held": 355,
+    "prs_held": 355,
+    "unfinished_held": 332,
+    "final_also_held": 23,
+    "lost": []
+  },
+  "lost": 0,
+  "duplicates": {
+    "proposals": 168,
+    "prs_with_proposals": 168,
+    "duplicate_proposals": 0
+  },
+  "usage": {
+    "prpilot-api": {
+      "billable_instance_s": 101.80665237268276,
+      "vcpu_s": 101.80665237268276,
+      "gib_s": 50.90332618634138,
+      "requests": 1496.0,
+      "usd": 0.0031690179724102397,
+      "vcpu": 1.0,
+      "gib": 0.5,
+      "cpu_idle": true
+    },
+    "prpilot-worker": {
+      "billable_instance_s": 23919.59999999999,
+      "vcpu_s": 47839.19999999998,
+      "gib_s": 191356.79999999993,
+      "requests": 8549.0,
+      "usd": 1.6299523999999994,
+      "vcpu": 2.0,
+      "gib": 8.0,
+      "cpu_idle": true
+    },
+    "prpilot-model": {
+      "billable_instance_s": 27241.136934509686,
+      "vcpu_s": 108964.54773803875,
+      "gib_s": 217929.0954760775,
+      "requests": 200.0,
+      "usd": 3.160051884403124,
+      "vcpu": 4.0,
+      "gib": 8.0,
+      "cpu_idle": true
+    },
+    "prpilot-executor": {
+      "billable_instance_s": 1.0,
+      "vcpu_s": 1.0,
+      "gib_s": 0.5,
+      "requests": 0.0,
+      "usd": 2.525e-05,
+      "vcpu": 1.0,
+      "gib": 0.5,
+      "cpu_idle": true
+    }
+  },
+  "database": {
+    "name": "prpilot-pg",
+    "tier": "db-f1-micro",
+    "disk_gib": 10.0,
+    "hours": 4.0030256275000005,
+    "usd": 0.051353883563750015
+  },
+  "prices": {
+    "run_cpu": {
+      "sku": "4856-B847-F1EB",
+      "description": "Services CPU (Request-based billing)",
+      "usd": 2.4e-05,
+      "unit": "s"
+    },
+    "run_memory": {
+      "sku": "02A2-9231-36A6",
+      "description": "Services Memory (Request-based billing)",
+      "usd": 2.5e-06,
+      "unit": "GiBy.s"
+    },
+    "run_requests": {
+      "sku": "2DA5-55D3-E679",
+      "description": "Requests",
+      "usd": 4e-07,
+      "unit": "count"
+    },
+    "sql_instance": {
+      "sku": "C2D4-F7DF-B8D0",
+      "description": "Cloud SQL for PostgreSQL: Zonal - Micro instance in Americas",
+      "usd": 0.0105,
+      "unit": "h"
+    },
+    "sql_storage": {
+      "sku": "C18F-7FE0-0717",
+      "description": "Cloud SQL for PostgreSQL: Zonal - Standard storage in Americas",
+      "usd": 0.17,
+      "unit": "GiBy.mo"
+    },
+    "pubsub_throughput": {
+      "sku": "027D-B6C7-CCA2",
+      "description": "Message Delivery Basic",
+      "usd": 40.0,
+      "unit": "TiBy"
+    }
+  },
+  "free_tier_applied": false,
+  "cost_usd": {
+    "serving": 4.793553582727317,
+    "database": 0.051353883563750015,
+    "total": 4.844907466291067,
+    "serving_per_pr": 0.028533057040043556,
+    "total_per_pr": 0.02883873491839921
+  }
+}
