@@ -147,7 +147,10 @@ uv run python -m replay.measure report --label burst --server-times $api.api
 ```
 
 Apply again without those three variables after the run (back to 3 instances, model at zero,
-5 attempts).
+5 attempts). If events were still being retried or dead-lettered after the last run finished
+(an overloaded burst), end the usage window when the burst stopped polling, so the report
+counts every dead-lettered event and the capacity that stayed up:
+`--until (Get-Item data\processed\replay\burst.sends.jsonl).LastWriteTimeUtc.ToString("yyyy-MM-ddTHH:mm:ssZ")`.
 
 Every later apply needs `-var replay_bundle=...` too while the replay is in use. Without it the
 worker stops mounting the bucket (the bundles stay there until teardown).

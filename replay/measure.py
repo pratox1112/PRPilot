@@ -10,9 +10,11 @@
   `--server-times`, only for runs stored by images that stamp pr_runs.updated_at with the
   commit time (models.PRRun; earlier images, such as the pilot's, stamped the claim time).
 - Usage: Cloud Monitoring over the send's window (first send to last final run, plus a
-  margin for the metrics' delay): billable instance time and requests per Cloud Run service,
-  Pub/Sub billed bytes, push answers by response class, dead-lettered messages. Run the
-  report at least 10 minutes after the send ends, with no other traffic in the window.
+  margin for the metrics' delay; or to `--until`, when events kept arriving or being
+  dead-lettered after the last final run, as in an overloaded burst): billable instance time
+  and requests per Cloud Run service, Pub/Sub billed bytes, push answers by response class,
+  dead-lettered messages. Run the report at least 10 minutes after the send ends, with no
+  other traffic in the window.
 - Sizes: each service's CPU and memory as deployed (Cloud Run API), the database tier and disk
   (Cloud SQL Admin API).
 - Burst checks (loadtest.burst): redeliveries sent and how the api answered them; lost
@@ -234,7 +236,8 @@ def clean_except(git: dict, outputs: list[str]) -> dict:
     return {**git, "dirty": bool(rest), "dirty_paths": rest}
 
 
-def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None:
+def cmd_report(g: Google, label: str, api: str | None, notes: list[str],
+               until: datetime | None = None) -> None:  # fmt: skip
     sends = read_jsonl(SENDS_DIR / f"{label}.sends.jsonl")
     deliveries, dups = None, None
     if api:
@@ -248,7 +251,7 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None
         dups = duplicates(sends, r.json())
     start = min(ts(s["sent_at"]) for s in sends)
     end = max(ts(s.get("seen_final_at") or s["sent_at"]) for s in sends)
-    window = (start, end + MARGIN)
+    window = (start, max(end + MARGIN, until or end))
     if datetime.now(UTC) < window[1]:
         raise SystemExit(f"wait until {rfc3339(window[1])}: the metrics arrive with a delay")
 
@@ -291,7 +294,7 @@ def cmd_report(g: Google, label: str, api: str | None, notes: list[str]) -> None
         "label": label, "notes": notes,
         "meta": {**meta, "git": clean_except(meta["git"], outputs)},
         "window_utc": [rfc3339(w) for w in window], "send_minutes": minutes,
-        "throughput_prs_per_min": out["prs_sent"] / minutes if minutes else None,
+        "throughput_prs_per_min": out["final"] / minutes if minutes else None,
         **out,
         "pubsub": {"push_answers": push, "dead_lettered": dead, "billed_bytes": pubsub_bytes},
         "lost": out["accepted"] - out["final"] - int(dead), "duplicates": dups,
@@ -324,6 +327,7 @@ def main() -> None:
         help="also the server-clock latencies (reads /deliveries from the api)",
     )
     rep.add_argument("--note", action="append", default=[], help="recorded with the result")
+    rep.add_argument("--until", type=ts, help="end the usage window here (RFC 3339, UTC)")
     a = ap.parse_args()
     token = os.environ.get("GCP_ACCESS_TOKEN", "").strip()
     if not token:
@@ -332,7 +336,7 @@ def main() -> None:
     if a.cmd == "prices":
         cmd_prices(g)
     else:
-        cmd_report(g, a.label, a.server_times and a.server_times.rstrip("/"), a.note)
+        cmd_report(g, a.label, a.server_times and a.server_times.rstrip("/"), a.note, a.until)
 
 
 if __name__ == "__main__":
