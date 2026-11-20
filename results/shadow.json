@@ -1,0 +1,166 @@
+{
+  "label": "shadow",
+  "notes": [
+    "Stopped by the owner at 103 of 500 PRs to save time; the bundle runs in opening-time order, so all 103 are numpy (held out of training)."
+  ],
+  "meta": {
+    "timestamp_utc": "2026-11-20T21:35:55+00:00",
+    "git": {
+      "commit": "bd3590a7d4bcb6b5b2954664c48bb80bb6ec8058",
+      "dirty": false,
+      "dirty_paths": []
+    },
+    "python": "3.12.10",
+    "packages": {
+      "httpx": "0.28.1"
+    }
+  },
+  "window_utc": [
+    "2026-11-20T20:09:33.013747Z",
+    "2026-11-20T21:34:54.405499Z"
+  ],
+  "send_minutes": 75.35652920000001,
+  "throughput_prs_per_min": 1.3668357751274987,
+  "prs_sent": 103,
+  "accepted": 103,
+  "final": 103,
+  "outcomes": {
+    "proposed": 93,
+    "failed": 10
+  },
+  "redelivery_answers": {},
+  "triaged": 103,
+  "valid_after_retries": 44,
+  "rescued_by_fallback": 49,
+  "model_requests_mean": 2.1650485436893203,
+  "sent_to_seen_final": {
+    "n": 103,
+    "p50_s": 248.580322,
+    "p95_s": 955.173661,
+    "max_s": 1402.147192
+  },
+  "webhook_to_stored": {
+    "n": 103,
+    "p50_s": 247.434466,
+    "p95_s": 952.946419,
+    "max_s": 1398.079575
+  },
+  "worker_start_to_stored": {
+    "n": 103,
+    "p50_s": 85.868543,
+    "p95_s": 334.795349,
+    "max_s": 545.034102
+  },
+  "pubsub": {
+    "push_answers": {
+      "ack": 111.0,
+      "deadline_exceeded": 5.0,
+      "remote_server_5xx": 3.0,
+      "unreachable": 17.0
+    },
+    "dead_lettered": 0,
+    "billed_bytes": 246000.0
+  },
+  "dead_letters": null,
+  "lost": 0,
+  "duplicates": {
+    "proposals": 93,
+    "prs_with_proposals": 93,
+    "duplicate_proposals": 0
+  },
+  "usage": {
+    "prpilot-api": {
+      "billable_instance_s": 541.1999999999999,
+      "vcpu_s": 541.1999999999999,
+      "gib_s": 270.59999999999997,
+      "requests": 7285.0,
+      "usd": 0.016579299999999998,
+      "vcpu": 1.0,
+      "gib": 0.5,
+      "cpu_idle": true
+    },
+    "prpilot-worker": {
+      "billable_instance_s": 14369.868852766163,
+      "vcpu_s": 28739.737705532327,
+      "gib_s": 114958.9508221293,
+      "requests": 136.0,
+      "usd": 0.9772054819880992,
+      "vcpu": 2.0,
+      "gib": 8.0,
+      "cpu_idle": true
+    },
+    "prpilot-model": {
+      "billable_instance_s": 12248.892730110678,
+      "vcpu_s": 48995.57092044271,
+      "gib_s": 146986.71276132815,
+      "requests": 245.0,
+      "usd": 1.5434584839939454,
+      "vcpu": 4.0,
+      "gib": 12.0,
+      "cpu_idle": true
+    },
+    "prpilot-executor": {
+      "billable_instance_s": 0.0,
+      "vcpu_s": 0.0,
+      "gib_s": 0.0,
+      "requests": 0.0,
+      "usd": 0.0,
+      "vcpu": 1.0,
+      "gib": 0.5,
+      "cpu_idle": true
+    }
+  },
+  "database": {
+    "name": "prpilot-pg",
+    "tier": "db-f1-micro",
+    "disk_gib": 10.0,
+    "hours": 1.4226088200000002,
+    "usd": 0.01825031725931507
+  },
+  "prices": {
+    "run_cpu": {
+      "sku": "4856-B847-F1EB",
+      "description": "Services CPU (Request-based billing)",
+      "usd": 2.4e-05,
+      "unit": "s"
+    },
+    "run_memory": {
+      "sku": "02A2-9231-36A6",
+      "description": "Services Memory (Request-based billing)",
+      "usd": 2.5e-06,
+      "unit": "GiBy.s"
+    },
+    "run_requests": {
+      "sku": "2DA5-55D3-E679",
+      "description": "Requests",
+      "usd": 4e-07,
+      "unit": "count"
+    },
+    "sql_instance": {
+      "sku": "C2D4-F7DF-B8D0",
+      "description": "Cloud SQL for PostgreSQL: Zonal - Micro instance in Americas",
+      "usd": 0.0105,
+      "unit": "h"
+    },
+    "sql_storage": {
+      "sku": "C18F-7FE0-0717",
+      "description": "Cloud SQL for PostgreSQL: Zonal - Standard storage in Americas",
+      "usd": 0.17,
+      "unit": "GiBy.mo"
+    },
+    "pubsub_throughput": {
+      "sku": "027D-B6C7-CCA2",
+      "description": "Message Delivery Basic",
+      "usd": 40.0,
+      "unit": "TiBy"
+    }
+  },
+  "free_tier_applied": false,
+  "cost_usd": {
+    "serving": 2.53725221540991,
+    "database": 0.01825031725931507,
+    "total": 2.555502532669225,
+    "serving_per_pr": 0.024633516654465146,
+    "total_per_pr": 0.024810704200672086
+  }
+}
