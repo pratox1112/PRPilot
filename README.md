@@ -1,6 +1,7 @@
 # PRPilot: pull request triage with a fine-tuned 1.7B model, from webhook to approved write
 
 [![CI](https://github.com/pratox1112/PRPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/pratox1112/PRPilot/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 <p>
 <img alt="Python" src="https://img.shields.io/badge/Python_3.12-3776AB?style=for-the-badge&logo=python&logoColor=white">
@@ -195,7 +196,7 @@ the burst and the shadow replay, pausing, and teardown to $0.
   owner under the competition's terms and not committed.
 - **Models:** Qwen3-1.7B and Qwen3.5-122B-A10B are Apache-2.0. PromptGuard 2 is Meta's,
   under its own licence, and gated on Hugging Face.
-- **Code:** no licence file yet.
+- **Code:** MIT ([LICENSE](LICENSE)). The licence covers this repository's code, not the data or the models above.
 
 ---
 
