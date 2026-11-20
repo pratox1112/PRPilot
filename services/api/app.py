@@ -136,7 +136,9 @@ def create_app(services: Services, parts: tuple[str, ...] = PARTS) -> FastAPI:
         @app.get("/runs")
         async def runs(state: str | None = None, repo: str | None = None,
                        pr_number: int | None = None, limit: int = Query(200, ge=1, le=MAX_LIST),
-                       who: str = Depends(admin)) -> list[dict]:  # fmt: skip
+                       output: bool = False, who: str = Depends(admin)) -> list[dict]:  # fmt: skip
+            # The triage output only on request (`output=true`, for scoring a replay): it is
+            # the bulk of a run, and the proposal already carries what a reviewer acts on.
             async with services.sessions() as s:
                 q = select(PRRun).order_by(PRRun.id.desc()).limit(limit)
                 if state:
@@ -147,7 +149,8 @@ def create_app(services: Services, parts: tuple[str, ...] = PARTS) -> FastAPI:
                     q = q.where(PRRun.pr_number == pr_number)
                 return [{"id": r.id, "repo": r.repo, "pr_number": r.pr_number,
                          "head_sha": r.head_sha, "state": r.state, "screen": r.screen,
-                         "triage": {k: v for k, v in (r.triage or {}).items() if k != "output"},
+                         "triage": {k: v for k, v in (r.triage or {}).items()
+                                    if output or k != "output"},
                          "error": r.error, "created_at": r.created_at,
                          "updated_at": r.updated_at}
                         for r in await s.scalars(q)]  # fmt: skip

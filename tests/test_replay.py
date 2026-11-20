@@ -11,7 +11,8 @@ import pytest
 from prpilot_core.github.replay import ReplayGitHubClient, bundle_record
 from prpilot_core.queue import InProcessQueue
 from prpilot_core.settings import Settings
-from replay import bundle, measure, send
+from prpilot_data.prompts import pack_row
+from replay import bundle, measure, send, shadow
 from services.worker import handler
 from tests.test_api import AUTH, SECRET, TOKEN, client
 from tests.test_github_clients import CAND, ROW
@@ -86,12 +87,14 @@ async def test_a_signed_send_reaches_a_stored_run_via_the_replay_worker(db, tmp_
             again = await send.send_one(c, "http://t", SECRET, admin, "t", pr, timeout=5,
                                         poll=0.01)  # fmt: skip
             [d] = (await c.get("/deliveries", headers=AUTH)).json()
+            [full] = (await c.get("/runs", params={"output": "true"}, headers=AUTH)).json()
     finally:
         await queue.stop()
     # o/r is not a sandbox repo: it is triaged only because the bundle holds it
     assert rec["http_status"] == 202 and rec["outcome"] == "proposed" and len(calls) == 1
     assert rec["final"]["head_sha"] == ROW["head_sha"] and rec["final"]["triage"]["requests"] == 1
     assert "output" not in rec["final"]["triage"]
+    assert full["triage"]["output"]["labels"] == ["kind/bug"]  # only when asked for
     assert again["answer"] == {"status": "duplicate"} and again["outcome"] == "proposed"
     assert d["delivery_id"] == rec["delivery_id"] == send.delivery_id("t", "o/r", 5)
 
@@ -255,3 +258,42 @@ def test_dead_letters_are_read_without_consuming_and_reconciled():
     check = measure.dead_letter_check(sends, {**held, "9": "other"})
     assert check == {"messages_held": 2, "prs_held": 2, "unfinished_held": 1,
                      "final_also_held": 1, "lost": ["o/r#3"]}  # fmt: skip
+
+
+@pytest.mark.anyio
+async def test_shadow_prompts_match_the_pack_and_a_different_one_is_caught(tmp_path):
+    cand = {**CAND, "reviewers": [{"login": "erin"}]}
+    path = tmp_path / "b.jsonl"
+    bundle.write([bundle_record(ROW, cand)], path)
+    row = pack_row({**ROW, "split": "val"}, cand)
+    assert await shadow.prompt_mismatches(path, {("o/r", 5): row}) == (1, [])
+    edited = {**row, "messages": [row["messages"][0], {"role": "user", "content": "x"}]}
+    assert await shadow.prompt_mismatches(path, {("o/r", 5): edited}) == (1, ["o/r#5"])
+    assert await shadow.prompt_mismatches(path, {}) == (1, ["o/r#5"])
+
+
+def test_shadow_replies_per_view_and_empty_without_output():
+    sends = [{"repo": "o/r", "number": n, "head_sha": "h", "sent_at": "2026-11-20T10:00:00Z",
+              "seen_final_at": "2026-11-20T10:01:00Z" if n < 3 else None}
+             for n in (1, 2, 3)]  # fmt: skip
+    out = {"type": "bug", "reviewers": ["a"]}
+    runs = [
+        {"repo": "o/r", "pr_number": 1, "head_sha": "h", "state": "proposed",
+         "screen": {"pii_redacted": ["EMAIL"], "secrets_redacted": []},
+         "triage": {"output": out, "requests": 2, "partly_filtered": True}},
+        {"repo": "o/r", "pr_number": 2, "head_sha": "h", "state": "quarantined", "screen": {},
+         "triage": None},
+        {"repo": "o/r", "pr_number": 1, "head_sha": "old", "state": "proposed", "screen": {},
+         "triage": {"output": {"type": "docs"}}},  # another head of the same PR
+    ]  # fmt: skip
+    props = [{"repo": "o/r", "pr_number": 1, "head_sha": "h",
+              "triage": {**out, "reviewers": ["m", "a"]}}]  # fmt: skip
+    got = shadow.replies(sends, runs, props)
+    assert [json.loads(r["text"]) if r["text"] else None for r in got["model"]] == [out, None, None]
+    assert json.loads(got["proposal"][0]["text"])["reviewers"] == ["m", "a"]
+    assert [r["text"] for r in got["proposal"][1:]] == ["", ""]
+    assert [r["finish_reason"] for r in got["model"]] == ["proposed", "quarantined", "no run"]
+    assert got["model"][0]["latency_s"] == 60.0 and got["model"][2]["latency_s"] is None
+    assert shadow.run_counts(sends, runs) == {
+        "prs_sent": 3, "runs": 2, "states": {"proposed": 1, "quarantined": 1},
+        "partly_filtered": 1, "pii_redacted": 1, "secrets_redacted": 0}  # fmt: skip

@@ -152,6 +152,26 @@ Apply again without those three variables after the run (back to 3 instances, mo
 counts every dead-lettered event and the capacity that stayed up:
 `--until (Get-Item data\processed\replay\burst.sends.jsonl).LastWriteTimeUtc.ToString("yyyy-MM-ddTHH:mm:ssZ")`.
 
+For the shadow replay (the test split's 500-PR sample, scored once against maintainer truth),
+first check, free and locally, that the worker will build byte-identical prompts to the
+offline pack; then send it like the pilot, turn the runs into replies, and score them with
+the eval harness next to the offline run of the same GGUF file on the same PRs:
+
+```powershell
+uv run --group data python -m replay.bundle --split test --keys data/processed/prompts_test_s500.jsonl --out data/processed/replay/shadow_test500.jsonl
+uv run python -m replay.shadow prompts --bundle data/processed/replay/shadow_test500.jsonl --pack data/processed/prompts_test.jsonl
+gcloud storage cp data/processed/replay/shadow_test500.jsonl "gs://$proj-replay/"
+terraform -chdir=infra/terraform apply @tf -var replay_bundle=shadow_test500.jsonl
+uv run python -m replay.send --bundle data/processed/replay/shadow_test500.jsonl --api $api.api --label shadow --in-flight 3 --timeout 3600
+uv run python -m replay.measure report --label shadow --server-times $api.api
+uv run python -m replay.shadow replies --label shadow --api $api.api --pack data/processed/prompts_test.jsonl
+$score = "--project", "eval", "python", "-m", "prpilot_eval", "score", "--pack", "data/processed/prompts_test.jsonl", "--targets", "data/processed/targets_test.jsonl", "--only", "data/processed/prompts_test_s500.jsonl"
+uv run @score --replies data/processed/replay/shadow-model.jsonl --out results/shadow_replay_model.json
+uv run @score --replies data/processed/replay/shadow-proposal.jsonl --out results/shadow_replay_proposal.json
+uv run @score --replies data/processed/replies/student-gguf-system_test_11914958.jsonl --out results/student-gguf-system_test_s500.json
+uv run --project eval python -m prpilot_eval compare --a results/shadow_replay_model.records.jsonl --b results/student-gguf-system_test_s500.records.jsonl
+```
+
 Every later apply needs `-var replay_bundle=...` too while the replay is in use. Without it the
 worker stops mounting the bucket (the bundles stay there until teardown).
 
